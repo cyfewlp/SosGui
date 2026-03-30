@@ -10,33 +10,7 @@
 
 struct MultiSelection : ImGuiSelectionBasicStorage
 {
-    ImGuiMultiSelectFlags flags = ImGuiMultiSelectFlags_None;
-
-    constexpr auto NoSelectAll() -> MultiSelection &
-    {
-        flags |= ImGuiMultiSelectFlags_NoSelectAll;
-        return *this;
-    }
-
-    constexpr auto ClearOnEscape() -> MultiSelection &
-    {
-        flags |= ImGuiMultiSelectFlags_ClearOnEscape;
-        return *this;
-    }
-
-    constexpr auto ClearOnClickVoid() -> MultiSelection &
-    {
-        flags |= ImGuiMultiSelectFlags_ClearOnClickVoid;
-        return *this;
-    }
-
-    constexpr auto BoxSelect1d() -> MultiSelection &
-    {
-        flags |= ImGuiMultiSelectFlags_BoxSelect1d;
-        return *this;
-    }
-
-    auto Begin(const int itemSize) const { return ImGui::BeginMultiSelect(flags, Size, itemSize); }
+    auto Begin(ImGuiMultiSelectFlags flags, const int itemSize) const { return ImGui::BeginMultiSelect(flags, Size, itemSize); }
 
     bool ContainsIndex(int idx) { return Contains(GetStorageIdFromIndex(idx)); }
 

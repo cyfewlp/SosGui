@@ -53,10 +53,6 @@ bool OutfitSelectPopup::Draw(const char *nameKey, const OutfitList &outfitList, 
     clipper.Begin(static_cast<int>(debounceInput.viewData.size()));
     while (clipper.Step())
     {
-        if (!(0 <= clipper.DisplayStart && clipper.DisplayStart <= clipper.DisplayEnd))
-        {
-            continue;
-        }
         for (size_t index = static_cast<size_t>(clipper.DisplayStart); index < static_cast<size_t>(clipper.DisplayEnd); ++index)
         {
             const auto &outfit = *debounceInput.viewData[index];

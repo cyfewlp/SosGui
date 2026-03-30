@@ -1,6 +1,5 @@
 #include "gui/OutfitListTable.h"
 
-#include "Translation.h"
 #include "data/OutfitList.h"
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
@@ -17,11 +16,9 @@
 
 #include <array>
 #include <boost/optional/detail/optional_reference_spec.hpp>
-#include <d3d11.h>
 #include <functional>
 #include <ranges>
 #include <string>
-#include <tchar.h>
 #include <utility>
 #include <vector>
 
@@ -354,7 +351,7 @@ inline void OutfitListTable::OnToggleFavorite(std::vector<const SosUiOutfit *> &
 
 void OutfitListTable::PreDrawOutfits(ImGuiListClipper &clipper, MultiSelection &selection)
 {
-    auto *msIO = selection.NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid().Begin(clipper.ItemsCount);
+    auto *msIO = selection.Begin(ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid(), clipper.ItemsCount);
 
     selection.ApplyRequests(msIO);
     if (msIO->RangeSrcItem != -1)
@@ -378,7 +375,7 @@ void OutfitListTable::DrawOutfitTableContent(std::vector<const SosUiOutfit *> ou
         auto itemCount = clipper.DisplayEnd - clipper.DisplayStart;
         if (ascend)
         {
-            for (int index = clipper.DisplayStart; index < clipper.DisplayEnd; index++)
+            for (size_t index = static_cast<size_t>(clipper.DisplayStart); index < static_cast<size_t>(clipper.DisplayEnd); index++)
             {
                 drawOutfitEntry(outfitView[index], index);
             }

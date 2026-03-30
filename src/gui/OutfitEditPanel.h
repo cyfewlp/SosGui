@@ -144,7 +144,7 @@ private:
 
     auto GetGenerator() const -> ArmorGenerator * { return m_armorGeneratorTabBar.generator.get(); }
 
-    using DrawArmorEntry = std::function<void(const Armor *armor, size_t index)>;
+    using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
     void DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit);
     void DrawArmorViewFilter(const SosUiOutfit *editingOutfit);
     void DrawArmorView(Context &context, const EditingOutfit &editingOutfit);

@@ -48,7 +48,7 @@ public:
 
     void SetName(const std::string &newName) { m_name.assign(newName); }
 
-    void SetFavorite(bool isFavorite) { m_isFavorite = isFavorite; }
+    void SetFavorite(const bool isFavorite) { m_isFavorite = isFavorite; }
 
     [[nodiscard]] constexpr auto IsFavorite() const -> bool { return m_isFavorite; }
 

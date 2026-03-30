@@ -298,7 +298,7 @@ void OutfitEditPanel::SlotPolicyCombo(const EditingOutfit &editingOutfit, const 
 void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
 {
     ImGui::Separator();
-    ImGuiUtil::Text(Translate("Panels.OutfitEdit.ArmomrGenerator.Title"));
+    ImGuiUtil::Text(Translate("Panels.OutfitEdit.ArmorGenerator.Title"));
     if (ImGui::BeginTabBar("ArmorGeneratorTabBar", ImGuiEx::TabBarFlags().DrawSelectedOverline().Reorderable()))
     {
         const auto *tabBar          = ImGui::GetCurrentTabBar();
@@ -311,7 +311,7 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
         auto  *player         = RE::PlayerCharacter::GetSingleton();
         auto *&selectedActor  = m_armorGeneratorTabBar.selectedActor;
         auto  &armorGenerator = m_armorGeneratorTabBar.generator;
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmomrGenerator.NearObjectInventory")))
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.NearObjectInventory")))
         {
             auto *generator = dynamic_cast<NearObjectsInventoryArmorGenerator *>(armorGenerator.get());
             if (!generator || isTabItemAppear())
@@ -326,7 +326,7 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
             auto       *wantVisit   = nearObjects[generator->WantVisitIndex()];
 
             if (ImGui::BeginCombo(
-                    Translate1("Panels.OutfitEdit.ArmomrGenerator.NearObjects"), wantVisit->GetDisplayFullName(), ImGuiComboFlags_WidthFitPreview
+                    Translate1("Panels.OutfitEdit.ArmorGenerator.NearObjects"), wantVisit->GetDisplayFullName(), ImGuiComboFlags_WidthFitPreview
                 ))
             {
                 for (size_t index = 0; index < nearObjects.size(); ++index)
@@ -344,7 +344,7 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmomrGenerator.NearNpcCarried")))
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.NearNpcCarried")))
         {
             if (isTabItemAppear())
             {
@@ -359,7 +359,7 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmomrGenerator.ByFormID")))
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.ByFormID")))
         {
             if (isTabItemAppear())
             {
@@ -384,7 +384,7 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmomrGenerator.AllArmors")))
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.AllArmors")))
         {
             if (isTabItemAppear())
             {
@@ -445,7 +445,6 @@ void OutfitEditPanel::DrawArmorView(Context &context, const EditingOutfit &editi
 
 void OutfitEditPanel::DrawArmorViewContent(Context &context, const EditingOutfit &editingOutfit, const std::vector<ArmorView::RankedArmor> &viewData)
 {
-    using namespace ImGuiUtil;
     ImGui::TableSetupScrollFreeze(1, 1);
     ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed());
     ImGui::TableSetupColumn(Translate1("Armor"), ImGuiEx::TableColumnFlags().DefaultSort().NoHide());
@@ -457,19 +456,19 @@ void OutfitEditPanel::DrawArmorViewContent(Context &context, const EditingOutfit
 
     std::function<void()> onRequireAddArmor = [] {};
 
-    auto drawArmorEntry = [&](const Armor *armor, const size_t index) {
+    auto drawArmorEntry = [&](const Armor *armor, const ImGuiID index) {
         ImGui::PushID(static_cast<int>(index));
         ImGui::TableNextRow();
         ImGui::TableNextColumn(); // number column
         {
             const bool isSelected = m_armorView.multiSelection.UpdateSelected(armor, index);
-            ImGui::SetNextItemSelectionUserData(static_cast<int64_t>(index));
+            ImGui::SetNextItemSelectionUserData(index);
             ImGui::Selectable(std::format("{}", index + 1).c_str(), isSelected, ImGuiEx::SelectableFlags().AllowOverlap().SpanAllColumns());
 
             if (ImGui::BeginPopupContextItem("Context"))
             {
                 ImGui::BeginDisabled(editingOutfit.IsUntitled());
-                if (ImGui::MenuItem(Translate1("Paneles.OutfitEdit.AddAll")))
+                if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.AddAll")))
                 {
                     if (m_armorView.multiSelection.Size == 1)
                     {
@@ -541,32 +540,29 @@ void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<ArmorView::Ran
     static bool ascend = true;
     ImGuiUtil::may_update_table_sort_dir(ascend);
     ImGuiListClipper clipper;
-    auto *msIO = m_armorView.multiSelection.NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid().Begin(static_cast<int>(viewData.size()));
+    auto            *msIO = m_armorView.multiSelection.Begin(
+        ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid(), static_cast<int>(viewData.size())
+    );
     clipper.Begin(static_cast<int>(viewData.size()));
     m_armorView.multiSelection.ApplyRequests(msIO);
     if (msIO->RangeSrcItem != -1) clipper.IncludeItemByIndex(static_cast<int>(msIO->RangeSrcItem));
 
     while (clipper.Step())
     {
-        if (!(0 <= clipper.DisplayStart) && (clipper.DisplayStart <= clipper.DisplayEnd))
-        {
-            continue;
-        }
+        const int itemCount = clipper.DisplayEnd - clipper.DisplayStart;
+        auto      index     = static_cast<ImGuiID>(clipper.DisplayStart);
         if (ascend)
         {
-            for (size_t index = static_cast<size_t>(clipper.DisplayStart); index < static_cast<size_t>(clipper.DisplayEnd); ++index)
+            for (const auto &armor : viewData | std::views::drop(clipper.DisplayStart) | std::views::take(itemCount))
             {
-                drawArmorEntry(viewData.at(index), index);
+                drawArmorEntry(static_cast<const Armor *>(armor), index++);
             }
         }
         else
         {
-            using namespace std::views;
-            size_t index = static_cast<size_t>(clipper.DisplayStart);
-            for (int         count = clipper.DisplayEnd - clipper.DisplayStart;
-                 const auto &armor : viewData | reverse | drop(clipper.DisplayStart) | take(count))
+            for (const auto &armor : viewData | std::views::reverse | std::views::drop(clipper.DisplayStart) | std::views::take(itemCount))
             {
-                drawArmorEntry(armor, index++);
+                drawArmorEntry(static_cast<const Armor *>(armor), index++);
             }
         }
     }
@@ -719,7 +715,7 @@ void OutfitEditPanel::OverrideArmorRequest::DoDraw(SosUiData &uiData, bool &conf
         PushError(Error::add_armor_to_unknown_outfit_id);
         return;
     }
-    RenderMultilineMessage(Translate("Paneles.OutfitEdit.ConfirmRemoveConfictArmors"));
+    RenderMultilineMessage(Translate("Panels.OutfitEdit.ConfirmRemoveConflictArmors"));
     RenderConfirmButtons(confirmed);
 }
 
@@ -731,22 +727,24 @@ void OutfitEditPanel::BatchAddArmorsRequest::OnConfirm(OutfitEditPanel *editPane
         PushError(Error::add_armor_to_unknown_outfit_id);
         return;
     }
-    REX::EnumSet<Slot> usedSlot;
     // We will remove all used armors in view;
-    auto              &editingOutfit = outfitList.GetOutfitById(id).value();
-
-    auto                                prevArmors = editingOutfit.GetUniqueArmors();
+    auto                               &editingOutfit = outfitList.GetOutfitById(id).value();
+    REX::EnumSet<Slot>                  usedSlot;
     std::vector<ArmorView::RankedArmor> newViewData;
     newViewData.reserve(editPanel->m_armorView.ViewData().size());
+    // Selected armors maybe use the same slots.
+    // In order apply armor and the last conflict armor will win.
+    // If an armor contains all slot already used by previous armors, it will be ignored and keep in view.
     for (size_t index = 0; index < editPanel->m_armorView.ViewData().size(); ++index)
     {
-        const auto &armor = editPanel->m_armorView.ViewData().at(index);
-        if (!editPanel->m_armorView.multiSelection.Contains(static_cast<uint32_t>(index)) || usedSlot.all(armor->GetSlotMask().get()))
+        const auto &rankedArmor = editPanel->m_armorView.ViewData().at(index);
+        if (!editPanel->m_armorView.multiSelection.Contains(static_cast<uint32_t>(index)) || usedSlot.all(rankedArmor->GetSlotMask().get()))
         {
-            newViewData.emplace_back(armor);
+            newViewData.emplace_back(rankedArmor);
             continue;
         }
-        usedSlot.set(armor->GetSlotMask().get());
+        auto armor = static_cast<const Armor *>(rankedArmor);
+        usedSlot.set(rankedArmor->GetSlotMask().get());
         if (editingOutfit.IsConflictWith(armor))
         {
             +[&] {
@@ -760,7 +758,8 @@ void OutfitEditPanel::BatchAddArmorsRequest::OnConfirm(OutfitEditPanel *editPane
     editPanel->m_armorView.multiSelection.Clear();
     editPanel->m_armorView.SwapViewData(newViewData);
 
-    const auto &armors = editingOutfit.GetUniqueArmors();
+    auto        prevArmors = editingOutfit.GetUniqueArmors();
+    const auto &armors     = editingOutfit.GetUniqueArmors();
     std::erase_if(prevArmors, [&armors](const Armor *armor) {
         return armors.contains(armor);
     });

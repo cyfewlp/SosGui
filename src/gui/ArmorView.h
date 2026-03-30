@@ -40,19 +40,16 @@ struct ArmorView final
 
     struct ArmorMultiSelection : MultiSelection
     {
-        SlotEnumeration slotMask = Slot::kNone;
+        REX::EnumSet<Slot> slotMask = Slot::kNone;
 
-        auto UpdateSelected(const Armor *armor, const size_t index) -> bool
+        auto UpdateSelected(const Armor *armor, const ImGuiID index) -> bool
         {
-            bool con = Contains(static_cast<ImGuiID>(index));
-            if (con)
-                slotMask.set(armor->GetSlotMask().get());
-            else
-                slotMask.reset(armor->GetSlotMask().get());
-            return con;
+            const bool has = Contains(index);
+            slotMask.set(has, armor->GetSlotMask().get());
+            return has;
         }
 
-        auto IsSelectSlot(Slot slot) const -> bool { return slotMask.all(slot); }
+        auto IsSelectSlot(const Slot slot) const -> bool { return slotMask.all(slot); }
 
         void Clear()
         {
@@ -76,7 +73,7 @@ struct ArmorView final
 
         auto operator->() const -> const Armor * { return armor; }
 
-        operator const Armor *() const { return armor; }
+        explicit operator const Armor *() const { return armor; }
     };
 
 private:
