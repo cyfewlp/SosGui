@@ -21,7 +21,6 @@ class OutfitEditPanel final : public BaseGui
 public:
     using Slot            = RE::BIPED_MODEL::BipedObjectSlot;
     using Armor           = RE::TESObjectARMO;
-    using SlotEnumeration = SKSE::stl::enumeration<Slot, uint32_t>;
 
     static constexpr int MAX_FILTER_ARMOR_NAME = 256;
 

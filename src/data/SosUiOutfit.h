@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SKSE/Impl/PCH.h"
 #include "Translation.h"
 #include "data/id.h"
 
@@ -20,12 +21,12 @@ public:
     using SlotPolicyArray           = std::array<std::string, SLOT_COUNT>;
 
 private:
-    OutfitId                               m_id;
-    std::string                            m_name;
-    SKSE::stl::enumeration<Slot, uint32_t> m_slotMask = Slot::kNone;
-    std::array<const Armor *, SLOT_COUNT>  m_armors;
-    SlotPolicyArray                        m_slotPolicies;
-    bool                                   m_isFavorite = false;
+    OutfitId                              m_id;
+    std::string                           m_name;
+    REX::EnumSet<Slot, uint32_t>          m_slotMask = Slot::kNone;
+    std::array<const Armor *, SLOT_COUNT> m_armors;
+    SlotPolicyArray                       m_slotPolicies;
+    bool                                  m_isFavorite = false;
 
 public:
     explicit constexpr SosUiOutfit(OutfitId id, const std::string &name, bool favorite = false) : m_id(id), m_name(name), m_isFavorite(favorite)
@@ -43,7 +44,7 @@ public:
 
     auto HasSlot(uint32_t slotPos) const -> bool { return m_slotMask.all(static_cast<Slot>(1 << slotPos)); }
 
-    auto IsConflictWith(const Armor *armor) const -> bool { return m_slotMask.any(armor->GetSlotMask()); }
+    auto IsConflictWith(const Armor *armor) const -> bool { return m_slotMask.any(armor->GetSlotMask().get()); }
 
     void SetName(const std::string &newName) { m_name.assign(newName); }
 

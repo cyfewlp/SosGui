@@ -1,0 +1,10 @@
+[submodule "extern/JamieMods"]
+	path = extern/JamieMods
+	url = https://github.com/cyfewlp/JamieMods
+[submodule "extern/imgui"]
+	path = extern/imgui
+	url = https://github.com/ocornut/imgui
+[submodule "extern/CommonLibSSE-NG"]
+	path = extern/CommonLibSSE-NG
+	url = https://github.com/alandtse/CommonLibVR
+	branch = ng

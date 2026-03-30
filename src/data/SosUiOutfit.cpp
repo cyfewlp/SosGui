@@ -33,7 +33,7 @@ void SosUiOutfit::AddArmor(const Armor *armor)
             m_armors[idx] = armor;
         }
     }
-    m_slotMask.set(slot);
+    m_slotMask.set(slot.get());
 }
 
 void SosUiOutfit::RemoveArmor(const Armor *armor)
@@ -58,7 +58,7 @@ void SosUiOutfit::RemoveArmor(const Armor *armor)
             m_armors[idx] = nullptr;
         }
     }
-    m_slotMask.reset(slot);
+    m_slotMask.reset(slot.get());
 }
 
 auto SosUiOutfit::GetArmorAt(uint32_t slotPos) const -> const Armor *

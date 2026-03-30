@@ -5,7 +5,6 @@
 
 #include "data/OutfitList.h"
 #include "gui/icon.h"
-#include "imguiex/imguiex_m3.h"
 
 namespace SosGui
 {

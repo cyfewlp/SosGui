@@ -1,12 +1,29 @@
+cmake_minimum_required(VERSION 4.2)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(BUILD_TESTING "Build tests" OFF)
+
+if (BUILD_TESTING)
+  list(APPEND VCPKG_MANIFEST_FEATURES "test-deps")
+endif ()
+
+set(EXTERN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extern)
+set(JAMIE_MODS_DIR ${EXTERN_DIR}/JamieMods)
+set(CommonLibSSE_NG_DIR ${EXTERN_DIR}/CommonLibSSE-NG)
+set(TEST_PROJ_NAME "${PROJECT_NAME}Test")
+
 project(
     SosGui
     VERSION 0.0.1
-    DESCRIPTION "SkyrimOutfitSystemSE ImGui"
+    DESCRIPTION "SkyrimOutfitSystemSE ImGui Frontend"
     LANGUAGES CXX
 )
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/version.rc.in
+    ${JAMIE_MODS_DIR}/cmake/version.rc.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY
 )
@@ -38,7 +55,11 @@ source_group(
 )
 
 include(${JAMIE_MODS_DIR}/cmake/imgui-config.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/CommonLibSSE-NG/cmake/CommonLibSSE.cmake)
+include(${EXTERN_DIR}/CommonLibSSE-NG/cmake/CommonLibSSE.cmake)
+set(_OLD_BUILD_TESTS ${BUILD_TESTS})
+set(BUILD_TESTS OFF) # forbid CommonLibSSE-NG from building its tests, since we only want to build our own tests, and CommonLibSSE-NG's tests are not relevant to us and would just slow down the build
+add_subdirectory(${CommonLibSSE_NG_DIR} EXCLUDE_FROM_ALL)
+set(BUILD_TESTS ${_OLD_BUILD_TESTS})
 
 add_commonlibsse_plugin(${PROJECT_NAME} SOURCES
     ${sources}
@@ -49,12 +70,7 @@ add_commonlibsse_plugin(${PROJECT_NAME} SOURCES
     ${JAMIE_MODS_COMMON_DIR}/imgui/ImThemeLoader.cpp
     ${JAMIE_MODS_COMMON_DIR}/fonts/FontManager.cpp
     ${JAMIE_MODS_COMMON_DIR}/i18n/translator_manager.cpp
-    ${IMGUIEX_DIR}/imguiex/m3.cpp
-    ${IMGUIEX_DIR}/imguiex/imguiex_m3.cpp
-    ${IMGUIEX_DIR}/imguiex/imguiex_m3_slider.cpp
-    ${IMGUIEX_DIR}/imguiex/M3ThemeBuilder.cpp
     ${IMGUIEX_DIR}/imguiex/ErrorNotifier.cpp
-    ${IMGUIEX_DIR}/imguiex/ThemesLoader.cpp
     ${IMGUIEX_DIR}/imguiex/imgui_manager.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     MINIMUM_SKSE_VERSION "1.5.97"
@@ -85,7 +101,6 @@ target_link_libraries(
     CommonLibSSE
     ${DETOURS_LIBRARY}
     Freetype::Freetype
-    MaterialYou
 )
 target_compile_options(${PROJECT_NAME} PRIVATE -Wpedantic -Wshadow -Wconversion -Wno-unused-command-line-argument)
 

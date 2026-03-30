@@ -1,8 +1,5 @@
 #include "util/ImGuiUtil.h"
 
-#include "imguiex/Material3.h"
-#include "imguiex/m3/facade/icon_button.h"
-
 namespace SosGui
 {
 
@@ -50,10 +47,7 @@ auto GetIconFont() -> ImFont *
 
 auto ImGuiUtil::IconButton(std::string_view icon, const ImVec2 &size) -> bool
 {
-    constexpr auto iconSize = M3Spec::IconButtonSizing<ImGuiEx::M3::Spec::SizeTips::XSMALL>::IconSize;
-    const auto     pixels   = ImGuiEx::M3::Context::GetM3Styles().GetPixels(iconSize);
-    ImFont        *iconFont = GetIconFont();
-    ImGui::PushFont(iconFont, pixels);
+    ImGui::PushFont(GetIconFont(), 0.0F);
     const auto clicked = ImGui::Button(icon.data(), size);
     ImGui::PopFont();
     return clicked;

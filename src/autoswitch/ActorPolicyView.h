@@ -6,6 +6,7 @@
 
 #include "gui/popup/OutfitSelectPopup.h"
 
+#include <limits>
 #include <memory>
 
 namespace SosGui
@@ -20,7 +21,7 @@ class ActorPolicyView
     struct Popup : OutfitSelectPopup
     {
         const RE::Actor *actor          = nullptr;
-        uint32_t         selectPolicyId = -1;
+        uint32_t         selectPolicyId = std::numeric_limits<uint32_t>::max();
 
         Popup(const RE::Actor *const actor, const uint32_t selectPolicyId) : actor(actor), selectPolicyId(selectPolicyId) {}
     };

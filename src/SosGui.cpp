@@ -6,13 +6,9 @@
 #include "gui/icon.h"
 #include "i18n/translator_manager.h"
 #include "imgui.h"
-#include "imgui/ImThemeLoader.h"
-#include "imgui_impl_dx11.h"
-#include "imgui_impl_win32.h"
 #include "imguiex/ImGuiEx.h"
 #include "imguiex/imgui_manager.h"
 #include "imguiex/imguiex_enum_wrap.h"
-#include "imguiex/imguiex_m3.h"
 #include "log.h"
 #include "path_utils.h"
 #include "task.h"
@@ -78,7 +74,6 @@ auto SosGuiWindow::Init(const HWND hWnd, const RE::BSGraphics::RendererData &ren
         (void)ImGuiEx::AddPrimaryFont({WCharUtils::ToString(defaultFontFilePath)}, {});
     }
 
-    ImGuiEx::M3::Initialize(utils::GetInterfaceFile(Settings::UiSettings::ICON_FONT), ImGuiEx::M3::GetM3ClassicSchemeConfig());
     ImGui::StyleColorsDark();
 }
 
@@ -86,7 +81,6 @@ auto SosGuiWindow::ShutDown() -> void
 {
     auto *uiSetting = Settings::UiSettings::GetInstance();
     Settings::Save(*uiSetting);
-    ImGuiEx::M3::Destroy();
     ImGuiEx::Shutdown();
 }
 

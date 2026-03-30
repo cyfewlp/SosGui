@@ -2,6 +2,8 @@
 // Created by jamie on 2025/5/7.
 //
 
+#pragma once
+
 #include "data/ArmorContainer.h"
 #include "data/ArmorGenerator.h"
 #include "data/SosUiData.h"
@@ -44,9 +46,9 @@ struct ArmorView final
         {
             bool con = Contains(static_cast<ImGuiID>(index));
             if (con)
-                slotMask.set(armor->GetSlotMask());
+                slotMask.set(armor->GetSlotMask().get());
             else
-                slotMask.reset(armor->GetSlotMask());
+                slotMask.reset(armor->GetSlotMask().get());
             return con;
         }
 

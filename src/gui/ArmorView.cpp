@@ -4,6 +4,7 @@
 
 #include "gui/ArmorView.h"
 
+#include "SosDataType.h"
 #include "gui/icon.h"
 #include "imgui.h"
 
@@ -213,8 +214,8 @@ void ArmorView::reset_counter()
         modRefCounter.emplace(modName, 0);
         modRefCounter[modName] += 1;
 
-        const auto slotMaskValue = static_cast<uint32_t>(rankedArmor->GetSlotMask());
-        for (uint32_t slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
+        const auto slotMaskValue = rankedArmor->GetSlotMask().underlying();
+        for (SlotType slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
         {
             uint32_t slotValue = 1 << slotPos;
             if (slotValue > slotMaskValue) break;

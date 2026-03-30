@@ -1,13 +1,5 @@
 # ImGui for SkyrimOutfitSystemSE (SosGui)
 
-Main Window:
-
-![[main_window.png]]
-
-Outfit Edit Panel
-
-![[outfit_edit_panel.png]]
-
 ## Features
 
 * Armor candidates
@@ -60,3 +52,14 @@ cpack
 ## Document
 
 Use [Obsidian](https://obsidian.md/) as document manage tool: `Wikilink` and `Backlink`
+
+
+## Gallery
+
+Main Window:
+
+![main window](assets/main_window.png)
+
+Outfit Edit Panel
+
+![outfit edit panel](assets/outfit_edit_panel.png)
