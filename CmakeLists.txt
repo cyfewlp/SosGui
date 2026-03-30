@@ -17,7 +17,7 @@ set(TEST_PROJ_NAME "${PROJECT_NAME}Test")
 
 project(
     SosGui
-    VERSION 0.0.1
+    VERSION 0.1.0
     DESCRIPTION "SkyrimOutfitSystemSE ImGui Frontend"
     LANGUAGES CXX
 )

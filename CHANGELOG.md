@@ -1,4 +1,4 @@
-## [unreleased]
+## [0.1.0] - 2026-03-30
 
 ### 🚀 Features
 
@@ -39,6 +39,10 @@
 - *(SosGui)* Remove font manager module; Migrate to common FontManager; Migrated to imgui_manager
 - *(SosGui)* Remove About/SettingsPopup; Migrated to lucide icons;
 - *(SosGui)* Depecated translator module and Migrate to i18n::Translator(WIP)
+
+### 📚 Documentation
+
+- Add git-cliff and CHANGELOG
 
 ### ⚙️ Miscellaneous Tasks
 
