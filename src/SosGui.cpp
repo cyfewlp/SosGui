@@ -48,8 +48,7 @@ SosGuiWindow::SosGuiWindow()
       m_outfitListTable(m_uiData, m_outfitService, m_outfitEditPanel)
 {
     i18n::SetTranslator(&m_translator);
-    const auto modInterfaceDir = utils::GetInterfacePath() / SKSE::PluginDeclaration::GetSingleton()->GetName();
-    i18n::UpdateTranslator("english", "english", modInterfaceDir);
+    i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
 }
 
 SosGuiWindow::~SosGuiWindow()
