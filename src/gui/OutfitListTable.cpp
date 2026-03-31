@@ -428,7 +428,6 @@ void OutfitListTable::OpenContextMenu(RE::Actor *editingActor, const SosUiOutfit
 {
     if (!ImGui::BeginPopupContextItem("##OutfitListContextMenu"))
     {
-        ImGui::EndPopup();
         return;
     }
     const auto &outfitName = clickedOutfit->GetName();

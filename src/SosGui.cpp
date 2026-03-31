@@ -72,6 +72,7 @@ auto SosGuiWindow::Init(const HWND hWnd, const RE::BSGraphics::RendererData &ren
     {
         (void)ImGuiEx::AddPrimaryFont({WCharUtils::ToString(defaultFontFilePath)}, {});
     }
+    (void)ImGuiEx::AddFont(utils::GetInterfaceFile(Settings::UiSettings::ICON_FONT));
 
     ImGui::StyleColorsDark();
 }
