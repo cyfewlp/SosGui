@@ -40,6 +40,18 @@ auto get_slot_name_key(const uint32_t slotPos) -> std::string
 {
     return std::format("Panels.OutfitEdit.Slot{}", slotPos + SOS_SLOT_OFFSET);
 }
+
+void DrawSlotPolicyHelpPopup(const char *name)
+{
+    if (ImGui::BeginPopupModal(name))
+    {
+        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText1"));
+        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText2"));
+        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText3"));
+        ImGui::EndPopup();
+    }
+}
+
 } // namespace
 
 void OutfitEditPanel::EditContext::Clear()
@@ -97,7 +109,7 @@ void OutfitEditPanel::PushError(const Error error)
     }
 }
 
-void OutfitEditPanel::Draw(Context &context, const EditingOutfit &editingOutfit)
+void OutfitEditPanel::Draw(const EditingOutfit &editingOutfit)
 {
     if (!IsShowing())
     {
@@ -120,37 +132,27 @@ void OutfitEditPanel::Draw(Context &context, const EditingOutfit &editingOutfit)
 
         ImGui::SameLine();
         ImGui::BeginGroup();
-        DrawOutfitPanel(context, editingOutfit);
+        DrawOutfitPanel(editingOutfit);
         DrawArmorGeneratorTabBar(editingOutfit.GetSourceOutfit());
         DrawArmorViewFilter(editingOutfit.GetSourceOutfit());
-        DrawArmorView(context, editingOutfit);
+        DrawArmorView(editingOutfit);
         ImGui::EndGroup();
     }
     ImGui::End();
-}
-
-bool OutfitEditPanel::OnModalPopupConfirmed(Popup::ModalPopup *modalPopup)
-{
-    if (auto *modifyRequest = dynamic_cast<OutfitModifyRequest *>(modalPopup); modifyRequest)
-    {
-        modifyRequest->OnConfirm(this);
-        return true;
-    }
-    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Outfit Panel
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OutfitEditPanel::DrawOutfitPanel(Context &context, const EditingOutfit &editingOutfit)
+void OutfitEditPanel::DrawOutfitPanel(const EditingOutfit &editingOutfit)
 {
     ImGui::TextUnformatted(editingOutfit.GetName().c_str());
     if (ImGui::BeginTabBar("##OutfitTabBarView"))
     {
         if (ImGui::BeginTabItem(Translate1("Armor"), nullptr, ImGuiTabItemFlags_Leading))
         {
-            DrawOutfitArmors(context, editingOutfit);
+            DrawOutfitArmors(editingOutfit);
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
@@ -180,11 +182,14 @@ void OutfitEditPanel::DrawSideBar(const SosUiOutfit *editingOutfit)
 
 void OutfitEditPanel::UpdateWindowTitle(const std::string &outfitName)
 {
-    m_windowTitle = std::format("{} - {}###OutfitEditPanel", Translate("Panels.OutfitEdit.EditingHint"), Translate("Panels.OutfitEdit.Title"));
+    m_windowTitle =
+        std::format("{} {} - {}###OutfitEditPanel", Translate("Panels.OutfitEdit.EditingHint"), outfitName, Translate("Panels.OutfitEdit.Title"));
 }
 
-void OutfitEditPanel::DrawOutfitArmors(Context &context, const EditingOutfit &editingOutfit)
+void OutfitEditPanel::DrawOutfitArmors(const EditingOutfit &editingOutfit)
 {
+    constexpr const char *SLOT_POLICY_HELP_POPUP_TITLE = "What is Slot Policy?";
+
     if (editingOutfit.IsUntitled())
     {
         ImGuiUtil::Text(Translate("Panels.OutfitEdit.MissingOutfitHint"));
@@ -200,8 +205,9 @@ void OutfitEditPanel::DrawOutfitArmors(Context &context, const EditingOutfit &ed
     ImGui::SameLine();
     if (ImGui::Button(Translate1("Panels.OutfitEdit.SlotPolicies")))
     {
-        context.popupList.push_back(std::make_unique<SlotPolicyHelp>());
+        ImGui::OpenPopup(SLOT_POLICY_HELP_POPUP_TITLE);
     }
+    DrawSlotPolicyHelpPopup(SLOT_POLICY_HELP_POPUP_TITLE);
 
     static uint32_t selectedIdx = RE::BIPED_OBJECT::kEditorTotal;
     if (ImGui::BeginTable("##OutfitArmors", 5, ImGuiEx::TableFlags().Resizable().SizingStretchProp()))
@@ -251,7 +257,7 @@ void OutfitEditPanel::DrawOutfitArmors(Context &context, const EditingOutfit &ed
                 ImGui::BeginDisabled(armor == nullptr);
                 if (ImGui::Button(Translate1("Delete")))
                 {
-                    context.popupList.emplace_back(std::make_unique<DeleteRequest>(editingOutfit.GetId(), armor));
+                    DeleteArmor(editingOutfit.GetId(), armor);
                 }
                 ImGui::EndDisabled();
             }
@@ -427,7 +433,7 @@ void OutfitEditPanel::DrawArmorViewFilter(const SosUiOutfit *editingOutfit)
     }
 }
 
-void OutfitEditPanel::DrawArmorView(Context &context, const EditingOutfit &editingOutfit)
+void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
 {
     if (m_armorView.ViewData().empty())
     {
@@ -438,12 +444,12 @@ void OutfitEditPanel::DrawArmorView(Context &context, const EditingOutfit &editi
     const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_FramePadding>({3.0F, 3.0F});
     if (ImGui::BeginTable("##ArmorCandidates", 6, flags))
     {
-        DrawArmorViewContent(context, editingOutfit, m_armorView.ViewData());
+        DrawArmorViewContent(editingOutfit, m_armorView.ViewData());
         ImGui::EndTable();
     }
 }
 
-void OutfitEditPanel::DrawArmorViewContent(Context &context, const EditingOutfit &editingOutfit, const std::vector<ArmorView::RankedArmor> &viewData)
+void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorView::RankedArmor> &viewData)
 {
     ImGui::TableSetupScrollFreeze(1, 1);
     ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed());
@@ -454,9 +460,10 @@ void OutfitEditPanel::DrawArmorViewContent(Context &context, const EditingOutfit
     ImGui::TableSetupColumn(Translate1("Add"), ImGuiEx::TableColumnFlags().NoSort());
     ImGui::TableHeadersRow();
 
-    std::function<void()> onRequireAddArmor = [] {};
-
-    auto drawArmorEntry = [&](const Armor *armor, const ImGuiID index) {
+    constexpr const char *conflictTipsPopupName = "RemoveConflictArmors?";
+    const ImGuiID         conflictTipsPopupId   = ImGui::GetID(conflictTipsPopupName);
+    const Armor          *targetArmor           = nullptr;
+    auto                  drawArmorEntry        = [&](const Armor *armor, const ImGuiID index) {
         ImGui::PushID(static_cast<int>(index));
         ImGui::TableNextRow();
         ImGui::TableNextColumn(); // number column
@@ -467,18 +474,17 @@ void OutfitEditPanel::DrawArmorViewContent(Context &context, const EditingOutfit
 
             if (ImGui::BeginPopupContextItem("Context"))
             {
-                ImGui::BeginDisabled(editingOutfit.IsUntitled());
+                ImGui::BeginDisabled(editingOutfit.IsUntitled() || m_armorView.multiSelection.Size <= 0);
                 if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.AddAll")))
                 {
                     if (m_armorView.multiSelection.Size == 1)
                     {
-                        onRequireAddArmor = [&, armor] {
-                            OnAcceptAddArmorToOutfit(context, editingOutfit, armor);
-                        };
+                        targetArmor = armor;
+                        OnAcceptAddArmorToOutfit(conflictTipsPopupId, editingOutfit, armor);
                     }
                     else if (m_armorView.multiSelection.Size > 1)
                     {
-                        context.popupList.emplace_back(std::make_unique<BatchAddArmorsRequest>(editingOutfit.GetId()));
+                        BatchAddArmors(editingOutfit.GetId());
                     }
                 }
                 ImGui::EndDisabled();
@@ -488,17 +494,17 @@ void OutfitEditPanel::DrawArmorViewContent(Context &context, const EditingOutfit
 
         if (ImGui::TableNextColumn()) // armor name column
         {
-            ImGui::Text("%s", armor->GetName());
+            ImGuiUtil::Text(armor->GetName());
         }
 
         if (ImGui::TableNextColumn()) // formId column
         {
-            ImGui::Text("%s", std::format("{:#010X}", armor->GetFormID()).c_str());
+            ImGuiUtil::Text(std::format("{:#010X}", armor->GetFormID()));
         }
 
         if (ImGui::TableNextColumn()) // mod name column
         {
-            ImGui::Text("%s", util::GetFormModFileName(armor).data());
+            ImGuiUtil::Text(util::GetFormModFileName(armor));
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip))
             {
                 ImGui::SetItemTooltip("%s", util::GetFormModFileName(armor).data());
@@ -520,18 +526,31 @@ void OutfitEditPanel::DrawArmorViewContent(Context &context, const EditingOutfit
         ImGui::BeginDisabled(editingOutfit.IsUntitled());
         if (ImGui::TableNextColumn() && ImGui::Button(Translate1("Add"))) // column Action
         {
-            onRequireAddArmor = [&, armor] {
-                OnAcceptAddArmorToOutfit(context, editingOutfit, armor);
-            };
+            targetArmor = armor;
+            OnAcceptAddArmorToOutfit(conflictTipsPopupId, editingOutfit, armor);
         }
         ImGui::EndDisabled();
         ImGui::PopID();
     };
 
     DrawArmorViewTableContent(viewData, drawArmorEntry);
-    if (!editingOutfit.IsUntitled())
+
+    if (ImGui::BeginPopupModal(conflictTipsPopupName))
     {
-        onRequireAddArmor();
+        if (targetArmor != nullptr && m_uiData.GetOutfitList().HasOutfit(editingOutfit.GetId()))
+        {
+            ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.ConfirmRemoveConflictArmors"));
+            if (const auto confirmed = Popup::DrawActionButtons(); confirmed)
+            {
+                OverrideExistArmor(editingOutfit, targetArmor);
+            }
+        }
+        else
+        {
+            PushError(Error::add_armor_to_unknown_outfit_id);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 }
 
@@ -555,14 +574,14 @@ void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<ArmorView::Ran
         {
             for (const auto &armor : viewData | std::views::drop(clipper.DisplayStart) | std::views::take(itemCount))
             {
-                drawArmorEntry(static_cast<const Armor *>(armor), index++);
+                drawArmorEntry(armor.Data(), index++);
             }
         }
         else
         {
             for (const auto &armor : viewData | std::views::reverse | std::views::drop(clipper.DisplayStart) | std::views::take(itemCount))
             {
-                drawArmorEntry(static_cast<const Armor *>(armor), index++);
+                drawArmorEntry(armor.Data(), index++);
             }
         }
     }
@@ -650,11 +669,11 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer(const SosUiOutfit *editing)
     }
 }
 
-void OutfitEditPanel::OnAcceptAddArmorToOutfit(Context &context, const EditingOutfit &editingOutfit, const Armor *armor)
+void OutfitEditPanel::OnAcceptAddArmorToOutfit(ImGuiID conflictTipsPopupId, const EditingOutfit &editingOutfit, const Armor *armor)
 {
     if (editingOutfit.IsConflictWith(armor))
     {
-        context.popupList.emplace_back(std::make_unique<OverrideArmorRequest>(editingOutfit.GetId(), armor));
+        ImGui::OpenPopup(conflictTipsPopupId);
     }
     else
     {
@@ -666,62 +685,24 @@ void OutfitEditPanel::OnAcceptAddArmorToOutfit(Context &context, const EditingOu
     }
 }
 
-void OutfitEditPanel::DeleteRequest::OnConfirm(OutfitEditPanel *editPanel)
+void OutfitEditPanel::OverrideExistArmor(const EditingOutfit &outfit, const Armor *armor)
 {
-    if (const auto opt = editPanel->m_uiData.GetOutfitList().GetOutfitById(id); opt.has_value())
-    {
-        +[&] {
-            return editPanel->m_outfitService.DeleteArmor(opt.value().GetId(), opt.value().GetName(), armor);
-        };
-        assert(editPanel->m_armorView.add_armor(armor).has_value() && "Can't add armor!");
-    }
-    else
-    {
-        PushError(Error::delete_armor_from_unknown_outfit_id);
-    }
-}
-
-void OutfitEditPanel::DeleteRequest::DoDraw(SosUiData &uiData, bool &confirmed)
-{
-    if (!uiData.GetOutfitList().HasOutfit(id))
-    {
-        PushError(Error::delete_armor_from_unknown_outfit_id);
-        return;
-    }
-    ImGuiUtil::Text(std::format("{} {}?", Translate("Panels.OutfitEdit.RemoveArmor"), armor->GetName()));
-    RenderConfirmButtons(confirmed);
-}
-
-void OutfitEditPanel::OverrideArmorRequest::OnConfirm(OutfitEditPanel *editPanel)
-{
-    if (const auto opt = editPanel->m_uiData.GetOutfitList().GetOutfitById(id); opt.has_value())
-    {
-        +[&] {
-            return editPanel->m_outfitService.AddArmor(opt.value().GetId(), opt.value().GetName(), armor);
-        };
-        editPanel->m_armorView.remove_armor(armor);
-        editPanel->m_armorView.multiSelection.Clear();
-    }
-    else
-    {
-        PushError(Error::add_armor_to_unknown_outfit_id);
-    }
-}
-
-void OutfitEditPanel::OverrideArmorRequest::DoDraw(SosUiData &uiData, bool &confirmed)
-{
-    if (!uiData.GetOutfitList().HasOutfit(id))
+    if (outfit.IsUntitled())
     {
         PushError(Error::add_armor_to_unknown_outfit_id);
         return;
     }
-    RenderMultilineMessage(Translate("Panels.OutfitEdit.ConfirmRemoveConflictArmors"));
-    RenderConfirmButtons(confirmed);
+
+    +[&] {
+        return m_outfitService.AddArmor(outfit.GetId(), outfit.GetName(), armor);
+    };
+    m_armorView.remove_armor(armor);
+    m_armorView.multiSelection.Clear();
 }
 
-void OutfitEditPanel::BatchAddArmorsRequest::OnConfirm(OutfitEditPanel *editPanel)
+void OutfitEditPanel::BatchAddArmors(const OutfitId id)
 {
-    auto &outfitList = editPanel->m_uiData.GetOutfitList();
+    auto &outfitList = m_uiData.GetOutfitList();
     if (!outfitList.HasOutfit(id))
     {
         PushError(Error::add_armor_to_unknown_outfit_id);
@@ -731,32 +712,32 @@ void OutfitEditPanel::BatchAddArmorsRequest::OnConfirm(OutfitEditPanel *editPane
     auto                               &editingOutfit = outfitList.GetOutfitById(id).value();
     REX::EnumSet<Slot>                  usedSlot;
     std::vector<ArmorView::RankedArmor> newViewData;
-    newViewData.reserve(editPanel->m_armorView.ViewData().size());
+    newViewData.reserve(m_armorView.ViewData().size());
     // Selected armors maybe use the same slots.
     // In order apply armor and the last conflict armor will win.
     // If an armor contains all slot already used by previous armors, it will be ignored and keep in view.
-    for (size_t index = 0; index < editPanel->m_armorView.ViewData().size(); ++index)
+    for (size_t index = 0; index < m_armorView.ViewData().size(); ++index)
     {
-        const auto &rankedArmor = editPanel->m_armorView.ViewData().at(index);
-        if (!editPanel->m_armorView.multiSelection.Contains(static_cast<uint32_t>(index)) || usedSlot.all(rankedArmor->GetSlotMask().get()))
+        const auto &rankedArmor = m_armorView.ViewData().at(index);
+        if (!m_armorView.multiSelection.Contains(static_cast<uint32_t>(index)) || usedSlot.all(rankedArmor->GetSlotMask().get()))
         {
             newViewData.emplace_back(rankedArmor);
             continue;
         }
-        auto armor = static_cast<const Armor *>(rankedArmor);
+        const auto *armor = rankedArmor.Data();
         usedSlot.set(rankedArmor->GetSlotMask().get());
         if (editingOutfit.IsConflictWith(armor))
         {
             +[&] {
-                return editPanel->m_outfitService.DeleteConflictArmors(editingOutfit.GetName(), armor);
+                return m_outfitService.DeleteConflictArmors(editingOutfit.GetName(), armor);
             };
         }
         +[&] {
-            return editPanel->m_outfitService.AddArmor(editingOutfit.GetId(), editingOutfit.GetName(), armor);
+            return m_outfitService.AddArmor(editingOutfit.GetId(), editingOutfit.GetName(), armor);
         };
     }
-    editPanel->m_armorView.multiSelection.Clear();
-    editPanel->m_armorView.SwapViewData(newViewData);
+    m_armorView.multiSelection.Clear();
+    m_armorView.SwapViewData(newViewData);
 
     auto        prevArmors = editingOutfit.GetUniqueArmors();
     const auto &armors     = editingOutfit.GetUniqueArmors();
@@ -765,33 +746,25 @@ void OutfitEditPanel::BatchAddArmorsRequest::OnConfirm(OutfitEditPanel *editPane
     });
     for (const auto &armor : prevArmors)
     {
-        if (auto result = editPanel->m_armorView.add_armor(armor); !result.has_value())
+        if (auto result = m_armorView.add_armor(armor); !result.has_value())
         {
             ErrorNotifier::GetInstance().Error(std::format("Can't restore armor {} from outfit {}", armor->GetName(), editingOutfit.GetName()));
         }
     }
 }
 
-void OutfitEditPanel::BatchAddArmorsRequest::DoDraw(SosUiData &, bool &confirmed)
+void OutfitEditPanel::DeleteArmor(const OutfitId id, const Armor *armor)
 {
-    const auto message = Translation::Translate("$SosGui_BatchAddArmors_Message");
-    RenderMultilineMessage(message);
-    RenderConfirmButtons(confirmed);
-}
-
-bool OutfitEditPanel::SlotPolicyHelp::Draw(SosUiData &uiData, bool &confirmed, const ImGuiWindowFlags flags)
-{
-    const auto mainViewPort = ImGui::GetMainViewport();
-    const auto maxSize      = ImVec2(mainViewPort->WorkSize.x * 0.5F, mainViewPort->WorkSize.y * 0.5F);
-    ImGui::SetNextWindowSize(maxSize, ImGuiCond_Appearing);
-    ImGui::SetNextWindowPos(ImVec2(maxSize.x * 0.5F, maxSize.y * 0.5F), ImGuiCond_Appearing);
-    return ModalPopup::Draw(uiData, confirmed, flags);
-}
-
-void OutfitEditPanel::SlotPolicyHelp::DoDraw(SosUiData &, bool &)
-{
-    ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText1"));
-    ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText2"));
-    ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText3"));
+    if (const auto opt = m_uiData.GetOutfitList().GetOutfitById(id); opt.has_value())
+    {
+        +[&] {
+            return m_outfitService.DeleteArmor(opt.value().GetId(), opt.value().GetName(), armor);
+        };
+        assert(m_armorView.add_armor(armor) && "Can't add armor!");
+    }
+    else
+    {
+        PushError(Error::delete_armor_from_unknown_outfit_id);
+    }
 }
 } // namespace SosGui

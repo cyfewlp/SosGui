@@ -13,6 +13,7 @@ namespace SosGui
 {
 class SosDataCoordinator;
 class OutfitService;
+class SosUiData;
 
 namespace AutoSwitch
 {

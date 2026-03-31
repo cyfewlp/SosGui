@@ -19,8 +19,8 @@ RefreshPlayerArmor = "Refresh Player Armor"
 Import = "Import from JSON"
 Export = "Export to JSON"
 ShowOrHide = "Show/Hide"
-Quickslots = "Quickslots"
-QuickslotsToolTip = "Adds a spell to your character, to allow quick switching between favorited outfits."
+QuickSlots = "QuickSlots"
+QuickSlotsToolTip = "Adds a spell to your character, to allow quick switching between favorited outfits."
 
 [Panels]
 

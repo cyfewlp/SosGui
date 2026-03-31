@@ -73,7 +73,7 @@ struct ArmorView final
 
         auto operator->() const -> const Armor * { return armor; }
 
-        explicit operator const Armor *() const { return armor; }
+        auto Data() const -> const Armor * { return armor; }
     };
 
 private:

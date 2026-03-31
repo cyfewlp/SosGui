@@ -44,7 +44,6 @@ class SosGuiWindow
     CharacterEditPanel m_characterEditPanel;
     OutfitEditPanel    m_outfitEditPanel;
     OutfitListTable    m_outfitListTable;
-    Context            m_context;
     i18n::Translator   m_translator;
 
     bool m_isShowPanels = true;
@@ -71,7 +70,6 @@ public:
     auto OnPostDisplay() -> void;
 
 private:
-    void DrawTopModalPopup();
     auto Draw() -> void;
     auto DrawSidebar() -> float;
     void DockSpace();
@@ -88,6 +86,6 @@ private:
 
     void OnImportSettings();
 
-    static auto EnableQuickslot(bool enable) -> bool;
+    static auto EnableQuickSlot(bool enable) -> bool;
 };
 } // namespace SosGui

@@ -84,31 +84,6 @@ auto SosGuiWindow::ShutDown() -> void
     ImGuiEx::Shutdown();
 }
 
-void SosGuiWindow::DrawTopModalPopup()
-{
-    if (m_context.popupList.empty())
-    {
-        return;
-    }
-
-    ImGui::PushStyleVarX(ImGuiStyleVar_WindowPadding, 25.0F);
-
-    ImGui::PushFont(nullptr, Settings::UiSettings::GetInstance()->Title4PxSize());
-    const auto &modalPopup = m_context.popupList.front();
-    bool        confirmed  = false;
-    const bool  toErase    = !modalPopup->Draw(m_uiData, confirmed, ImGuiWindowFlags_AlwaysAutoResize);
-    if (confirmed && !m_outfitListTable.OnModalPopupConfirmed(modalPopup.get()))
-    {
-        m_outfitEditPanel.OnModalPopupConfirmed(modalPopup.get());
-    }
-    if (toErase)
-    {
-        m_context.popupList.pop_front();
-    }
-    ImGui::PopStyleVar();
-    ImGui::PopFont();
-}
-
 auto SosGuiWindow::Refresh() const -> EagerTask
 {
     co_await m_dataCoordinator.Refresh();
@@ -145,14 +120,12 @@ auto SosGuiWindow::Draw() -> void
     {
         m_characterEditPanel.Draw(m_uiData, m_dataCoordinator, m_outfitService);
 
-        DrawTopModalPopup();
-
         const auto &selectActorIndex = m_characterEditPanel.GetSelectedActorIndex();
         RE::Actor  *selectedActor    = GetSelectedActor(selectActorIndex);
-        m_outfitListTable.Draw(m_context, selectedActor);
+        m_outfitListTable.Draw(selectedActor);
 
         const auto &editingOutfit = m_outfitListTable.GetEditingOutfit();
-        m_outfitEditPanel.Draw(m_context, editingOutfit);
+        m_outfitEditPanel.Draw(editingOutfit);
     }
     catch (const std::exception &e)
     {
@@ -251,14 +224,14 @@ void SosGuiWindow::Toolbar()
 
         {
             bool quickSlotEnabled = m_uiData.IsQuickSlotEnabled();
-            if (ImGui::Checkbox(Translate1("ToolBar.Quickslots"), &quickSlotEnabled))
+            if (ImGui::Checkbox(Translate1("ToolBar.QuickSlots"), &quickSlotEnabled))
             {
-                if (EnableQuickslot(quickSlotEnabled))
+                if (EnableQuickSlot(quickSlotEnabled))
                 {
                     m_uiData.SetQuickSlotEnabled(quickSlotEnabled);
                 }
             }
-            ImGui::SetItemTooltip("%s", Translate1("ToolBar.QuickslotsToolTip"));
+            ImGui::SetItemTooltip("%s", Translate1("ToolBar.QuickSlotsToolTip"));
         }
 
         if (ImGui::MenuItem(Translate1("ToolBar.Import")))
@@ -311,7 +284,7 @@ EagerTask waitImport(const SosDataCoordinator &dataCoordinator)
     co_await dataCoordinator.RequestImportSettings();
 }
 
-auto SosGuiWindow::EnableQuickslot(const bool enable) -> bool
+auto SosGuiWindow::EnableQuickSlot(const bool enable) -> bool
 {
     const auto &player = RE::PlayerCharacter::GetSingleton();
     if (auto *spell = RE::TESForm::LookupByEditorID<RE::SpellItem>(SOS_SPELL_EDITOR_ID); spell != nullptr)

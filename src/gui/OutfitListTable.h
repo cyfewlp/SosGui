@@ -13,12 +13,41 @@
 
 namespace SosGui
 {
+
+struct OutfitModifyRequest
+{
+    explicit OutfitModifyRequest(const SosUiOutfit *const outfit) : outfit(outfit) {}
+
+    [[nodiscard]] auto IsAcceptedAny() const -> bool { return acceptedCreateNew || acceptedRename || acceptedDelete; }
+
+    [[nodiscard]] auto IsAcceptedCreateNew() const -> bool { return acceptedCreateNew; }
+
+    [[nodiscard]] auto IsAcceptedRename() const -> bool { return acceptedRename; }
+
+    [[nodiscard]] auto IsAcceptedDelete() const -> bool { return acceptedDelete; }
+
+    [[nodiscard]] auto GetOutfit() const -> const SosUiOutfit * { return outfit; }
+
+    void AcceptCreateNew() { acceptedCreateNew = true; }
+
+    void AcceptRename() { acceptedRename = true; }
+
+    void AcceptDelete() { acceptedDelete = true; }
+
+private:
+    const SosUiOutfit *outfit            = nullptr;
+    bool               acceptedCreateNew = false; ///< is accepted create a new outfit?
+    bool               acceptedRename    = false; ///< is accepted rename outfit?
+    bool               acceptedDelete    = false; ///< is accepted delete all select outfits?
+};
+
 class OutfitListTable final : public BaseGui
 {
     static constexpr int        MAX_OUTFIT_NAME_BYTES = 256;
-    static inline SosUiOutfit   OUTFIT                = SosUiOutfit(UNTITLED_OUTFIT_ID, "Untitled");
+    static inline auto          OUTFIT                = SosUiOutfit();
     static inline EditingOutfit UNTITLED_OUTFIT{OUTFIT};
-    using DrawOutfitEntry = std::function<void(const SosUiOutfit *, size_t)>;
+    using DrawOutfitEntry  = std::function<void(const SosUiOutfit *, ImGuiID)>;
+    using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
     struct OutfitDebounceInput final : ImGuiUtil::DebounceInput
     {
@@ -41,36 +70,14 @@ class OutfitListTable final : public BaseGui
         }
     };
 
-    class CreateOutfitPopup final : public Popup::ModalPopup
-    {
-    public:
-        enum class Flags : std::uint8_t
-        {
-            NONE = 0,
-            CREATE_EMPTY,
-            CREATE_FROM_WORN
-        };
-
-        explicit CreateOutfitPopup() : ModalPopup("$SosGui_CreateOutfit") {}
-
-        [[nodiscard]] auto GetFlags() const -> Flags { return m_flags; }
-
-        auto GetOutfitName() const -> std::string { return std::string(m_outfitNameBuf.data(), m_outfitNameBuf.size()); }
-
-    protected:
-        void DoDraw(SosUiData &uiData, bool &confirmed) override;
-
-    private:
-        std::array<char, MAX_OUTFIT_NAME_BYTES> m_outfitNameBuf{};
-        Flags                                   m_flags = Flags::NONE;
-    };
-
     SosUiData          &m_uiData;
     OutfitService      &m_outfitService;
     OutfitEditPanel    &m_editPanel;
     EditingOutfit       m_wantEdit = UNTITLED_OUTFIT;
     MultiSelection      m_outfitMultiSelection;
     OutfitDebounceInput m_outfitFilterInput{};
+    ImGuiID             m_editingInputId = 0;
+    OutfitNameBuffer    m_outfitNameBuffer{};
 
 public:
     OutfitListTable(SosUiData &uiData, OutfitService &outfitService, OutfitEditPanel &editPanel)
@@ -83,33 +90,33 @@ public:
     void OnRefresh() override;
     void Cleanup() override;
 
-    void Draw(Context &context, RE::Actor *editingActor);
-    // Only one modal popup can be rendered in the same time.
-    bool OnModalPopupConfirmed(Popup::ModalPopup *modalPopup) const;
+    void Draw(RE::Actor *editingActor);
 
     auto GetEditingOutfit() -> EditingOutfit & { return m_wantEdit; }
 
 private:
     // refresh, filterer, favorite checkbox...
     void DrawToolWidgets();
-    void DrawOutfitTable(Context &context, RE::Actor *editingActor);
-    void DrawOutfitTableContent(Context &context, RE::Actor *editingActor);
+    void DrawOutfitTable(RE::Actor *editingActor);
+    void DrawOutfitTableContent(RE::Actor *editingActor);
     void OnToggleFavorite(std::vector<const SosUiOutfit *> &viewData, size_t index) const;
+    void DrawCreateOutfitPopup(const char *name);
 
     static void PreDrawOutfits(ImGuiListClipper &clipper, MultiSelection &selection);
     static void PostDrawOutfits(MultiSelection &selection);
     void        DrawOutfitTableContent(std::vector<const SosUiOutfit *> outfitView, bool ascend, const DrawOutfitEntry &drawOutfitEntry);
+    bool        ConfirmDeleteOutfitPopup(const char *popupName, const SosUiOutfit *outfit);
 
     /**
      * open a context menu if user right-clicks current row
      * @return true if the context menu is open.
      */
-    void OpenContextMenu(Context &context, uint32_t selectedItemCount, RE::Actor *editingActor, const SosUiOutfit *outfit, __out bool &acceptRename);
+    void OpenContextMenu(RE::Actor *editingActor, const SosUiOutfit *clickedOutfit, OutfitModifyRequest &contextMenu);
 
     void OnAcceptEditOutfit(const EditingOutfit &lastEdit, const EditingOutfit &editingOutfit) const;
     void OnAcceptActiveOutfit(RE::Actor *editingActor, OutfitId id, const std::string &outfitName) const;
     // check MultiSelection and set all selected outfit to favorite
     void OnAcceptSetFavoriteOutfits(bool toFavorite);
-    void OnAcceptDeleteOutfits();
+    void DeleteAllSelectOutfits(const SosUiOutfit *clickedOutfit);
 };
 } // namespace SosGui

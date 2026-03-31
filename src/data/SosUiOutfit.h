@@ -9,9 +9,13 @@
 #include <array>
 #include <string>
 #include <unordered_set>
+#include <utility>
 
 namespace SosGui
 {
+
+static constexpr OutfitId UNTITLED_OUTFIT_ID = INVALID_OUTFIT_ID;
+
 class SosUiOutfit
 {
 public:
@@ -21,40 +25,47 @@ public:
     using SlotPolicyArray           = std::array<std::string, SLOT_COUNT>;
 
 private:
-    OutfitId                              m_id;
-    std::string                           m_name;
-    REX::EnumSet<Slot, uint32_t>          m_slotMask = Slot::kNone;
-    std::array<const Armor *, SLOT_COUNT> m_armors;
     SlotPolicyArray                       m_slotPolicies;
+    std::array<const Armor *, SLOT_COUNT> m_armors{};
+    std::string                           m_name       = "Untitled";
+    REX::EnumSet<Slot, uint32_t>          m_slotMask   = Slot::kNone;
+    OutfitId                              m_id         = UNTITLED_OUTFIT_ID;
     bool                                  m_isFavorite = false;
 
 public:
-    explicit constexpr SosUiOutfit(OutfitId id, const std::string &name, bool favorite = false) : m_id(id), m_name(name), m_isFavorite(favorite)
+    explicit constexpr SosUiOutfit() { m_armors.fill(nullptr); }
+
+    explicit constexpr SosUiOutfit(const OutfitId id, std::string name, const bool favorite = false)
+        : m_name(std::move(name)), m_id(id), m_isFavorite(favorite)
     {
         m_armors.fill(nullptr);
     }
 
     [[nodiscard]] constexpr auto GetId() const -> OutfitId { return m_id; }
 
-    void AddArmor(const Armor *armor);
+    [[nodiscard]] auto GetArmorAt(uint32_t slotPos) const -> const Armor *;
 
-    void RemoveArmor(const Armor *armor);
+    [[nodiscard]] auto HasSlot(uint32_t slotPos) const -> bool { return m_slotMask.all(static_cast<Slot>(1 << slotPos)); }
 
-    auto GetArmorAt(uint32_t slotPos) const -> const Armor *;
-
-    auto HasSlot(uint32_t slotPos) const -> bool { return m_slotMask.all(static_cast<Slot>(1 << slotPos)); }
-
-    auto IsConflictWith(const Armor *armor) const -> bool { return m_slotMask.any(armor->GetSlotMask().get()); }
-
-    void SetName(const std::string &newName) { m_name.assign(newName); }
-
-    void SetFavorite(const bool isFavorite) { m_isFavorite = isFavorite; }
+    [[nodiscard]] auto IsConflictWith(const Armor *armor) const -> bool { return m_slotMask.any(armor->GetSlotMask().get()); }
 
     [[nodiscard]] constexpr auto IsFavorite() const -> bool { return m_isFavorite; }
 
     [[nodiscard]] auto GetName() const -> const std::string & { return m_name; }
 
     [[nodiscard]] auto IsEmpty() const -> bool { return m_slotMask.underlying() == 0; }
+
+    [[nodiscard]] auto GetSlotPolicies() const -> const SlotPolicyArray & { return m_slotPolicies; }
+
+    [[nodiscard]] auto GetUniqueArmors() const -> std::unordered_set<const Armor *>;
+
+    void AddArmor(const Armor *armor);
+
+    void RemoveArmor(const Armor *armor);
+
+    void SetName(const std::string &newName) { m_name.assign(newName); }
+
+    void SetFavorite(const bool isFavorite) { m_isFavorite = isFavorite; }
 
     void SetSlotPolicies(const uint32_t slotPos, const std::string &policy)
     {
@@ -64,13 +75,7 @@ public:
         }
         m_slotPolicies.at(slotPos) = policy;
     }
-
-    [[nodiscard]] auto GetSlotPolicies() const -> const SlotPolicyArray & { return m_slotPolicies; }
-
-    auto GetUniqueArmors() const -> std::unordered_set<const Armor *>;
 };
-
-static constexpr OutfitId UNTITLED_OUTFIT_ID = INVALID_OUTFIT_ID;
 
 class EditingOutfit
 {
@@ -79,29 +84,27 @@ class EditingOutfit
 public:
     explicit EditingOutfit(const SosUiOutfit &outfit) : m_sourceOutfit(&outfit) {}
 
-    explicit EditingOutfit(const SosUiOutfit *pOutfit) : m_sourceOutfit(pOutfit) {}
-
     [[nodiscard]] auto GetSourceOutfit() const -> const SosUiOutfit * { return m_sourceOutfit; }
 
-    auto operator->() const -> const SosUiOutfit * { return m_sourceOutfit; }
+    [[nodiscard]] auto GetId() const -> OutfitId { return m_sourceOutfit->GetId(); }
 
-    auto GetId() const -> OutfitId { return m_sourceOutfit->GetId(); }
+    [[nodiscard]] auto IsUntitled() const -> bool { return GetId() == UNTITLED_OUTFIT_ID; }
 
-    bool IsUntitled() const { return GetId() == UNTITLED_OUTFIT_ID; }
-
-    auto GetName() const
+    [[nodiscard]] auto GetName() const
     {
-        if (!m_sourceOutfit || IsUntitled()) return Translation::Translate("$SosGui_Untitled");
+        if ((m_sourceOutfit == nullptr) || IsUntitled()) return Translation::Translate("$SosGui_Untitled");
         return m_sourceOutfit->GetName();
     }
 
-    bool IsConflictWith(const RE::TESObjectARMO *armor) const { return m_sourceOutfit->IsConflictWith(armor); }
+    [[nodiscard]] auto IsConflictWith(const RE::TESObjectARMO *armor) const -> bool { return m_sourceOutfit->IsConflictWith(armor); }
 
-    bool IsEmpty() const { return m_sourceOutfit->IsEmpty(); }
+    [[nodiscard]] auto IsEmpty() const -> bool { return m_sourceOutfit == nullptr || m_sourceOutfit->IsEmpty(); }
 
-    auto GetArmorAt(uint32_t slotIdx) const -> const RE::TESObjectARMO * { return m_sourceOutfit->GetArmorAt(slotIdx); }
+    [[nodiscard]] auto GetArmorAt(const uint32_t slotIdx) const -> const RE::TESObjectARMO * { return m_sourceOutfit->GetArmorAt(slotIdx); }
 
-    auto GetSlotPolicies() const -> const SosUiOutfit::SlotPolicyArray & { return m_sourceOutfit->GetSlotPolicies(); }
+    [[nodiscard]] auto GetSlotPolicies() const -> const SosUiOutfit::SlotPolicyArray & { return m_sourceOutfit->GetSlotPolicies(); }
+
+    auto operator->() const -> const SosUiOutfit * { return m_sourceOutfit; }
 };
 
 constexpr auto GetOutfitId(const SosUiOutfit &outfit)

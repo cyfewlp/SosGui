@@ -97,7 +97,8 @@ void ArmorView::remove_armors_has_slot(Slot selectedSlots, Slot toRemoveSlot)
     multiSelection.Clear();
     for (auto itBegin = viewData.begin(); itBegin != viewData.end();)
     {
-        if (const auto &rankedArmor = *itBegin; rankedArmor->HasPartOf(toRemoveSlot) && util::IsArmorHasNoneSlotOf(rankedArmor, selectedSlots))
+        if (const auto &rankedArmor = *itBegin;
+            rankedArmor->HasPartOf(toRemoveSlot) && util::IsArmorHasNoneSlotOf(rankedArmor.Data(), selectedSlots))
         {
             itBegin = viewData.erase(itBegin);
         }
@@ -210,7 +211,7 @@ void ArmorView::reset_counter()
     modRefCounter.clear();
     for (const auto &rankedArmor : viewData)
     {
-        std::string_view modName = util::GetFormModFileName(rankedArmor);
+        std::string_view modName = util::GetFormModFileName(rankedArmor.Data());
         modRefCounter.emplace(modName, 0);
         modRefCounter[modName] += 1;
 

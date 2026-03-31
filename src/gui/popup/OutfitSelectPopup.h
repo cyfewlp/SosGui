@@ -10,6 +10,7 @@
 
 namespace SosGui
 {
+class SosUiOutfit;
 class OutfitList;
 
 class OutfitSelectPopup : Popup::BasicPopup
@@ -26,6 +27,6 @@ class OutfitSelectPopup : Popup::BasicPopup
 public:
     void UpdateView(const OutfitList &outfitList) { debounceInput.UpdateView(outfitList); }
 
-    bool Draw(const char *nameKey, const OutfitList &outfitList, __out OutfitId &selectId);
+    bool Draw(const char *nameKey, const OutfitList &outfitList, OutfitId &selectId);
 };
 } // namespace SosGui
