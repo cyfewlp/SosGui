@@ -111,9 +111,12 @@ add_build_lucide_icons(${PROJECT_NAME})
 ############################################################
 # Install
 set(interface_path interface/${PROJECT_NAME})
+set(DISTRIBUTION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution")
 
+file(GLOB_RECURSE TRANSLATE_FILES "${DISTRIBUTION_PATH}/translate/*.toml")
 install(FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution/${PROJECT_NAME}.toml"
+    "${DISTRIBUTION_PATH}/${PROJECT_NAME}.toml"
+    ${TRANSLATE_FILES}
     ${LUCIDE_ICON_OUT_TTF}
     DESTINATION ${interface_path}
     COMPONENT mod_interface_files
