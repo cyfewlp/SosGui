@@ -122,17 +122,6 @@ auto ArmorView::add_armor(const Armor *armor) -> std::expected<void, error>
     return {};
 }
 
-void ArmorView::add_armors_in_outfit(const SosUiOutfit *editing_outfit)
-{
-    for (const auto &armor : editing_outfit->GetUniqueArmors())
-    {
-        if (auto result = add_armor(armor); !result.has_value())
-        {
-            ErrorNotifier::GetInstance().Error(std::format("Can't restore armor {} from outfit {}", armor->GetName(), editing_outfit->GetName()));
-        }
-    }
-}
-
 void ArmorView::add_armors_has_slot(ArmorGenerator *generator, const SosUiOutfit *editing_outfit, Slot slots)
 {
     generator->ForEach([&](const Armor *armor) {
@@ -202,22 +191,6 @@ void ArmorView::remove_armors_no_has_slots(Slot slots)
     }
 }
 
-void ArmorView::remove_armors_in_outfit(const SosUiOutfit *editing_outfit)
-{
-    // may multi armor use the same slot
-    for (uint32_t slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
-    {
-        if (const auto *armor = editing_outfit->GetArmorAt(slotPos); armor != nullptr)
-        {
-            if (auto found = find_armor(armor); found.has_value() && found.value() != view_data_.end())
-            {
-                view_data_.erase(found.value());
-                slot_counter_[slotPos] -= 1;
-            }
-        }
-    }
-}
-
 void ArmorView::reset_counter()
 {
     mod_filterer_.clear();
@@ -238,7 +211,7 @@ void ArmorView::reset_counter()
     }
 }
 
-void ArmorView::reset_view_data(ArmorGenerator *generator, const SosUiOutfit *editing_outfit)
+void ArmorView::reset_view_data(ArmorGenerator *generator)
 {
     clear_view_data();
     generator->ForEach([&](const Armor *armor) {
@@ -248,17 +221,16 @@ void ArmorView::reset_view_data(ArmorGenerator *generator, const SosUiOutfit *ed
             logger::error("Can't add armor[{}]: {}", armor->formID, to_error_message(result.error()));
         }
     });
-    remove_armors_in_outfit(editing_outfit);
 }
 
-void ArmorView::reset_view(ArmorGenerator *generator, const SosUiOutfit *editing_outfit)
+void ArmorView::reset_view(ArmorGenerator *generator)
 {
     mod_filterer_.clear();
     slot_filterer_.clear();
     contain_non_playable_armor_ = true;
     armor_name_filter_.filter.Clear();
 
-    reset_view_data(generator, editing_outfit);
+    reset_view_data(generator);
     reset_counter();
 }
 
@@ -291,7 +263,7 @@ void ArmorView::filterer_enable_all_slots(bool enable_all, ArmorGenerator *gener
 
     if (slot_filterer_.is_enable_all_slots())
     {
-        reset_view_data(generator, editing_outfit);
+        reset_view_data(generator);
     }
     else if (slot_filterer_.is_all_slots_disabled())
     {
@@ -336,7 +308,7 @@ void ArmorView::filterer_select_slot(SlotType slotPos, bool select, ArmorGenerat
     }
     else if (!slot_filterer_.is_all_slots_enabled())
     {
-        reset_view_data(generator, editing_outfit);
+        reset_view_data(generator);
     }
 }
 

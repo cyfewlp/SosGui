@@ -137,15 +137,13 @@ public:
     void               clear();
     void               clear_view_data();
     [[nodiscard]] auto add_armor(const Armor *armor) -> std::expected<void, error>;
-    void               add_armors_in_outfit(const SosUiOutfit *editing_outfit);
     void               add_armors_has_slot(ArmorGenerator *generator, const SosUiOutfit *editing_outfit, Slot slots);
     bool               remove_armor(const Armor *armor);
     void               remove_armors_has_slot(Slot slots);
     void               remove_armors_no_has_slots(Slot slots);
-    void               remove_armors_in_outfit(const SosUiOutfit *editing_outfit);
     void               reset_counter();
-    void               reset_view_data(ArmorGenerator *generator, const SosUiOutfit *editing_outfit);
-    void               reset_view(ArmorGenerator *generator, const SosUiOutfit *editing_outfit);
+    void               reset_view_data(ArmorGenerator *generator);
+    void               reset_view(ArmorGenerator *generator);
     bool               filter(const Armor *armor) const;
     void               filterer_enable_all_slots(bool enable_all, ArmorGenerator *generator, const SosUiOutfit *editing_outfit);
     void               filterer_select_slot(SlotType slotPos, bool select, ArmorGenerator *generator, const SosUiOutfit *editing_outfit);

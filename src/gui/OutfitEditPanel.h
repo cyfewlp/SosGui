@@ -85,8 +85,6 @@ private:
     void DrawArmorViewModNameFilterer(const SosUiOutfit *editingOutfit);
     void DrawArmorViewSlotFilterer(const SosUiOutfit *editing);
 
-    void OnAcceptAddArmorToOutfit(ImGuiID conflictTipsPopupId, const EditingOutfit &editingOutfit, const Armor *armor);
-    void OverrideExistArmor(const EditingOutfit &outfit, const Armor *armor);
     void AddSelectArmors(OutfitId id);
     void DeleteArmor(OutfitId id, const Armor *armor);
 
