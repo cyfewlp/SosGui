@@ -23,8 +23,14 @@ struct ArmorItemVisitor final : RE::InventoryChanges::IItemChangeVisitor
 class ArmorGenerator
 {
 public:
-    virtual ~ArmorGenerator()                                                     = default;
+    virtual ~ArmorGenerator()                                                    = default;
     virtual void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) = 0;
+};
+
+class EmptyArmorGenerator final : public ArmorGenerator
+{
+public:
+    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) override {}
 };
 
 class FormIdArmorGenerator final : public ArmorGenerator

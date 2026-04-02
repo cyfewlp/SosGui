@@ -101,8 +101,17 @@ void OutfitListTable::Draw(RE::Actor *editingActor)
 
 void OutfitListTable::DrawToolWidgets()
 {
+    constexpr const char *CREATE_OUTFIT_POPUP_TITLE = "Create Outfit";
+    if (ImGuiUtil::IconButton(ICON_FILE_PLUS_CORNER))
+    {
+        ImGui::OpenPopup(CREATE_OUTFIT_POPUP_TITLE);
+    }
+    ImGui::SameLine();
+    ImGuiUtil::Text("Create");
+    DrawCreateOutfitPopup(CREATE_OUTFIT_POPUP_TITLE);
+
+    ImGui::SameLine();
     auto &outfitList = m_uiData.GetOutfitList();
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
     if (ImGuiUtil::IconButton(ICON_REFRESH_CW))
     {
         OnRefresh();
@@ -114,7 +123,6 @@ void OutfitListTable::DrawToolWidgets()
             return m_outfitService.GetAllFavoriteOutfits();
         };
     }
-    ImGui::PopStyleColor();
     ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.Refresh"));
 
     auto *uiSetting = Settings::UiSettings::GetInstance();
@@ -193,36 +201,17 @@ void OutfitListTable::DrawOutfitTableContent(RE::Actor *editingActor)
 {
     constexpr const char *OUTFIT_NAME_INPUT_LABEL            = "##editableOutfitNameId";
     constexpr const char *CONFIRM_DELETE_OUTFITS_POPUP_TITLE = "Delete";
-    constexpr const char *CREATE_OUTFIT_POPUP_TITLE          = "Create Outfit";
 
-    OutfitModifyRequest modifyRequest(nullptr);
     ImGui::TableSetupScrollFreeze(1, 1);
     ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed(), 56);
     ImGui::TableSetupColumn(Translate1("Panels.Outfit.Title"), ImGuiEx::TableColumnFlags().DefaultSort());
     ImGui::TableHeadersRow();
 
-    // Render our custom table header
-    ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
-    ImGui::TableNextColumn();
-    ImGui::TableHeader(ImGui::TableGetColumnName(0));
-
-    ImGui::TableNextColumn();
-    {
-        ImGui::PushFont(nullptr, Settings::UiSettings::GetInstance()->Title3PxSize());
-        if (ImGuiUtil::IconButton(ICON_FILE_PLUS_CORNER))
-        {
-            modifyRequest.AcceptCreateNew();
-        }
-        ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.Create"));
-        ImGui::SameLine();
-        ImGui::TableHeader(ImGui::TableGetColumnName(1));
-        ImGui::PopFont();
-    }
-
     static bool ascend = true;
     ImGuiUtil::may_update_table_sort_dir(ascend);
 
-    size_t clickedFavoriteId = INVALID_INDEX;
+    size_t              clickedFavoriteId = INVALID_INDEX;
+    OutfitModifyRequest modifyRequest(nullptr);
 
     auto OnRename = [this](const ImGuiID inputId, const std::string &outfitName) {
         m_editingInputId = inputId;
@@ -232,7 +221,7 @@ void OutfitListTable::DrawOutfitTableContent(RE::Actor *editingActor)
     auto drawOutfitEntry = [&](const SosUiOutfit *outfit, const ImGuiID index) {
         ImGui::PushID(static_cast<int>(index));
         ImGui::TableNextRow();
-        ImGui::TableNextColumn(); // number column
+        if (ImGui::TableNextColumn()) // number column
         {
             bool clicked = false;
             if (outfit->IsFavorite())
@@ -254,7 +243,7 @@ void OutfitListTable::DrawOutfitTableContent(RE::Actor *editingActor)
             ImGui::Text("%u", index + 1);
         }
 
-        ImGui::TableNextColumn(); // outfit name column
+        if (ImGui::TableNextColumn()) // outfit name column
         {
             if (const auto thisInputId = ImGui::GetID(OUTFIT_NAME_INPUT_LABEL); m_editingInputId == thisInputId)
             {
@@ -309,18 +298,12 @@ void OutfitListTable::DrawOutfitTableContent(RE::Actor *editingActor)
 
     DrawOutfitTableContent(viewData, ascend, drawOutfitEntry);
 
-    if (modifyRequest.IsAcceptedCreateNew())
-    {
-        ImGui::OpenPopup(CREATE_OUTFIT_POPUP_TITLE);
-    }
-
     if (modifyRequest.IsAcceptedDelete())
     {
         ImGui::OpenPopup(CONFIRM_DELETE_OUTFITS_POPUP_TITLE);
     }
 
     // draw popup out of loop to avoid call multiple draw command.
-    DrawCreateOutfitPopup(CREATE_OUTFIT_POPUP_TITLE);
 
     if (DrawConfirmDeleteOutfitsPopup(CONFIRM_DELETE_OUTFITS_POPUP_TITLE, m_outfitMultiSelection, modifyRequest.GetOutfit()))
     {
@@ -475,10 +458,6 @@ void OutfitListTable::OpenContextMenu(RE::Actor *editingActor, const SosUiOutfit
     if (m_outfitMultiSelection.Size == 1 && ImGui::MenuItem(Translate1("Panels.Outfit.Rename")))
     {
         contextMenu.AcceptRename();
-    }
-    if (ImGui::MenuItem(Translate1("Panels.Outfit.Create")))
-    {
-        contextMenu.AcceptCreateNew();
     }
     if (ImGui::MenuItem(Translate1("Delete")))
     {

@@ -178,6 +178,12 @@ void OutfitEditPanel::DrawSideBar(const SosUiOutfit *editingOutfit)
         DrawArmorViewSlotFilterer(editingOutfit);
     }
     ImGui::EndChild();
+    bool needUpdateView = ImGui::Checkbox("Contain non playable", &m_armorView.contain_non_playable_armor_);
+    needUpdateView      = ImGui::Checkbox("Contain template armors", &m_armorView.contain_template_armor_) || needUpdateView;
+    if (needUpdateView)
+    {
+        m_armorView.reset_view_data(GetGenerator(), editingOutfit);
+    }
 }
 
 void OutfitEditPanel::UpdateWindowTitle(const std::string &outfitName)
@@ -304,7 +310,6 @@ void OutfitEditPanel::SlotPolicyCombo(const EditingOutfit &editingOutfit, const 
 void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
 {
     ImGui::Separator();
-    ImGuiUtil::Text(Translate("Panels.OutfitEdit.ArmorGenerator.Title"));
     if (ImGui::BeginTabBar("ArmorGeneratorTabBar", ImGuiEx::TabBarFlags().DrawSelectedOverline().Reorderable()))
     {
         const auto *tabBar          = ImGui::GetCurrentTabBar();
@@ -369,7 +374,7 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
         {
             if (isTabItemAppear())
             {
-                armorGenerator = nullptr;
+                armorGenerator = std::make_unique<EmptyArmorGenerator>();
                 m_armorView.reset_view(GetGenerator(), editingOutfit);
             }
             ImGui::Text("0x");
@@ -405,30 +410,11 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
 
 void OutfitEditPanel::DrawArmorViewFilter(const SosUiOutfit *editingOutfit)
 {
-    constexpr const char *FILTERS_POPUP_TITLE = "Filters";
-    if (ImGuiUtil::IconButton(ICON_FILE_PLUS_CORNER))
-    {
-        ImGui::OpenPopup(FILTERS_POPUP_TITLE);
-    }
-    ImGui::SetItemTooltip("%s", Translate1("Panels.OutfitEdit.Filterers"));
-
     ImGui::SameLine();
     if (m_armorView.armor_name_filter_.Draw())
     {
         m_armorView.armor_name_filter_.dirty = false;
         m_armorView.reset_view_data(GetGenerator(), editingOutfit);
-    }
-
-    ImGui::SetNextWindowPos({ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y});
-    if (ImGui::BeginPopup(FILTERS_POPUP_TITLE))
-    {
-        bool needUpdate = ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainNonPlayable"), &m_armorView.contain_non_playable_armor_);
-        needUpdate      = ImGui::Checkbox(Translate1("Panels.OutfitEdit.Template"), &m_armorView.contain_template_armor_) || needUpdate;
-        if (needUpdate)
-        {
-            m_armorView.reset_view_data(GetGenerator(), editingOutfit);
-        }
-        ImGui::EndPopup();
     }
 }
 
@@ -453,9 +439,9 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
     ImGui::TableSetupScrollFreeze(1, 1);
     ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed());
     ImGui::TableSetupColumn(Translate1("Armor"), ImGuiEx::TableColumnFlags().DefaultSort().NoHide());
-    ImGui::TableSetupColumn("FormID", ImGuiEx::TableColumnFlags().NoSort());
-    ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.ModName"), ImGuiEx::TableColumnFlags().NoSort());
-    ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.Playable"), ImGuiEx::TableColumnFlags().NoSort());
+    ImGui::TableSetupColumn("FormID", ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
+    ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.ModName"), ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
+    ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.Playable"), ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
     ImGui::TableSetupColumn(Translate1("Add"), ImGuiEx::TableColumnFlags().NoSort());
     ImGui::TableHeadersRow();
 
@@ -646,7 +632,7 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer(const SosUiOutfit *editing)
     {
         ImGui::PushID(static_cast<int>(idx));
 
-        auto slotLabel = std::format("({}) {}", m_armorView.get_armor_count(idx), Translation::Translate(get_slot_name_key(idx)));
+        auto slotLabel = std::format("({}) {}", m_armorView.get_armor_count(idx), Translate(get_slot_name_key(idx)));
         bool checked   = slotFilterer.is_slot_selected(idx);
         if (ImGui::Checkbox(slotLabel.c_str(), &checked))
         {
@@ -755,7 +741,11 @@ void OutfitEditPanel::DeleteArmor(const OutfitId id, const Armor *armor)
         +[&] {
             return m_outfitService.DeleteArmor(opt.value().GetId(), opt.value().GetName(), armor);
         };
-        assert(m_armorView.add_armor(armor) && "Can't add armor!");
+        if (const auto expected = m_armorView.add_armor(armor); !expected)
+        {
+            const auto msg = ArmorView::to_error_message(expected.error());
+            ErrorNotifier::GetInstance().Error(msg);
+        }
     }
     else
     {

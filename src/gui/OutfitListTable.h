@@ -18,9 +18,7 @@ struct OutfitModifyRequest
 {
     explicit OutfitModifyRequest(const SosUiOutfit *const outfit) : outfit(outfit) {}
 
-    [[nodiscard]] auto IsAcceptedAny() const -> bool { return acceptedCreateNew || acceptedRename || acceptedDelete; }
-
-    [[nodiscard]] auto IsAcceptedCreateNew() const -> bool { return acceptedCreateNew; }
+    [[nodiscard]] auto IsAcceptedAny() const -> bool { return acceptedRename || acceptedDelete; }
 
     [[nodiscard]] auto IsAcceptedRename() const -> bool { return acceptedRename; }
 
@@ -28,15 +26,12 @@ struct OutfitModifyRequest
 
     [[nodiscard]] auto GetOutfit() const -> const SosUiOutfit * { return outfit; }
 
-    void AcceptCreateNew() { acceptedCreateNew = true; }
-
     void AcceptRename() { acceptedRename = true; }
 
     void AcceptDelete() { acceptedDelete = true; }
 
 private:
     const SosUiOutfit *outfit            = nullptr;
-    bool               acceptedCreateNew = false; ///< is accepted create a new outfit?
     bool               acceptedRename    = false; ///< is accepted rename outfit?
     bool               acceptedDelete    = false; ///< is accepted delete all select outfits?
 };
