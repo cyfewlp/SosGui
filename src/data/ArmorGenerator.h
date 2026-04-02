@@ -24,7 +24,7 @@ class ArmorGenerator
 {
 public:
     virtual ~ArmorGenerator()                                                     = default;
-    virtual void for_each(std::function<void(RE::TESObjectARMO *armor)> &&action) = 0;
+    virtual void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) = 0;
 };
 
 class FormIdArmorGenerator final : public ArmorGenerator
@@ -34,7 +34,7 @@ class FormIdArmorGenerator final : public ArmorGenerator
 public:
     explicit FormIdArmorGenerator(RE::FormID a_armorFormId) : armorFormId(a_armorFormId) {}
 
-    void for_each(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
+    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
 };
 
 class NearObjectsInventoryArmorGenerator final : public ArmorGenerator
@@ -43,7 +43,7 @@ class NearObjectsInventoryArmorGenerator final : public ArmorGenerator
     size_t                           wantVisitIndex = 0;
 
 public:
-    void for_each(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
+    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
 
     void Update();
 
@@ -61,7 +61,7 @@ class InventoryArmorGenerator final : public ArmorGenerator
 public:
     explicit InventoryArmorGenerator(RE::Actor *actor) : actor(actor) {}
 
-    void for_each(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
+    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
 };
 
 class CarriedArmorGenerator final : public ArmorGenerator
@@ -71,12 +71,12 @@ class CarriedArmorGenerator final : public ArmorGenerator
 public:
     explicit CarriedArmorGenerator(RE::Actor *actor) : actor(actor) {}
 
-    void for_each(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
+    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
 };
 
 class BasicArmorGenerator final : public ArmorGenerator
 {
 public:
-    void for_each(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
+    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) override;
 };
 } // namespace SosGui

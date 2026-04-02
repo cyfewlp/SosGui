@@ -348,7 +348,8 @@ inline void OutfitListTable::OnToggleFavorite(std::vector<const SosUiOutfit *> &
 
 void OutfitListTable::DrawCreateOutfitPopup(const char *name)
 {
-    if (ImGui::BeginPopupModal(name))
+    bool open = true;
+    if (ImGui::BeginPopupModal(name, &open))
     {
         // Clear the active id that rename input item if exists.
         // It should unreachable.
@@ -367,13 +368,16 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name)
             +[&] {
                 return m_outfitService.CreateOutfit(std::string(m_outfitNameBuffer.data()));
             };
+            ImGui::CloseCurrentPopup();
         }
 
+        ImGui::SameLine();
         if (ImGui::Button(Translate1("Panels.Outfit.CreateFromWorn")))
         {
             +[&] {
                 return m_outfitService.CreateOutfitFromWorn(std::string(m_outfitNameBuffer.data()));
             };
+            ImGui::CloseCurrentPopup();
         }
         ImGui::EndDisabled();
 

@@ -208,5 +208,8 @@ constexpr std::string_view SOS_SPELL_EDITOR_ID   = "SkyrimOutfitSystemQuickslotS
 constexpr std::string_view SOS_NATIVE_CLASS_NAME = "SkyrimOutfitSystemNativeFuncs";
 constexpr uint8_t          MAX_ERROR_COUNT       = 64;
 constexpr uint8_t          MAX_ERROR_SHOW_COUNT  = 5;
-using SlotType                                   = std::underlying_type<RE::BIPED_OBJECT>::type;
+
+using Slot     = RE::BIPED_MODEL::BipedObjectSlot;
+using Armor    = RE::TESObjectARMO;
+using SlotType = std::underlying_type<RE::BIPED_OBJECT>::type;
 } // namespace SosGui

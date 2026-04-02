@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-option(BUILD_TESTING "Build tests" OFF)
+option(BUILD_TESTING "Build tests" ON)
 
 if (BUILD_TESTING)
   list(APPEND VCPKG_MANIFEST_FEATURES "test-deps")
@@ -27,10 +27,6 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY
 )
-
-if (BUILD_TESTING)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/test.cmake)
-endif ()
 
 ## Set Output folder
 
@@ -107,6 +103,12 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wpedantic -Wshadow -Wconversion 
 include(${JAMIE_MODS_DIR}/cmake/build-lucide-icon.cmake)
 
 add_build_lucide_icons(${PROJECT_NAME})
+
+############################################################
+# Test
+if (BUILD_TESTING)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/test.cmake)
+endif ()
 
 ############################################################
 # Install

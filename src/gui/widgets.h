@@ -10,11 +10,9 @@
 
 struct MultiSelection : ImGuiSelectionBasicStorage
 {
-    auto Begin(ImGuiMultiSelectFlags flags, const int itemSize) const { return ImGui::BeginMultiSelect(flags, Size, itemSize); }
+    constexpr auto Begin(ImGuiMultiSelectFlags flags, const int itemSize) const { return ImGui::BeginMultiSelect(flags, Size, itemSize); }
 
-    bool ContainsIndex(int idx) { return Contains(GetStorageIdFromIndex(idx)); }
-
-    static auto End() { return ImGui::EndMultiSelect(); }
+    constexpr auto ContainsIndex(int idx) -> bool { return Contains(GetStorageIdFromIndex(idx)); }
 };
 
 namespace SosGui::widgets

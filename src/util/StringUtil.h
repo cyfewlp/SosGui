@@ -30,4 +30,7 @@ struct StringCompactor
 
     bool operator()(const std::string &lhs, const std::string &rhs) const { return UnicodeStringCompare(lhs.c_str(), rhs.c_str()); }
 };
+
+inline constexpr StringCompactor StrEqual;
+
 } // namespace SosGui::util

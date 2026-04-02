@@ -70,6 +70,22 @@ auto SosUiOutfit::GetArmorAt(uint32_t slotPos) const -> const Armor *
     return m_armors.at(slotPos);
 }
 
+auto SosUiOutfit::HasArmor(const Armor *armor) const -> bool
+{
+    if (m_slotMask.none(armor->GetSlotMask().get()))
+    {
+        return false;
+    }
+    for (const auto &armor1 : m_armors)
+    {
+        if (armor == armor1)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 auto SosUiOutfit::GetUniqueArmors() const -> std::unordered_set<const Armor *>
 {
     std::unordered_set<const Armor *> ret;

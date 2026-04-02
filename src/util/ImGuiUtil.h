@@ -7,6 +7,7 @@
 #include "Translation.h"
 #include "imgui.h"
 #include "imguiex/ImGuiEx.h"
+#include "imguiex/icon.h"
 
 #include <array>
 #include <string>
@@ -120,8 +121,8 @@ struct DebounceInput
 {
     std::chrono::time_point<std::chrono::system_clock> prevEditTime;
     ImGuiTextFilter                                    filter;
-    bool                                               dirty    = true;
     std::chrono::milliseconds                          duration = 300ms;
+    bool                                               dirty    = true;
 
     explicit DebounceInput() : prevEditTime(std::chrono::system_clock::now()) {}
 

@@ -45,6 +45,8 @@ public:
 
     [[nodiscard]] auto GetArmorAt(uint32_t slotPos) const -> const Armor *;
 
+    [[nodiscard]] auto HasArmor(const Armor *armor) const -> bool;
+
     [[nodiscard]] auto HasSlot(uint32_t slotPos) const -> bool { return m_slotMask.all(static_cast<Slot>(1 << slotPos)); }
 
     [[nodiscard]] auto IsConflictWith(const Armor *armor) const -> bool { return m_slotMask.any(armor->GetSlotMask().get()); }

@@ -40,11 +40,6 @@ private:
         void Clear();
     } m_editContext = {};
 
-    ArmorView      m_armorView{};
-    std::string    m_windowTitle;
-    SosUiData     &m_uiData;
-    OutfitService &m_outfitService;
-
 public:
     explicit OutfitEditPanel(SosUiData &uiData, OutfitService &outfitService) : m_uiData(uiData), m_outfitService(outfitService) {}
 
@@ -78,31 +73,42 @@ private:
     void HighlightConflictSlot(Slot slot) const;
     void SlotPolicyCombo(const EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
 
+    // FIXME: may return null
     auto GetGenerator() const -> ArmorGenerator * { return m_armorGeneratorTabBar.generator.get(); }
 
     using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
     void DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit);
     void DrawArmorViewFilter(const SosUiOutfit *editingOutfit);
     void DrawArmorView(const EditingOutfit &editingOutfit);
-    void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorView::RankedArmor> &viewData);
-    void DrawArmorViewTableContent(const std::vector<ArmorView::RankedArmor> &viewData, const DrawArmorEntry &drawArmorEntry);
+    void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<RankedArmor> &viewData);
+    void DrawArmorViewTableContent(const std::vector<RankedArmor> &viewData, const DrawArmorEntry &drawArmorEntry);
     void DrawArmorViewModNameFilterer(const SosUiOutfit *editingOutfit);
     void DrawArmorViewSlotFilterer(const SosUiOutfit *editing);
 
     void OnAcceptAddArmorToOutfit(ImGuiID conflictTipsPopupId, const EditingOutfit &editingOutfit, const Armor *armor);
     void OverrideExistArmor(const EditingOutfit &outfit, const Armor *armor);
-    void BatchAddArmors(OutfitId id);
+    void AddSelectArmors(OutfitId id);
     void DeleteArmor(OutfitId id, const Armor *armor);
 
-    static auto ToSlot(uint32_t slotPos) -> Slot { return slotPos >= RE::BIPED_OBJECT::kEditorTotal ? Slot::kNone : static_cast<Slot>(1 << slotPos); }
-
-    static auto ToSlot(const RE::BIPED_OBJECT equipIndex) -> Slot
+    enum class ConflictSolution : std::uint8_t
     {
-        if (equipIndex >= RE::BIPED_OBJECT::kEditorTotal)
-        {
-            return Slot::kNone;
-        }
-        return static_cast<Slot>(1 << equipIndex);
-    }
+        none,
+        Skip,         ///< skip current conflict armor
+        SkipAll,      ///< skip all conflict armors
+        Overwrite,    ///< (remove)overwrite old conflict armor
+        OverwriteAll, ///< (remove)overwrite all old conflict armors
+        Suspend,      ///< waiting user choose a solution
+    };
+
+    ArmorView        m_armorView{};
+    std::string      m_windowTitle;
+    SosUiData       &m_uiData;
+    OutfitService   &m_outfitService;
+    int              waiting_add_armor_count_ = 0;
+    ////////////////////////////////
+    //// add armors vars
+    const Armor     *want_added_armor_{nullptr};
+    bool             has_conflict_armor_ = false;
+    ConflictSolution conflict_solution_  = ConflictSolution::none;
 };
 } // namespace SosGui

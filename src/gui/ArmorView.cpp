@@ -12,12 +12,9 @@
 
 namespace SosGui
 {
-bool ArmorView::ArmorFilter::PassFilter(const Armor *armor) const
+
+bool armor_view::ArmorNameFilter::PassFilter(const Armor *armor) const
 {
-    if (mustPlayable && IsArmorNonPlayable(armor))
-    {
-        return false;
-    }
     if (!filter.IsActive())
     {
         return true;
@@ -29,7 +26,7 @@ bool ArmorView::ArmorFilter::PassFilter(const Armor *armor) const
     return false;
 }
 
-bool ArmorView::ArmorFilter::Draw()
+bool armor_view::ArmorNameFilter::Draw()
 {
     ImGui::AlignTextToFramePadding();
     ImGuiUtil::IconButton(ICON_SEARCH);
@@ -39,13 +36,22 @@ bool ArmorView::ArmorFilter::Draw()
     return needUpdate;
 }
 
-bool ArmorView::ModFilterer::PassFilter(const Armor *armor) const
+auto armor_view::SlotFilterer::pass_filter(const Armor *armor) const -> bool
+{
+    if (enable_all_slot_ || armor->HasPartOf(static_cast<Slot>(selected_slots_.to_ulong())))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool armor_view::ModFilterer::PassFilter(const Armor *armor) const
 {
     bool result = true;
-    if (passModList.empty()) return result;
-    for (const auto &[modName, checked] : passModList)
+    if (mod_entry_map.empty()) return result;
+    for (const auto &[modName, modEntry] : mod_entry_map)
     {
-        if (checked)
+        if (modEntry.checked)
         {
             result = false;
             if (util::GetFormModFileName(armor) == modName)
@@ -59,48 +65,117 @@ bool ArmorView::ModFilterer::PassFilter(const Armor *armor) const
 
 void ArmorView::init()
 {
-    if (availableArmorCount != 0)
+    if (armor_container_.Size() != 0)
     {
         return;
     }
-    armorContainer.Init();
-    availableArmorCount = armorContainer.Size();
+    armor_container_.Init();
 }
 
 void ArmorView::on_refresh()
 {
-    viewData.clear();
-    slotCounter.fill(0);
-    slotFiltererSelected = 0;
-    checkAllSlot         = true;
-    multiSelection.Clear();
-    armorFilter.Clear();
-    modFilterer.Clear();
-    modRefCounter.clear();
+    view_data_.clear();
+    slot_counter_.fill(0);
+    slot_filterer_.clear();
+    multi_selection_.Clear();
+    armor_name_filter_.Clear();
+    mod_filterer_.clear();
 }
 
 void ArmorView::clear()
 {
     on_refresh();
-    armorContainer.Clear();
-    availableArmorCount = 0;
+    armor_container_.Clear();
 }
 
-void ArmorView::clearViewData()
+void ArmorView::clear_view_data()
 {
-    viewData.clear();
-    multiSelection.Clear();
+    view_data_.clear();
+    multi_selection_.Clear();
 }
 
-void ArmorView::remove_armors_has_slot(Slot selectedSlots, Slot toRemoveSlot)
+auto ArmorView::add_armor(const Armor *armor) -> std::expected<void, error>
 {
-    multiSelection.Clear();
-    for (auto itBegin = viewData.begin(); itBegin != viewData.end();)
+    if (filter(armor))
     {
-        if (const auto &rankedArmor = *itBegin;
-            rankedArmor->HasPartOf(toRemoveSlot) && util::IsArmorHasNoneSlotOf(rankedArmor.Data(), selectedSlots))
+        const auto armorRank = armor_container_.GetRank(armor->GetName(), armor->formID);
+        if (armorRank >= armor_container_.Size())
         {
-            itBegin = viewData.erase(itBegin);
+            return std::unexpected{error::unknown_armor};
+        }
+        const auto ranked = RankedArmor(armor, armorRank);
+        const auto found  = std::lower_bound(view_data_.begin(), view_data_.end(), ranked);
+
+        if (found != view_data_.end())
+        {
+            if (found->get_rank() == armorRank)
+            {
+                return std::unexpected{error::armor_already_exists};
+            }
+            if (found->get_rank() >= armor_container_.Size())
+            {
+                return std::unexpected{error::unassociated_armor};
+            }
+        }
+        view_data_.insert(found, ranked);
+    }
+    return {};
+}
+
+void ArmorView::add_armors_in_outfit(const SosUiOutfit *editing_outfit)
+{
+    for (const auto &armor : editing_outfit->GetUniqueArmors())
+    {
+        if (auto result = add_armor(armor); !result.has_value())
+        {
+            ErrorNotifier::GetInstance().Error(std::format("Can't restore armor {} from outfit {}", armor->GetName(), editing_outfit->GetName()));
+        }
+    }
+}
+
+void ArmorView::add_armors_has_slot(ArmorGenerator *generator, const SosUiOutfit *editing_outfit, Slot slots)
+{
+    generator->ForEach([&](const Armor *armor) {
+        if (!editing_outfit->HasArmor(armor) && armor->HasPartOf(slots))
+        {
+            if (const auto result = add_armor(armor); !result.has_value())
+            {
+                if (result.error() != error::armor_already_exists)
+                {
+                    // TODO: show error in UI
+                    logger::error("Can't add armor[{}]: {}", armor->formID, to_error_message(result.error()));
+                }
+            }
+        }
+    });
+}
+
+bool ArmorView::remove_armor(const Armor *armor)
+{
+    if (auto found = find_armor(armor); found.has_value() && found.value() != view_data_.end())
+    {
+        view_data_.erase(found.value());
+        for (SlotType slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
+        {
+            if (armor->HasPartOf(util::ToSlot(slotPos)))
+            {
+                slot_counter_[slotPos] -= 1;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+void ArmorView::remove_armors_has_slot(Slot slots)
+{
+    multi_selection_.Clear();
+    for (auto itBegin = view_data_.begin(); itBegin != view_data_.end();)
+    {
+        const auto &rankedArmor = *itBegin;
+        if (rankedArmor->HasPartOf(slots) && util::IsArmorNotHasSlotOf(rankedArmor.data(), slot_filterer_.get_selected_slots()))
+        {
+            itBegin = view_data_.erase(itBegin);
         }
         else
         {
@@ -109,194 +184,180 @@ void ArmorView::remove_armors_has_slot(Slot selectedSlots, Slot toRemoveSlot)
     }
 }
 
-void ArmorView::add_armors_in_outfit(const SosUiOutfit *editingOutfit)
+void ArmorView::remove_armors_no_has_slots(Slot slots)
 {
-    for (const auto &armor : editingOutfit->GetUniqueArmors())
+    multi_selection_.Clear();
+    const auto selectedSlots = slot_filterer_.get_selected_slots();
+    for (auto itBegin = view_data_.begin(); itBegin != view_data_.end();)
     {
-        if (auto result = add_armor(armor); !result.has_value())
+        const auto &rankedArmor = *itBegin;
+        if (util::IsArmorNotHasSlotOf(rankedArmor.data(), slots) && util::IsArmorNotHasSlotOf(rankedArmor.data(), selectedSlots))
         {
-            ErrorNotifier::GetInstance().Error(std::format("Can't restore armor {} from outfit {}", armor->GetName(), editingOutfit->GetName()));
+            itBegin = view_data_.erase(itBegin);
+        }
+        else
+        {
+            ++itBegin;
         }
     }
 }
 
-void ArmorView::remove_armors_in_outfit(const SosUiOutfit *editingOutfit)
+void ArmorView::remove_armors_in_outfit(const SosUiOutfit *editing_outfit)
 {
     // may multi armor use the same slot
     for (uint32_t slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
     {
-        if (const auto *armor = editingOutfit->GetArmorAt(slotPos); armor != nullptr)
+        if (const auto *armor = editing_outfit->GetArmorAt(slotPos); armor != nullptr)
         {
-            if (auto result = find_armor(armor); result.has_value())
+            if (auto found = find_armor(armor); found.has_value() && found.value() != view_data_.end())
             {
-                viewData.erase(viewData.begin() + result.value());
-                slotCounter[slotPos] -= 1;
+                view_data_.erase(found.value());
+                slot_counter_[slotPos] -= 1;
             }
         }
     }
-}
-
-bool ArmorView::filter(const Armor *armor) const
-{
-    if (!modFilterer.PassFilter(armor))
-    {
-        return false;
-    }
-    // filter by slot: has any selected slot
-    auto slot = static_cast<Slot>(slotFiltererSelected.to_ulong());
-    if (!checkAllSlot && slot != Slot::kNone && util::IsArmorHasNoneSlotOf(armor, slot))
-    {
-        return false;
-    }
-    // filter by armor name
-    if (!armorFilter.PassFilter(armor))
-    {
-        return false;
-    }
-    return true;
-}
-
-auto ArmorView::add_armor(const Armor *armor) -> std::expected<void, error>
-{
-    if (filter(armor))
-    {
-        const auto armorRank = armorContainer.GetRank(armor->GetName(), armor->formID);
-        size_t     startPos  = 0;
-        size_t     endPos    = viewData.size();
-        while (endPos - startPos > 0)
-        {
-            const size_t middle = startPos + (endPos - startPos) / 2;
-            const auto   rank   = viewData.at(middle).Rank();
-            if (rank >= armorContainer.Size())
-            {
-                return std::unexpected{error::unassociated_armor};
-            }
-            if (armorRank < rank)
-            {
-                endPos = middle;
-            }
-            else if (armorRank > rank)
-            {
-                startPos = middle + 1;
-            }
-            else
-            {
-                return std::unexpected{error::armor_already_exists};
-            }
-        }
-        viewData.insert(viewData.begin() + startPos, RankedArmor(armor, armorRank));
-    }
-    return {};
-}
-
-bool ArmorView::remove_armor(const Armor *armor)
-{
-    if (const auto result = find_armor(armor); result.has_value())
-    {
-        viewData.erase(viewData.begin() + result.value());
-        for (uint8_t slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
-        {
-            if (armor->HasPartOf(static_cast<Slot>(1 << slotPos)))
-            {
-                slotCounter[slotPos] -= 1;
-            }
-        }
-        return true;
-    }
-    return false;
 }
 
 void ArmorView::reset_counter()
 {
-    modRefCounter.clear();
-    for (const auto &rankedArmor : viewData)
+    mod_filterer_.clear();
+    slot_counter_.fill(0);
+    for (const auto &rankedArmor : view_data_)
     {
-        std::string_view modName = util::GetFormModFileName(rankedArmor.Data());
-        modRefCounter.emplace(modName, 0);
-        modRefCounter[modName] += 1;
+        std::string_view modName = util::GetFormModFileName(rankedArmor.data());
+        auto             it      = mod_filterer_.try_emplace(modName, 0, false);
+        it.first->second.count += 1;
 
-        const auto slotMaskValue = rankedArmor->GetSlotMask().underlying();
         for (SlotType slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
         {
-            uint32_t slotValue = 1 << slotPos;
-            if (slotValue > slotMaskValue) break;
-            if ((slotMaskValue & slotValue) != 0)
+            if (rankedArmor->HasPartOf(util::ToSlot(slotPos)))
             {
-                slotCounter[slotPos]++;
+                slot_counter_[slotPos]++;
             }
         }
     }
-    for (const auto &modName : modRefCounter | std::views::keys)
-    {
-        modFilterer.passModList.emplace_back(modName, false);
-    }
 }
 
-void ArmorView::update_view_data(ArmorGenerator *generator, const SosUiOutfit *editingOutfit)
+void ArmorView::reset_view_data(ArmorGenerator *generator, const SosUiOutfit *editing_outfit)
 {
-    clearViewData();
-    if (generator != nullptr)
-    {
-        try
+    clear_view_data();
+    generator->ForEach([&](const Armor *armor) {
+        if (const auto result = add_armor(armor); !result.has_value())
         {
-            generator->for_each([&](const Armor *armor) {
-                if (const auto result = add_armor(armor); !result.has_value())
-                {
-                    throw std::runtime_error(ToErrorMessage(result.error()));
-                }
-            });
+            // TODO: show error in UI
+            logger::error("Can't add armor[{}]: {}", armor->formID, to_error_message(result.error()));
         }
-        catch (const std::runtime_error &e)
-        {
-            // TODO: add error message to notifier?
-            logger::error("WARNING: Invalid armor generator: {}", e.what());
-        }
-        remove_armors_in_outfit(editingOutfit);
-    }
+    });
+    remove_armors_in_outfit(editing_outfit);
 }
 
-void ArmorView::reset_view(ArmorGenerator *generator, const SosUiOutfit *editingOutfit)
+void ArmorView::reset_view(ArmorGenerator *generator, const SosUiOutfit *editing_outfit)
 {
-    modFilterer.Clear();
-    slotFiltererSelected     = 0;
-    armorFilter.mustPlayable = false;
-    armorFilter.filter.Clear();
+    mod_filterer_.clear();
+    slot_filterer_.clear();
+    contain_non_playable_armor_ = true;
+    armor_name_filter_.filter.Clear();
 
-    update_view_data(generator, editingOutfit);
+    reset_view_data(generator, editing_outfit);
     reset_counter();
 }
 
-auto ArmorView::find_armor(const Armor *armor) const -> std::expected<size_t, error>
+bool ArmorView::filter(const Armor *armor) const
 {
-    const auto armorRank = armorContainer.GetRank(armor->GetName(), armor->formID);
-    size_t     startPos  = 0;
-    size_t     endPos    = viewData.size();
-    while (endPos - startPos > 0)
+    if (!mod_filterer_.PassFilter(armor))
     {
-        const size_t middle = (endPos + startPos) / 2;
-        const auto   rank   = viewData.at(middle).Rank();
-        if (rank >= armorContainer.Size())
+        return false;
+    }
+    if (!slot_filterer_.pass_filter(armor))
+    {
+        return false;
+    }
+    // filter by armor name
+    if (contain_non_playable_armor_ || util::IsArmorPlayable(armor))
+    {
+        if (!armor_name_filter_.PassFilter(armor))
         {
-            return std::unexpected{error::unassociated_armor};
+            return false;
         }
-        if (armorRank < rank)
+    }
+    return true;
+}
+
+void ArmorView::filterer_enable_all_slots(bool enable_all, ArmorGenerator *generator, const SosUiOutfit *editing_outfit)
+{
+    const auto old = slot_filterer_.is_enable_all_slots();
+    if (old == enable_all) return;
+    slot_filterer_.enable_all_slots(enable_all);
+
+    if (slot_filterer_.is_enable_all_slots())
+    {
+        reset_view_data(generator, editing_outfit);
+    }
+    else if (slot_filterer_.is_all_slots_disabled())
+    {
+        clear_view_data();
+    }
+    else
+    {
+        remove_armors_no_has_slots(slot_filterer_.get_selected_slots());
+    }
+}
+
+void ArmorView::filterer_select_slot(SlotType slotPos, bool select, ArmorGenerator *generator, const SosUiOutfit *editing_outfit)
+{
+    if (const auto old = slot_filterer_.is_slot_selected(slotPos); old == select)
+    {
+        return;
+    }
+    slot_filterer_.select_slot(slotPos, select);
+
+    // cancel enable all slots when select/unselect any slot
+    const auto oldIsEnableAllSlots = slot_filterer_.is_enable_all_slots();
+    if (oldIsEnableAllSlots)
+    {
+        slot_filterer_.enable_all_slots(false);
+    }
+
+    if (slot_filterer_.is_all_slots_disabled())
+    {
+        clear_view_data();
+    }
+    else if (!oldIsEnableAllSlots)
+    {
+        const Slot slot = util::ToSlot(slotPos);
+        if (select)
         {
-            endPos = middle;
-        }
-        else if (armorRank > rank)
-        {
-            startPos = middle + 1;
+            add_armors_has_slot(generator, editing_outfit, slot);
         }
         else
         {
-            return middle;
+            remove_armors_has_slot(slot);
         }
     }
-    return std::unexpected{error::armor_not_exist};
+    else if (!slot_filterer_.is_all_slots_enabled())
+    {
+        reset_view_data(generator, editing_outfit);
+    }
 }
 
-bool ArmorView::no_select_any_slot() const
+auto ArmorView::find_armor(const Armor *armor) const -> std::expected<const_iterator, error>
 {
-    return !checkAllSlot && slotFiltererSelected == 0;
+    const auto armorRank = armor_container_.GetRank(armor->GetName(), armor->formID);
+    if (armorRank >= armor_container_.Size())
+    {
+        return std::unexpected{error::unknown_armor};
+    }
+
+    const RankedArmor ranked(armor, armorRank);
+    const auto        found = std::lower_bound(view_data_.begin(), view_data_.end(), ranked);
+
+    if (found != view_data_.end())
+    {
+        if (found->get_rank() >= armor_container_.Size())
+        {
+            return std::unexpected{error::unassociated_armor};
+        }
+    }
+    return found;
 }
 } // namespace SosGui

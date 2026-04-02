@@ -15,12 +15,16 @@ class ArmorContainer : BaseContainer
 
     struct NameComparator
     {
-        bool operator()(const Armor *lhs, const Armor *rhs) const { return util::StringCompactor()(lhs->GetName(), rhs->GetName()); }
+        bool operator()(const Armor *lhs, const Armor *rhs) const { return util::StrEqual(lhs->GetName(), rhs->GetName()); }
     };
 
     std::vector<Armor *> m_container;
 
 public:
+    using size_type      = std::vector<Armor *>::size_type;
+    using iterator       = std::vector<Armor *>::iterator;
+    using const_iterator = std::vector<Armor *>::const_iterator;
+
     ArmorContainer()  = default;
     ~ArmorContainer() = default;
 
@@ -29,13 +33,20 @@ public:
     // init container: sort all registered armor by name
     void Init();
 
+    auto FindArmor(const char *armorName, RE::FormID formId) const -> const_iterator;
+
     /**
      * The formId be used ensure the expected armor
      * because some armor may have the same name.
      */
-    auto GetRank(const char *armorName, RE::FormID formId) const -> size_t;
+    constexpr auto GetRank(const char *armorName, RE::FormID formId) const -> size_t
+    {
+        return static_cast<size_t>(std::distance(m_container.begin(), FindArmor(armorName, formId)));
+    }
 
-    void Clear() { m_container.clear(); }
+    constexpr auto GetRank(const_iterator element) const -> size_t { return static_cast<size_t>(std::distance(m_container.begin(), element)); }
+
+    constexpr void Clear() { m_container.clear(); }
 
     constexpr auto IsEmpty() const -> bool { return m_container.empty(); }
 

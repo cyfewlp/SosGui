@@ -7,6 +7,17 @@
 
 namespace SosGui
 {
+
+namespace
+{
+
+auto CanDisplayArmorInventoryFilter(RE::TESBoundObject &object) -> bool
+{
+    const auto *armor = object.As<RE::TESObjectARMO>();
+    return util::IsArmorCanDisplay(armor);
+}
+} // namespace
+
 auto ArmorItemVisitor::Visit(RE::InventoryEntryData *a_entryData) -> RE::BSContainer::ForEachResult
 {
     if (const auto form = a_entryData->object; form && form->formType == RE::FormType::Armor)
@@ -19,7 +30,7 @@ auto ArmorItemVisitor::Visit(RE::InventoryEntryData *a_entryData) -> RE::BSConta
     return RE::BSContainer::ForEachResult::kContinue;
 }
 
-void FormIdArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *armor)> &&action)
+void FormIdArmorGenerator::ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action)
 {
     if (const auto foundArmor = RE::TESForm::LookupByID<RE::TESObjectARMO>(armorFormId); foundArmor != nullptr)
     {
@@ -27,13 +38,13 @@ void FormIdArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *armor)
     }
 }
 
-void NearObjectsInventoryArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *armor)> &&action)
+void NearObjectsInventoryArmorGenerator::ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action)
 {
     if (wantVisitIndex >= nearObjects.size())
     {
         return;
     }
-    for (const auto &entry : nearObjects[wantVisitIndex]->GetInventory())
+    for (const auto &entry : nearObjects[wantVisitIndex]->GetInventory(CanDisplayArmorInventoryFilter, false))
     {
         if (const auto armor = skyrim_cast<RE::TESObjectARMO *>(entry.first); armor != nullptr)
         {
@@ -49,23 +60,19 @@ void NearObjectsInventoryArmorGenerator::Update()
     const RE::TESObjectCELL   *cell   = player->GetParentCell();
 
     cell->ForEachReference([this](RE::TESObjectREFR *objectRef) {
-        if (const auto &name = objectRef->GetName(); !name || !name[0])
+        if (const std::string_view nameSv(objectRef->GetName()); nameSv.empty())
         {
             return RE::BSContainer::ForEachResult::kContinue;
         }
-        for (const auto &entry : objectRef->GetInventory())
+        if (!objectRef->GetInventory(CanDisplayArmorInventoryFilter, false).empty())
         {
-            if (const auto *armor = entry.first->As<RE::TESObjectARMO>(); armor && util::IsArmorCanDisplay(armor))
-            {
-                nearObjects.push_back(objectRef);
-                break;
-            }
+            nearObjects.push_back(objectRef);
         }
         return RE::BSContainer::ForEachResult::kContinue;
     });
 }
 
-void InventoryArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *armor)> &&action)
+void InventoryArmorGenerator::ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action)
 {
     if (actor == nullptr)
     {
@@ -84,7 +91,7 @@ void InventoryArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *arm
     }
 }
 
-void CarriedArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *armor)> &&action)
+void CarriedArmorGenerator::ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action)
 {
     if (actor == nullptr)
     {
@@ -103,7 +110,7 @@ void CarriedArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *armor
     }
 }
 
-void BasicArmorGenerator::for_each(std::function<void(RE::TESObjectARMO *armor)> &&action)
+void BasicArmorGenerator::ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action)
 {
     auto       *dataHandler = RE::TESDataHandler::GetSingleton();
     const auto &armorArray  = dataHandler->GetFormArray<RE::TESObjectARMO>();

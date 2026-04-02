@@ -15,8 +15,12 @@ void ArmorContainer::Insert(Armor *armor)
 void ArmorContainer::Init()
 {
     Clear();
-    auto       *dataHandler = RE::TESDataHandler::GetSingleton();
-    const auto &armorArray  = dataHandler->GetFormArray<RE::TESObjectARMO>();
+    auto *dataHandler = RE::TESDataHandler::GetSingleton();
+    if (dataHandler == nullptr)
+    {
+        return;
+    }
+    const auto &armorArray = dataHandler->GetFormArray<RE::TESObjectARMO>();
 
     auto comparator = NameComparator();
     m_container.reserve(armorArray.size());
@@ -30,19 +34,19 @@ void ArmorContainer::Init()
     }
 }
 
-auto ArmorContainer::GetRank(const char *armorName, RE::FormID formId) const -> size_t
+auto ArmorContainer::FindArmor(const char *armorName, RE::FormID formId) const -> const_iterator
 {
     if (armorName == nullptr)
     {
-        return m_container.size();
+        return m_container.end();
     }
     auto foundIt = std::lower_bound(m_container.begin(), m_container.end(), armorName, [](const Armor *armor, const char *searchName) {
-        return util::StringCompactor()(armor->GetName(), searchName);
+        return util::StrEqual(armor->GetName(), searchName);
     });
 
     if (foundIt == m_container.end() || (*foundIt)->formID == formId)
     {
-        return std::distance(m_container.begin(), foundIt);
+        return foundIt;
     }
     while (++foundIt != m_container.end())
     {
@@ -56,6 +60,6 @@ auto ArmorContainer::GetRank(const char *armorName, RE::FormID formId) const -> 
         }
     }
 
-    return std::distance(m_container.begin(), foundIt);
+    return foundIt;
 }
 } // namespace SosGui
