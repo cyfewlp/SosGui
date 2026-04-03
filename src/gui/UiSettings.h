@@ -44,7 +44,6 @@ public:
 
     int32_t selectedThemeIndex   = DefaultThemeIndex_Invalid; // setting key: selectedThemeIndex
     bool    includeTemplateArmor = true;
-    bool    showFavoriteOutfits  = false;
 
     [[nodiscard]] constexpr float TextSmallPxSize() const { return m_TextSmallPxSize; }
 
@@ -64,7 +63,6 @@ public:
     {
         selectedThemeIndex   = DefaultThemeIndex_Invalid;
         includeTemplateArmor = true;
-        showFavoriteOutfits  = false;
     }
 
     static auto GetInstance() -> UiSettings *

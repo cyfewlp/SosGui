@@ -13,29 +13,6 @@
 
 namespace SosGui
 {
-
-struct OutfitModifyRequest
-{
-    explicit OutfitModifyRequest(const SosUiOutfit *const outfit) : outfit(outfit) {}
-
-    [[nodiscard]] auto IsAcceptedAny() const -> bool { return acceptedRename || acceptedDelete; }
-
-    [[nodiscard]] auto IsAcceptedRename() const -> bool { return acceptedRename; }
-
-    [[nodiscard]] auto IsAcceptedDelete() const -> bool { return acceptedDelete; }
-
-    [[nodiscard]] auto GetOutfit() const -> const SosUiOutfit * { return outfit; }
-
-    void AcceptRename() { acceptedRename = true; }
-
-    void AcceptDelete() { acceptedDelete = true; }
-
-private:
-    const SosUiOutfit *outfit         = nullptr;
-    bool               acceptedRename = false; ///< is accepted rename outfit?
-    bool               acceptedDelete = false; ///< is accepted delete all select outfits?
-};
-
 class OutfitContainer;
 
 class OutfitListTable final : public BaseGui
@@ -54,6 +31,7 @@ class OutfitListTable final : public BaseGui
     ImGuiUtil::DebounceInput m_outfitFilterInput{};
     ImGuiID                  m_editingInputId = 0;
     OutfitNameBuffer         m_outfitNameBuffer{};
+    bool                     show_favorites_ = false;
 
 public:
     OutfitListTable(SosUiData &uiData, OutfitService &outfitService, OutfitEditPanel &editPanel)
@@ -76,20 +54,9 @@ private:
     void DrawOutfitTable(RE::Actor *editingActor);
     void DrawOutfitTableContent(RE::Actor *editingActor);
     void DrawCreateOutfitPopup(const char *name);
-
-    static void PreDrawOutfits(ImGuiListClipper &clipper, MultiSelection &selection);
-    static void PostDrawOutfits(MultiSelection &selection);
-    void        DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, bool ascend, const DrawOutfitEntry &drawOutfitEntry);
-    bool        ConfirmDeleteOutfitPopup(const char *popupName, const SosUiOutfit *outfit);
-
-    /**
-     * open a context menu if user right-clicks current row
-     * @return true if the context menu is open.
-     */
-    void OpenContextMenu(RE::Actor *editingActor, const SosUiOutfit &clickedOutfit, OutfitModifyRequest &contextMenu);
+    bool ConfirmDeleteOutfitPopup(const char *popupName, const SosUiOutfit *outfit);
 
     void OnAcceptEditOutfit(const EditingOutfit &lastEdit, const EditingOutfit &editingOutfit) const;
-    void OnAcceptActiveOutfit(RE::Actor *editingActor, OutfitId id, const std::string &outfitName) const;
     // check MultiSelection and set all selected outfit to favorite
     void OnAcceptSetFavoriteOutfits(bool toFavorite);
     void DeleteAllSelectOutfits(const SosUiOutfit *clickedOutfit);
