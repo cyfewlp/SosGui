@@ -11,6 +11,8 @@
 #include "gui/widgets.h"
 #include "util/ImGuiUtil.h"
 
+#include <expected>
+
 namespace SosGui
 {
 
@@ -118,7 +120,7 @@ public:
     armor_view::SlotFilterer        slot_filterer_;
     armor_view::ArmorMultiSelection multi_selection_;
     bool                            contain_non_playable_armor_ = true;
-    bool                            contain_template_armor_    = false;
+    bool                            contain_template_armor_     = false;
 
     using const_iterator = std::vector<RankedArmor>::const_iterator;
 

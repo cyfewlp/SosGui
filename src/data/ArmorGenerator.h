@@ -30,7 +30,7 @@ public:
 class EmptyArmorGenerator final : public ArmorGenerator
 {
 public:
-    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&action) override {}
+    void ForEach(std::function<void(RE::TESObjectARMO *armor)> &&) override {}
 };
 
 class FormIdArmorGenerator final : public ArmorGenerator

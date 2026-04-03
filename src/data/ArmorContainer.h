@@ -15,7 +15,7 @@ class ArmorContainer : BaseContainer
 
     struct NameComparator
     {
-        bool operator()(const Armor *lhs, const Armor *rhs) const { return util::StrEqual(lhs->GetName(), rhs->GetName()); }
+        bool operator()(const Armor *lhs, const Armor *rhs) const { return util::StrLess(lhs->GetName(), rhs->GetName()); }
     };
 
     std::vector<Armor *> m_container;

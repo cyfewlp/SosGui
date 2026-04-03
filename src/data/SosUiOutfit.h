@@ -69,14 +69,7 @@ public:
 
     void SetFavorite(const bool isFavorite) { m_isFavorite = isFavorite; }
 
-    void SetSlotPolicies(const uint32_t slotPos, const std::string &policy)
-    {
-        if (slotPos >= SLOT_COUNT)
-        {
-            return;
-        }
-        m_slotPolicies.at(slotPos) = policy;
-    }
+    void SetSlotPolicy(const uint32_t slotPos, const std::string &policy) { m_slotPolicies.at(slotPos) = policy; }
 };
 
 class EditingOutfit

@@ -19,30 +19,6 @@
 
 namespace SosGui
 {
-inline void SosGuiWindow::OutfitDebounceInput::Clear()
-{
-    DebounceInput::Clear();
-    viewData.clear();
-}
-
-void SosGuiWindow::OutfitDebounceInput::OnInput()
-{
-    DebounceInput::OnInput();
-    viewData.clear();
-}
-
-void SosGuiWindow::OutfitDebounceInput::updateView(const OutfitList &outfitList)
-{
-    dirty = false;
-    viewData.clear();
-    outfitList.for_each([&](const auto &outfit, int64_t) {
-        if (filter.PassFilter(outfit.GetName().c_str()))
-        {
-            viewData.push_back(&outfit);
-        }
-    });
-}
-
 SosGuiWindow::SosGuiWindow()
     : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), m_outfitEditPanel(m_uiData, m_outfitService),
       m_outfitListTable(m_uiData, m_outfitService, m_outfitEditPanel)

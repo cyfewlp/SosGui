@@ -5,9 +5,9 @@
 #pragma once
 
 #include "Cleanable.h"
+#include "OutfitContainer.h"
 #include "autoswitch/ActorPolicyContainer.h"
 #include "data/ActorOutfitMap.h"
-#include "data/OutfitList.h"
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
 #include "imguiex/ErrorNotifier.h"
@@ -43,7 +43,7 @@ private:
     bool                             m_enabled           = false;
     bool                             m_fQuickSlotEnabled = false;
     ActorOutfitMap                   m_actorOutfitMap;
-    OutfitList                       m_outfitList{};
+    OutfitContainer                  outfit_container_{};
     AutoSwitch::ActorPolicyContainer m_autoSwitchPolicyContainer;
 
     std::unordered_map<RE::FormID, bool> m_autoSwitchEnabled;
@@ -62,7 +62,7 @@ public:
         m_enabled           = false;
         m_fQuickSlotEnabled = false;
         m_actorOutfitMap.Clear();
-        m_outfitList.clear();
+        outfit_container_.get_all().clear();
         m_autoSwitchPolicyContainer.Clear();
         m_autoSwitchEnabled.clear();
     }
@@ -168,13 +168,7 @@ public:
 
     auto GetAutoSwitchPolicyContainer() -> AutoSwitch::ActorPolicyContainer & { return m_autoSwitchPolicyContainer; }
 
-    ////////////////////////////////////////////////////////////////////////////
-    // SosUiOutfit
-    ////////////////////////////////////////////////////////////////////////////
-
-    [[nodiscard]] auto GetOutfitList() const -> const OutfitList & { return m_outfitList; }
-
-    [[nodiscard]] auto GetOutfitList() -> OutfitList & { return m_outfitList; }
+    [[nodiscard]] auto GetOutfitContainer() -> OutfitContainer & { return outfit_container_; }
 
     ////////////////////////////////////////////////////////////////////////////
     // Active outfit

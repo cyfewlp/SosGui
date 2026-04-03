@@ -28,18 +28,18 @@ void CharacterEditPanel::Focus()
 
 void CharacterEditPanel::DrawOutfitSelectPopup(RE::Actor *const &selectedActor, SosUiData &uiData, const OutfitService &outfitService)
 {
-    OutfitId    selectId   = INVALID_OUTFIT_ID;
-    const auto &outfitList = uiData.GetOutfitList();
+    OutfitId selectId = INVALID_OUTFIT_ID;
 
     if (m_outfitSelectPopup)
     {
-        auto isHided = !m_outfitSelectPopup->Draw(OUTFIT_SELECT_LIST_POPUP_NAME, outfitList, selectId);
+        auto isHided = !m_outfitSelectPopup->Draw(OUTFIT_SELECT_LIST_POPUP_NAME, uiData.GetOutfitContainer().get_all(), selectId);
         if (selectId != INVALID_OUTFIT_ID)
         {
-            if (const auto opt = outfitList.GetOutfitById(selectId); opt.has_value())
+            const auto it = uiData.GetOutfitContainer().find(selectId);
+            if (it != uiData.GetOutfitContainer().get_all().end())
             {
                 +[&] {
-                    return outfitService.SetActorOutfit(selectedActor, opt.value().GetId(), opt.value().GetName());
+                    return outfitService.SetActorOutfit(selectedActor, it->GetId(), it->GetName());
                 };
                 util::RefreshActorArmor(selectedActor);
             }
@@ -105,7 +105,7 @@ static auto GetActorOutfitName(SosUiData &uiData, RE::Actor *actor) -> std::stri
     return uiData.GetActorOutfitMap()
         .TryGetOutfitId(actor)
         .flat_map([&](auto &id) {
-            return uiData.GetOutfitList().GetOutfitById(id);
+            return boost::make_optional(*uiData.GetOutfitContainer().find(id));
         })
         .map([](const auto &outfit) {
             return outfit.GetName();
@@ -139,7 +139,6 @@ void CharacterEditPanel::DrawCharactersTable(SosUiData &uiData, const SosDataCoo
                     m_selectedActorIndex = idx;
                     ImGui::OpenPopup(OUTFIT_SELECT_LIST_POPUP_NAME);
                     m_outfitSelectPopup = std::make_unique<OutfitSelectPopup>();
-                    m_outfitSelectPopup->UpdateView(uiData.GetOutfitList());
                 }
                 if (isSelected)
                 {

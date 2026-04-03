@@ -11,22 +11,12 @@
 namespace SosGui
 {
 class SosUiOutfit;
-class OutfitList;
 
 class OutfitSelectPopup : Popup::BasicPopup
 {
-    struct OutfitDebounceInput final : ImGuiUtil::DebounceInput
-    {
-        std::vector<const SosUiOutfit *> viewData{};
-
-        void Clear() override;
-        void OnInput() override;
-        void UpdateView(const OutfitList &outfitList);
-    } debounceInput{};
+    ImGuiUtil::DebounceInput debounce_input_;
 
 public:
-    void UpdateView(const OutfitList &outfitList) { debounceInput.UpdateView(outfitList); }
-
-    bool Draw(const char *nameKey, const OutfitList &outfitList, OutfitId &selectId);
+    bool Draw(const char *nameKey, const std::vector<SosUiOutfit> &outfits, OutfitId &selectId);
 };
 } // namespace SosGui

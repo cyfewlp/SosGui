@@ -77,12 +77,12 @@ private:
     auto GetGenerator() const -> ArmorGenerator * { return m_armorGeneratorTabBar.generator.get(); }
 
     using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
-    void DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit);
-    void DrawArmorViewFilter(const SosUiOutfit *editingOutfit);
+    void DrawArmorGeneratorTabBar();
+    void DrawArmorViewFilter();
     void DrawArmorView(const EditingOutfit &editingOutfit);
     void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<RankedArmor> &viewData);
     void DrawArmorViewTableContent(const std::vector<RankedArmor> &viewData, const DrawArmorEntry &drawArmorEntry);
-    void DrawArmorViewModNameFilterer(const SosUiOutfit *editingOutfit);
+    void DrawArmorViewModNameFilterer();
     void DrawArmorViewSlotFilterer(const SosUiOutfit *editing);
 
     void AddSelectArmors(OutfitId id);
@@ -103,10 +103,6 @@ private:
     SosUiData       &m_uiData;
     OutfitService   &m_outfitService;
     int              waiting_add_armor_count_ = 0;
-    ////////////////////////////////
-    //// add armors vars
-    const Armor     *want_added_armor_{nullptr};
-    bool             has_conflict_armor_ = false;
-    ConflictSolution conflict_solution_  = ConflictSolution::none;
+    ConflictSolution conflict_solution_       = ConflictSolution::none;
 };
 } // namespace SosGui

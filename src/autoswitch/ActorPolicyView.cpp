@@ -68,7 +68,6 @@ void ActorPolicyView::Draw(
                     selectedPolicyId = policyId;
 
                     outfitSelectPopup = std::make_unique<Popup>(currentActor, policyId);
-                    outfitSelectPopup->UpdateView(uiData.GetOutfitList());
                 }
                 if (isSelected)
                 {
@@ -85,7 +84,7 @@ void ActorPolicyView::Draw(
     OutfitId selectId = INVALID_OUTFIT_ID;
     if (outfitSelectPopup)
     {
-        bool isHided = !outfitSelectPopup->Draw("Outfit List##AutoSwitch", uiData.GetOutfitList(), selectId);
+        bool isHided = !outfitSelectPopup->Draw("Outfit List##AutoSwitch", uiData.GetOutfitContainer().get_all(), selectId);
         if (selectId != INVALID_OUTFIT_ID)
         {
             +[&, selectId] {
@@ -103,7 +102,7 @@ void ActorPolicyView::Draw(
 void ActorPolicyView::Column1Outfit(const RE::FormID actorId, const uint32_t policyId, SosUiData &uiData)
 {
     const auto &view       = uiData.GetAutoSwitchPolicyContainer();
-    auto       &outfitList = uiData.GetOutfitList();
+    auto       &outfitList = uiData.GetOutfitContainer();
 
     if (!ImGui::TableNextColumn())
     {
@@ -114,7 +113,7 @@ void ActorPolicyView::Column1Outfit(const RE::FormID actorId, const uint32_t pol
                               return it->outfitId;
                           })
                           .flat_map([&](auto &outfitId) {
-                              return outfitList.GetOutfitById(outfitId);
+                              return boost::make_optional(*outfitList.find(outfitId));
                           })
                           .map(GetOutfitName)
                           .value_or_eval([] {

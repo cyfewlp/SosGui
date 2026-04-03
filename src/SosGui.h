@@ -26,15 +26,6 @@ class SosGuiWindow
         explicit InitFail(const char *msg) : std::runtime_error(msg) {}
     };
 
-    struct OutfitDebounceInput final : ImGuiUtil::DebounceInput
-    {
-        std::vector<const SosUiOutfit *> viewData{};
-
-        void Clear() override;
-        void OnInput() override;
-        void updateView(const OutfitList &outfitList);
-    };
-
     using Slot  = RE::BIPED_MODEL::BipedObjectSlot;
     using Armor = RE::TESObjectARMO;
 

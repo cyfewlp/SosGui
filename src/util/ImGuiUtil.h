@@ -128,7 +128,7 @@ struct DebounceInput
 
     virtual ~DebounceInput() = default;
 
-    bool PassFilter(const char *text) const { return filter.PassFilter(text); }
+    bool PassFilter(std::string_view text) const { return filter.PassFilter(text.data(), text.data() + text.size()); }
 
     virtual void OnInput()
     {

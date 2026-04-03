@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SosDataType.h"
-#include "data/OutfitList.h"
 #include "data/SosUiData.h"
 #include "data/id.h"
 #include "task.h"
@@ -17,10 +16,10 @@ class OutfitService
     using Armor    = RE::TESObjectARMO;
     using Variable = RE::BSScript::Variable;
     SosUiData  &m_uiData;
-    OutfitList &m_outfitList;
+    OutfitContainer &outfit_container_;
 
 public:
-    OutfitService(SosUiData &uiData) : m_uiData(uiData), m_outfitList(m_uiData.GetOutfitList()) {}
+    OutfitService(SosUiData &uiData) : m_uiData(uiData), outfit_container_(m_uiData.GetOutfitContainer()) {}
 
     auto CreateOutfit(std::string outfitName) const -> Task;
 
@@ -44,7 +43,7 @@ public:
 
     static auto DeleteConflictArmors(std::string outfitName, const Armor *armor) -> Task;
 
-    auto DeleteArmor(OutfitId id, std::string outfitName, const Armor *armor) const -> Task;
+    auto RemoveArmor(OutfitId id, std::string outfitName, const Armor *armor) const -> Task;
 
     auto GetOutfitArmors(OutfitId id, std::string outfitName) const -> Task;
 

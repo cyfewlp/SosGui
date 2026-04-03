@@ -3,7 +3,6 @@
 #include "SosDataType.h"
 #include "SosNativeCaller.h"
 #include "autoswitch/ActorPolicyContainer.h"
-#include "data/OutfitList.h"
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
@@ -34,7 +33,7 @@ auto OutfitService::CreateOutfit(std::string outfitName) const -> Task
     }
     else
     {
-        m_outfitList.AddOutfit(std::move(outfitName));
+        outfit_container_.Add(std::move(outfitName));
     }
 }
 
@@ -56,7 +55,7 @@ auto OutfitService::CreateOutfitFromWorn(std::string outfitName) const -> Task
             if (const Variable existVar = co_await SosNativeCaller::IsOutfitExisting(std::string(outfitName));
                 existVar.IsBool() && existVar.GetBool())
             {
-                m_outfitList.AddOutfit(std::move(outfitName));
+                outfit_container_.Add(std::move(outfitName));
                 co_return;
             }
             errorMessage.append("create outfit fail.");
@@ -84,11 +83,11 @@ auto OutfitService::GetOutfitList() const -> Task
     }
     const auto array = outfitListVar.GetArray();
 
-    m_outfitList.clear();
+    outfit_container_.get_all().clear();
     for (const auto *iter = array->begin(); iter != array->end(); ++iter)
     {
         const RE::BSScript::Variable var = *iter;
-        m_outfitList.AddOutfit(var.Unpack<std::string>());
+        outfit_container_.Add(var.Unpack<std::string>());
     }
 }
 
@@ -102,35 +101,36 @@ auto OutfitService::GetAllFavoriteOutfits() const -> Task
     }
     const auto array = outfitListVar.GetArray();
 
-    auto &outfitList = m_uiData.GetOutfitList();
     for (const auto *iter = array->begin(); iter != array->end(); ++iter)
     {
-        if (const auto result = outfitList.SetFavoriteOutfit(iter->Unpack<std::string>(), true); !result.has_value())
+        const auto &outfitName = iter->Unpack<std::string>();
+        if (auto it = outfit_container_.find(outfitName); it != outfit_container_.get_all().end())
         {
-            ErrorNotifier::GetInstance().Error(result.error().what());
-            co_return;
+            it->SetFavorite(true);
+        }
+        else
+        {
+            ErrorNotifier::GetInstance().Error(std::format("Can't found outfit {}", outfitName));
         }
     }
 }
 
 auto OutfitService::SetOutfitIsFavorite(const OutfitId id, std::string outfitName, const bool isFavorite) const -> Task
 {
-    if (const auto result = m_uiData.GetOutfitList().SetFavoriteOutfit(id, isFavorite); !result.has_value())
+    if (auto it = outfit_container_.find(id); it != outfit_container_.end())
     {
-        ErrorNotifier::GetInstance().Error(result.error().what());
-        co_return;
+        it->SetFavorite(isFavorite);
+        co_await SosNativeCaller::SetOutfitFavoriteStatus(std::string(outfitName), isFavorite);
     }
-    co_await SosNativeCaller::SetOutfitFavoriteStatus(std::string(outfitName), isFavorite);
 }
 
 auto OutfitService::SetActorOutfit(RE::Actor *actor, const OutfitId id, std::string outfitName) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
+    if (outfit_container_.exists(id))
     {
-        co_return;
+        m_uiData.GetActorOutfitMap().SetOutfit(actor, id);
+        co_await SosNativeCaller::ActiveOutfit(actor, std::string(outfitName));
     }
-    m_uiData.GetActorOutfitMap().SetOutfit(actor, id);
-    co_await SosNativeCaller::ActiveOutfit(actor, std::string(outfitName));
 }
 
 auto OutfitService::GetActorOutfit(RE::Actor *actor) const -> Task
@@ -140,51 +140,46 @@ auto OutfitService::GetActorOutfit(RE::Actor *actor) const -> Task
     {
         ErrorNotifier::GetInstance().Error("Can't get actor's active outfit");
     }
-    const auto outfitName = outfitNameVar.Unpack<std::string>();
-    if (const auto id = m_outfitList.findIdByName(outfitName); id != INVALID_OUTFIT_ID)
+    if (const auto it = outfit_container_.find(outfitNameVar.Unpack<std::string>()); it != outfit_container_.end())
     {
-        m_uiData.GetActorOutfitMap().SetOutfit(actor, id);
+        m_uiData.GetActorOutfitMap().SetOutfit(actor, it->GetId());
     }
 }
 
 auto OutfitService::RenameOutfit(const OutfitId id, std::string outfitName, std::string newName) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
+    if (auto it = outfit_container_.find(id); it != outfit_container_.end())
     {
-        co_return;
-    }
-    if (const auto successVar = co_await SosNativeCaller::RenameOutfit(std::move(outfitName), std::string(newName));
-        !successVar.IsBool() || !successVar.GetBool())
-    {
-        ErrorNotifier::GetInstance().Error("Can't rename outfit");
-        co_return;
-    }
+        if (const auto successVar = co_await SosNativeCaller::RenameOutfit(std::move(outfitName), std::string(newName));
+            !successVar.IsBool() || !successVar.GetBool())
+        {
+            ErrorNotifier::GetInstance().Error("Can't rename outfit");
+            co_return;
+        }
 
-    m_outfitList.RenameOutfit(id, std::move(newName));
+        it->SetName(std::move(newName));
+    }
 }
 
 auto OutfitService::DeleteOutfit(const OutfitId id, std::string outfitName) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
+    if (outfit_container_.erase(id))
     {
-        co_return;
+        co_await SosNativeCaller::DeleteOutfit(std::move(outfitName));
     }
-    m_outfitList.DeleteOutfit(id);
-    co_await SosNativeCaller::DeleteOutfit(std::move(outfitName));
 }
 
 auto OutfitService::AddArmor(const OutfitId id, std::string outfitName, const Armor *armor) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
-    {
-        co_return;
-    }
     if (armor == nullptr)
     {
         co_return;
     }
-    m_outfitList.AddArmor(id, armor);
-    co_await SosNativeCaller::AddArmorToOutfit(std::move(outfitName), armor);
+    if (auto it = outfit_container_.find(id); it != outfit_container_.end())
+    {
+        it->AddArmor(armor);
+        co_await SosNativeCaller::AddArmorToOutfit(std::move(outfitName), armor);
+    }
 }
 
 auto OutfitService::DeleteConflictArmors(std::string outfitName, const Armor *armor) -> Task
@@ -197,23 +192,23 @@ auto OutfitService::DeleteConflictArmors(std::string outfitName, const Armor *ar
     // We no need update UI data because we default directly override armor in slot
 }
 
-auto OutfitService::DeleteArmor(const OutfitId id, std::string outfitName, const Armor *armor) const -> Task
+auto OutfitService::RemoveArmor(const OutfitId id, std::string outfitName, const Armor *armor) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
-    {
-        co_return;
-    }
     if (armor == nullptr)
     {
         co_return;
     }
-    m_outfitList.DeleteArmor(id, armor);
-    co_await SosNativeCaller::RemoveArmorFromOutfit(std::move(outfitName), armor);
+    if (auto it = outfit_container_.find(id); it != outfit_container_.end())
+    {
+        it->RemoveArmor(armor);
+        co_await SosNativeCaller::RemoveArmorFromOutfit(std::move(outfitName), armor);
+    }
 }
 
 auto OutfitService::GetOutfitArmors(const OutfitId id, std::string outfitName) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
+    auto it = outfit_container_.find(id);
+    if (it == outfit_container_.end())
     {
         co_return;
     }
@@ -224,29 +219,27 @@ auto OutfitService::GetOutfitArmors(const OutfitId id, std::string outfitName) c
         ErrorNotifier::GetInstance().Error("Can't get outfit armors");
         co_return;
     }
-    const auto           array = armorsVar.GetArray();
-    std::vector<Armor *> armors;
+    const auto array = armorsVar.GetArray();
     for (const auto *iter = array->begin(); iter != array->end(); ++iter)
     {
         const RE::BSScript::Variable var = *iter;
-        armors.emplace_back(var.Unpack<RE::TESObjectARMO *>());
+        it->AddArmor(var.Unpack<RE::TESObjectARMO *>());
     }
-    m_outfitList.AddArmors(id, std::move(armors));
 }
 
 auto OutfitService::SetSlotPolicy(const OutfitId id, std::string outfitName, const uint32_t slotPos, const SlotPolicy policy) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
+    if (auto it = outfit_container_.find(id); it != outfit_container_.end())
     {
-        co_return;
+        it->SetSlotPolicy(slotPos, SlotPolicyToUiString(policy));
+        co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(std::move(outfitName), slotPos, SlotPolicyToCode(policy));
     }
-    m_outfitList.SetSlotPolicy(id, slotPos, SlotPolicyToUiString(policy));
-    co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(std::move(outfitName), slotPos, SlotPolicyToCode(policy));
 }
 
 auto OutfitService::GetSlotPolicy(const OutfitId id, std::string outfitName) const -> Task
 {
-    if (!m_outfitList.HasOutfit(id))
+    auto it = outfit_container_.find(id);
+    if (it == outfit_container_.end())
     {
         co_return;
     }
@@ -262,15 +255,13 @@ auto OutfitService::GetSlotPolicy(const OutfitId id, std::string outfitName) con
         ErrorNotifier::GetInstance().Error("Invalid outfit slot policies: slot count incorrect.");
         co_return;
     }
-    std::vector<std::string> slotPolicies;
-    for (const auto *iter = array->begin(); iter != array->end(); ++iter)
+    SlotType slotPos = 0;
+    for (const auto *iter = array->begin(); iter != array->end(); ++iter, ++slotPos)
     {
         const RE::BSScript::Variable var = *iter;
 
-        slotPolicies.emplace_back(var.GetString());
+        it->SetSlotPolicy(slotPos, std::string(var.GetString()));
     }
-
-    m_outfitList.SetAllSlotPolicies(id, slotPolicies);
 }
 
 auto OutfitService::GetActorStateOutfit(RE::Actor *actor, uint32_t policyId) const -> Task
@@ -282,16 +273,15 @@ auto OutfitService::GetActorStateOutfit(RE::Actor *actor, uint32_t policyId) con
         co_return;
     }
 
-    if (const auto opt = m_uiData.GetOutfitList().TryFindIdByName(outfitVar.Unpack<std::string>()); opt.has_value())
+    if (auto it = outfit_container_.find(outfitVar.Unpack<std::string>()); it != outfit_container_.end())
     {
-        m_uiData.GetAutoSwitchPolicyContainer().emplace(actor->GetFormID(), policyId, opt.value());
+        m_uiData.GetAutoSwitchPolicyContainer().emplace(actor->GetFormID(), policyId, it->GetId());
     }
 }
 
 auto OutfitService::GetActorAllStateOutfit(RE::Actor *actor) const -> Task
 {
-    auto       &view       = m_uiData.GetAutoSwitchPolicyContainer();
-    const auto &outfitList = m_uiData.GetOutfitList();
+    auto &view = m_uiData.GetAutoSwitchPolicyContainer();
     view.erase(actor->GetFormID());
     using Policy = AutoSwitch::Policy;
     for (uint32_t policyId = 0; policyId < static_cast<uint32_t>(Policy::Count); ++policyId)
@@ -301,9 +291,9 @@ auto OutfitService::GetActorAllStateOutfit(RE::Actor *actor) const -> Task
         {
             continue;
         }
-        if (const auto outfitId = outfitList.findIdByName(outfitVar.Unpack<std::string>()); outfitId != INVALID_OUTFIT_ID)
+        if (auto it = outfit_container_.find(outfitVar.Unpack<std::string>()); it != outfit_container_.end())
         {
-            view.emplace(actor->GetFormID(), policyId, outfitId);
+            view.emplace(actor->GetFormID(), policyId, it->GetId());
         }
     }
 }
@@ -315,20 +305,17 @@ auto OutfitService::SetActorStateOutfit(const RE::Actor *actor, uint32_t policyI
         ErrorNotifier::GetInstance().Error(std::format("Invalid outfit policy: {}", policyId));
         co_return;
     }
-    auto      &view          = m_uiData.GetAutoSwitchPolicyContainer();
-    auto       outfitNameOpt = m_uiData.GetOutfitList().GetOutfitById(outfitId).map([](auto &outfit) {
-        return outfit.GetName();
-    });
-    const auto actorId       = actor->GetFormID();
-    if (!outfitNameOpt.has_value())
+    auto &view = m_uiData.GetAutoSwitchPolicyContainer();
+
+    if (auto it = outfit_container_.find(outfitId); it != outfit_container_.end())
     {
-        co_await SosNativeCaller::SetStateOutfit(actor, std::move(policyId), "");
-        view.erase(actorId, policyId);
+        co_await SosNativeCaller::SetStateOutfit(actor, std::move(policyId), it->GetName().c_str());
+        view.emplace_or_replace(actor->GetFormID(), policyId, outfitId);
     }
     else
     {
-        co_await SosNativeCaller::SetStateOutfit(actor, std::move(policyId), outfitNameOpt.value().c_str());
-        view.emplace_or_replace(actorId, policyId, outfitId);
+        co_await SosNativeCaller::SetStateOutfit(actor, std::move(policyId), "");
+        view.erase(actor->GetFormID(), policyId);
     }
 }
 } // namespace SosGui

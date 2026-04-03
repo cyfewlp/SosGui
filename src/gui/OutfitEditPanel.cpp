@@ -125,8 +125,8 @@ void OutfitEditPanel::Draw(const EditingOutfit &editingOutfit)
         ImGui::SameLine();
         ImGui::BeginGroup();
         DrawOutfitPanel(editingOutfit);
-        DrawArmorGeneratorTabBar(editingOutfit.GetSourceOutfit());
-        DrawArmorViewFilter(editingOutfit.GetSourceOutfit());
+        DrawArmorGeneratorTabBar();
+        DrawArmorViewFilter();
         DrawArmorView(editingOutfit);
         ImGui::EndGroup();
     }
@@ -160,7 +160,7 @@ void OutfitEditPanel::DrawSideBar(const SosUiOutfit *editingOutfit)
 
     if (ImGui::BeginChild("##ModNameListChild", {0, childHeight}, ImGuiEx::ChildFlags().Borders().ResizeY()))
     {
-        DrawArmorViewModNameFilterer(editingOutfit);
+        DrawArmorViewModNameFilterer();
     }
     ImGui::EndChild();
 
@@ -299,7 +299,7 @@ void OutfitEditPanel::SlotPolicyCombo(const EditingOutfit &editingOutfit, const 
     }
 }
 
-void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
+void OutfitEditPanel::DrawArmorGeneratorTabBar()
 {
     ImGui::Separator();
     if (ImGui::BeginTabBar("ArmorGeneratorTabBar", ImGuiEx::TabBarFlags().DrawSelectedOverline().Reorderable()))
@@ -400,7 +400,7 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar(const SosUiOutfit *editingOutfit)
     }
 }
 
-void OutfitEditPanel::DrawArmorViewFilter(const SosUiOutfit *editingOutfit)
+void OutfitEditPanel::DrawArmorViewFilter()
 {
     ImGui::SameLine();
     if (m_armorView.armor_name_filter_.Draw())
@@ -590,7 +590,7 @@ void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<RankedArmor> &
     multiSelection.ApplyRequests(ImGui::EndMultiSelect());
 }
 
-void OutfitEditPanel::DrawArmorViewModNameFilterer(const SosUiOutfit *editingOutfit)
+void OutfitEditPanel::DrawArmorViewModNameFilterer()
 {
     bool needResetView = false;
     for (auto &modEntry : m_armorView.mod_filterer_.mod_entry_map | std::views::values)
@@ -640,14 +640,13 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
         return;
     }
 
-    const auto editingOutfitOpt = m_uiData.GetOutfitList().GetOutfitById(id);
-    if (!editingOutfitOpt.has_value())
+    const auto outfitIt = m_uiData.GetOutfitContainer().find(id);
+    if (outfitIt == m_uiData.GetOutfitContainer().end())
     {
         PushError(Error::add_armor_to_unknown_outfit_id);
         m_armorView.multi_selection_.Clear();
         return;
     }
-    auto              &editingOutfit = editingOutfitOpt.value();
     REX::EnumSet<Slot> usedSlot;
     void              *it     = nullptr;
     ImGuiID            nextId = 0;
@@ -655,7 +654,7 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
     {
         const auto &rankedArmor = m_armorView.get_view_data().at(nextId);
         const auto *armor       = rankedArmor.data();
-        if (usedSlot.all(rankedArmor->GetSlotMask().get()) || editingOutfit.IsConflictWith(armor))
+        if (usedSlot.all(rankedArmor->GetSlotMask().get()) || outfitIt->IsConflictWith(armor))
         {
             if (conflict_solution_ == ConflictSolution::none)
             {
@@ -679,27 +678,27 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
             }
 
             +[&] {
-                return m_outfitService.DeleteConflictArmors(editingOutfit.GetName(), armor);
+                return m_outfitService.DeleteConflictArmors(outfitIt->GetName(), armor);
             };
         }
 
         usedSlot.set(rankedArmor->GetSlotMask().get());
         +[&] {
-            return m_outfitService.AddArmor(editingOutfit.GetId(), editingOutfit.GetName(), armor);
+            return m_outfitService.AddArmor(outfitIt->GetId(), outfitIt->GetName(), armor);
         };
     }
 
     +[&] {
-        return m_outfitService.GetOutfitArmors(editingOutfit.GetId(), editingOutfit.GetName());
+        return m_outfitService.GetOutfitArmors(outfitIt->GetId(), outfitIt->GetName());
     };
 }
 
 void OutfitEditPanel::DeleteArmor(const OutfitId id, const Armor *armor)
 {
-    if (const auto opt = m_uiData.GetOutfitList().GetOutfitById(id); opt.has_value())
+    if (const auto it = m_uiData.GetOutfitContainer().find(id); it != m_uiData.GetOutfitContainer().end())
     {
         +[&] {
-            return m_outfitService.DeleteArmor(opt.value().GetId(), opt.value().GetName(), armor);
+            return m_outfitService.RemoveArmor(it->GetId(), it->GetName(), armor);
         };
     }
     else
