@@ -12,47 +12,6 @@
 
 namespace SosGui
 {
-void SosNativeCaller::Awaitable::CallbackFunctor::operator()(RE::BSScript::Variable a_result)
-{
-    pending = false;
-    result  = a_result;
-
-    if (continuation)
-    {
-        continuation.resume();
-    }
-}
-
-bool SosNativeCaller::Awaitable::await_ready() const
-{
-    if (!callback) return true;
-
-    return static_cast<CallbackFunctor *>(callback.get())->pending == false;
-}
-
-void SosNativeCaller::Awaitable::await_suspend(std::coroutine_handle<> a_handle) const
-{
-    if (!callback)
-    {
-        a_handle.resume();
-        return;
-    }
-
-    auto &continuation = static_cast<CallbackFunctor *>(callback.get())->continuation;
-
-    if (continuation)
-    {
-        continuation.destroy();
-    }
-
-    continuation = a_handle;
-}
-
-RE::BSScript::Variable SosNativeCaller::Awaitable::await_resume() const
-{
-    return dynamic_cast<CallbackFunctor *>(callback.get())->result;
-}
-
 auto SosNativeCaller::GetOutfitNameMaxLength() -> Awaitable
 {
     return StaticCall(SosFunction::GetOutfitNameMaxLength);

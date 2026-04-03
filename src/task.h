@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "log.h"
+
 #include <coroutine>
 #include <exception>
 
@@ -112,7 +114,7 @@ private:
 
 inline Task TaskPromise::get_return_object(const std::source_location &location) noexcept
 {
-    logger::debug("CoroutineTaskPromise::get_return_object: {}", location.function_name());
+    logger::debug("return {}", location.function_name());
     return Task{std::coroutine_handle<TaskPromise>::from_promise(*this)};
 }
 

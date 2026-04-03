@@ -14,38 +14,7 @@ class SosNativeCaller
     using Armor = RE::TESObjectARMO;
 
 public:
-    struct Awaitable
-    {
-        struct CallbackFunctor : public RE::BSScript::IStackCallbackFunctor
-        {
-            void operator()(RE::BSScript::Variable a_result) override;
-
-            void SetObject([[maybe_unused]] const RE::BSTSmartPointer<RE::BSScript::Object> &a_object) override {}
-
-            bool                    pending{false};
-            RE::BSScript::Variable  result;
-            std::coroutine_handle<> continuation;
-        };
-
-        Awaitable() : callback(new CallbackFunctor()) {}
-
-        void SetPending(bool a_pending = true) const
-        {
-            if (callback)
-            {
-                dynamic_cast<CallbackFunctor *>(callback.get())->pending = a_pending;
-            }
-        }
-
-        bool                   await_ready() const;
-        void                   await_suspend(std::coroutine_handle<> a_handle) const;
-        RE::BSScript::Variable await_resume() const;
-
-        constexpr auto GetCallback() -> RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> & { return callback; }
-
-    private:
-        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
-    };
+    using Awaitable = RE::BSScript::IVirtualMachine::Awaitable;
 
     static auto ActorNearPC() -> Awaitable;
     static auto AddActor(RE::Actor *actor) -> Awaitable;
@@ -93,24 +62,13 @@ private:
         return skyrimVm != nullptr ? skyrimVm->impl : nullptr;
     }
 
-    static auto DispatchStaticCall(
-        const RE::BSFixedString &a_fnName, RE::BSScript::IFunctionArguments *a_args,
-        RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> &a_result
-    )
+    static auto StaticCall(const RE::BSFixedString &a_fnName, RE::BSScript::IFunctionArguments *a_args = RE::MakeFunctionArguments()) -> Awaitable
     {
         if (const auto &vm = GetVM(); vm != nullptr)
         {
-            return vm->DispatchStaticCall(SOS_NATIVE_CLASS_NAME, a_fnName, a_args, a_result);
+            return vm->ADispatchStaticCall(SOS_NATIVE_CLASS_NAME, a_fnName, a_args);
         }
-        return false;
-    }
-
-    static auto StaticCall(const RE::BSFixedString &a_fnName, RE::BSScript::IFunctionArguments *a_args = RE::MakeFunctionArguments()) -> Awaitable
-    {
-        Awaitable  awaitable;
-        const bool success = DispatchStaticCall(a_fnName, a_args, awaitable.GetCallback());
-        awaitable.SetPending(success);
-        return awaitable;
+        return {};
     }
 };
 } // namespace SosGui

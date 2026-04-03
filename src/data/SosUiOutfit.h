@@ -72,6 +72,7 @@ public:
     void SetSlotPolicy(const uint32_t slotPos, const std::string &policy) { m_slotPolicies.at(slotPos) = policy; }
 };
 
+// TODO: may remove
 class EditingOutfit
 {
     const SosUiOutfit *m_sourceOutfit;
