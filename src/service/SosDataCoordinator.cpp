@@ -93,12 +93,10 @@ auto SosDataCoordinator::RequestSetActorAutoSwitchState(const RE::Actor *actor, 
 
 auto SosDataCoordinator::RequestImportSettings() const -> Task
 {
-    if (const auto successVar = co_await SosNativeCaller::ImportSettings(); !successVar.IsBool() || !successVar.GetBool())
+    if (const auto successVar = co_await SosNativeCaller::ImportSettings(); successVar.IsBool() && successVar.GetBool())
     {
-        ErrorNotifier::GetInstance().Error("Can't import settings");
-        co_return;
+        co_await Refresh();
     }
-    co_await Refresh();
 }
 
 auto SosDataCoordinator::RequestExportSettings() const -> Task
