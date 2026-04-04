@@ -95,7 +95,7 @@ Slot58 = "Unofficial (Typically Left Arm)"
 Slot59 = "Unofficial (Typically Right Arm)"
 Slot60 = "Unofficial (Typically Misc 2)"
 Slot61 = "FX"
-[Panels.OutfitEdit.ArmorGenerator]
+[Panels.OutfitEdit.ArmorSource]
 Title = "Armor Generator"
 ByFormID = "By FormID"
 NearObjectInventory = "Near Object Inventory"

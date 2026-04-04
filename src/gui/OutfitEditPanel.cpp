@@ -2,7 +2,7 @@
 
 #include "SosDataType.h"
 #include "Translation.h"
-#include "data/ArmorGenerator.h"
+#include "data/ArmorSource.h"
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
 #include "gui/UiSettings.h"
@@ -52,23 +52,68 @@ void DrawSlotPolicyHelpPopup(const char *name)
     }
 }
 
-} // namespace
-
-void OutfitEditPanel::EditContext::Clear()
+auto is_inventory_has_armor(RE::TESObjectREFR *objectRef) -> bool
 {
-    ShowAllSlotOutfitArmors = false;
-    dirty                   = true;
+    bool result = false;
+    if (auto invChanges = objectRef->GetInventoryChanges(); invChanges && invChanges->entryList)
+    {
+        for (auto &entry : *invChanges->entryList)
+        {
+            if (entry && entry->object && entry->object->As<Armor>() != nullptr)
+            {
+                result = true;
+                break;
+            }
+        }
+    }
+
+    if (auto container = objectRef->GetContainer(); container)
+    {
+        container->ForEachContainerObject([&](RE::ContainerObject &a_entry) {
+            auto obj = a_entry.obj;
+            if (obj && obj->As<Armor>() != nullptr)
+            {
+                result = true;
+                return RE::BSContainer::ForEachResult::kStop;
+            }
+            return RE::BSContainer::ForEachResult::kContinue;
+        });
+    }
+
+    return result;
 }
+
+auto get_near_objects_has_armor() -> std::vector<RE::TESObjectREFR *>
+{
+    const RE::PlayerCharacter *player = RE::PlayerCharacter::GetSingleton();
+    const RE::TESObjectCELL   *cell   = player->GetParentCell();
+
+    std::vector<RE::TESObjectREFR *> objectRefs;
+    cell->ForEachReference([&](RE::TESObjectREFR *objectRef) {
+        if (const std::string_view nameSv(objectRef->GetName()); nameSv.empty())
+        {
+            return RE::BSContainer::ForEachResult::kContinue;
+        }
+        if (is_inventory_has_armor(objectRef))
+        {
+            objectRefs.push_back(objectRef);
+        }
+        return RE::BSContainer::ForEachResult::kContinue;
+    });
+    return objectRefs;
+}
+
+} // namespace
 
 void OutfitEditPanel::OnRefresh()
 {
-    m_editContext.Clear();
+    should_refresh_view_ = true;
     m_armorView.on_refresh();
 }
 
 void OutfitEditPanel::Cleanup()
 {
-    m_editContext.Clear();
+    should_refresh_view_ = true;
     m_armorView.clear();
 }
 
@@ -82,10 +127,6 @@ void OutfitEditPanel::OnSelectOutfit(const EditingOutfit &lastEdit, const Editin
 {
     UpdateWindowTitle(editing.GetName());
     // m_armorView.multi_selection_.Clear();
-    if (dynamic_cast<BasicArmorGenerator *>(GetGenerator()) == nullptr)
-    {
-        m_armorView.reset_view_data(GetGenerator());
-    }
 }
 
 void OutfitEditPanel::PushError(const Error error)
@@ -111,10 +152,10 @@ void OutfitEditPanel::Draw(const EditingOutfit &editingOutfit)
     ImGui::SetNextWindowSize({DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT}, ImGuiCond_FirstUseEver);
     if (ImGui::Begin(m_windowTitle.c_str(), &m_show))
     {
-        if (m_editContext.dirty)
+        if (should_refresh_view_)
         {
-            m_editContext.dirty = false;
-            m_armorView.reset_view(GetGenerator());
+            should_refresh_view_ = false;
+            m_armorView.reset_view(armor_source_, armor_source_refr_);
         }
         if (ImGui::BeginChild("##OutfitEditPanelSideBar", {200, 0}, ImGuiEx::ChildFlags().Borders().ResizeX()))
         {
@@ -125,7 +166,7 @@ void OutfitEditPanel::Draw(const EditingOutfit &editingOutfit)
         ImGui::SameLine();
         ImGui::BeginGroup();
         DrawOutfitPanel(editingOutfit);
-        DrawArmorGeneratorTabBar();
+        DrawArmorSourcesTabBar();
         DrawArmorViewFilter();
         DrawArmorView(editingOutfit);
         ImGui::EndGroup();
@@ -167,14 +208,14 @@ void OutfitEditPanel::DrawSideBar(const SosUiOutfit *editingOutfit)
     ImGuiUtil::Text(Translate1("Panels.Outfit.BodySlots"));
     if (ImGui::BeginChild("#SlotFilterChild", {0, childHeight}, ImGuiEx::ChildFlags().Borders().ResizeY()))
     {
-        DrawArmorViewSlotFilterer(editingOutfit);
+        DrawArmorViewSlotFilterer();
     }
     ImGui::EndChild();
     bool needUpdateView = ImGui::Checkbox("Contain non playable", &m_armorView.contain_non_playable_armor_);
     needUpdateView      = ImGui::Checkbox("Contain template armors", &m_armorView.contain_template_armor_) || needUpdateView;
     if (needUpdateView)
     {
-        m_armorView.reset_view_data(GetGenerator());
+        m_armorView.reset_view_data(armor_source_, armor_source_refr_);
     }
 }
 
@@ -199,7 +240,7 @@ void OutfitEditPanel::DrawOutfitArmors(const EditingOutfit &editingOutfit)
         return;
     }
 
-    ImGui::Checkbox(Translate1("Panels.OutfitEdit.ShowAllSlots"), &m_editContext.ShowAllSlotOutfitArmors);
+    ImGui::Checkbox(Translate1("Panels.OutfitEdit.ShowAllSlots"), &show_all_outfit_slots_);
     ImGui::SameLine();
     if (ImGui::Button(Translate1("Panels.OutfitEdit.SlotPolicies")))
     {
@@ -220,7 +261,7 @@ void OutfitEditPanel::DrawOutfitArmors(const EditingOutfit &editingOutfit)
         for (SlotType slotIdx = 0; slotIdx < static_cast<SlotType>(RE::BIPED_OBJECT::kEditorTotal); ++slotIdx)
         {
             const auto *armor = editingOutfit.GetArmorAt(slotIdx);
-            if (!m_editContext.ShowAllSlotOutfitArmors && armor == nullptr)
+            if (!show_all_outfit_slots_ && armor == nullptr)
             {
                 continue;
             }
@@ -299,10 +340,10 @@ void OutfitEditPanel::SlotPolicyCombo(const EditingOutfit &editingOutfit, const 
     }
 }
 
-void OutfitEditPanel::DrawArmorGeneratorTabBar()
+void OutfitEditPanel::DrawArmorSourcesTabBar()
 {
     ImGui::Separator();
-    if (ImGui::BeginTabBar("ArmorGeneratorTabBar", ImGuiEx::TabBarFlags().DrawSelectedOverline().Reorderable()))
+    if (ImGui::BeginTabBar("ArmorSourceTabBar", ImGuiEx::TabBarFlags().DrawSelectedOverline().Reorderable()))
     {
         const auto *tabBar          = ImGui::GetCurrentTabBar();
         const auto  nextTabId       = tabBar->NextSelectedTabId;
@@ -311,34 +352,26 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar()
             const ImGuiTabItem *tabItem = ImGui::TabBarGetCurrentTab(ImGui::GetCurrentTabBar());
             return selectedId == 0 || (selectedId != nextTabId && tabItem->ID == nextTabId);
         };
-        auto  *player         = RE::PlayerCharacter::GetSingleton();
-        auto *&selectedActor  = m_armorGeneratorTabBar.selectedActor;
-        auto  &armorGenerator = m_armorGeneratorTabBar.generator;
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.NearObjectInventory")))
+        auto *player = RE::PlayerCharacter::GetSingleton();
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.NearObjectInventory")))
         {
-            auto *generator = dynamic_cast<NearObjectsInventoryArmorGenerator *>(armorGenerator.get());
-            if (!generator || isTabItemAppear())
+            if (isTabItemAppear())
             {
-                generator = new NearObjectsInventoryArmorGenerator;
-                generator->Update();
-                armorGenerator.reset(generator);
-                m_armorView.reset_view(GetGenerator());
+                near_objects_      = get_near_objects_has_armor();
+                armor_source_      = ArmorSource::Inventory;
+                armor_source_refr_ = near_objects_.empty() ? player : near_objects_[0];
+                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
 
-            const auto &nearObjects = generator->NearObjects();
-            auto       *wantVisit   = nearObjects[generator->WantVisitIndex()];
-
-            if (ImGui::BeginCombo(
-                    Translate1("Panels.OutfitEdit.ArmorGenerator.NearObjects"), wantVisit->GetDisplayFullName(), ImGuiComboFlags_WidthFitPreview
-                ))
+            if (ImGui::BeginCombo("##NearObjects", armor_source_refr_->GetDisplayFullName(), ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
             {
-                for (size_t index = 0; index < nearObjects.size(); ++index)
+                for (const auto &object : near_objects_)
                 {
-                    ImGui::PushID(static_cast<int>(index));
-                    if (ImGui::Selectable(nearObjects[index]->GetName(), generator->WantVisitIndex() == index))
+                    ImGui::PushID(static_cast<int>(object->formID));
+                    if (ImGui::Selectable(object->GetName(), armor_source_refr_->GetFormID() == object->GetFormID()))
                     {
-                        generator->SetWantVisitIndex(index);
-                        m_armorView.reset_view(GetGenerator());
+                        armor_source_refr_ = object;
+                        m_armorView.reset_view(armor_source_, armor_source_refr_);
                     }
                     ImGui::PopID();
                 }
@@ -347,27 +380,41 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar()
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.NearNpcCarried")))
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.NearNpcCarried")))
         {
             if (isTabItemAppear())
             {
-                armorGenerator = std::make_unique<CarriedArmorGenerator>(selectedActor);
-                m_armorView.reset_view(GetGenerator());
+                near_objects_      = get_near_objects_has_armor();
+                armor_source_      = ArmorSource::Carried;
+                armor_source_refr_ = player;
+                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
-            if (widgets::DrawNearActorsCombo(m_uiData.GetNearActors(), &selectedActor, player))
+
+            if (ImGui::BeginCombo("##NearActors", armor_source_refr_->GetDisplayFullName(), ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
             {
-                armorGenerator = std::make_unique<CarriedArmorGenerator>(selectedActor);
-                m_armorView.reset_view(GetGenerator());
+                for (const auto &object : near_objects_)
+                {
+                    if (!object->IsHumanoid()) continue;
+                    ImGui::PushID(static_cast<int>(object->formID));
+                    if (ImGui::Selectable(object->GetName(), armor_source_refr_->GetFormID() == object->GetFormID()))
+                    {
+                        armor_source_refr_ = object;
+                        m_armorView.reset_view(armor_source_, armor_source_refr_);
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::EndCombo();
             }
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.ByFormID")))
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.ByFormID")))
         {
             if (isTabItemAppear())
             {
-                armorGenerator = std::make_unique<EmptyArmorGenerator>();
-                m_armorView.reset_view(GetGenerator());
+                armor_source_      = ArmorSource::Armor;
+                armor_source_refr_ = nullptr;
+                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
             ImGui::Text("0x");
             ImGui::SameLine();
@@ -377,22 +424,23 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar()
             {
                 m_armorView.clear_view_data();
                 char          *pEnd{};
-                const uint32_t result = strtoul(formIdBuf.data(), &pEnd, 16);
+                const uint32_t formId = strtoul(formIdBuf.data(), &pEnd, 16);
                 if (pEnd != formIdBuf.data())
                 {
-                    armorGenerator = std::make_unique<FormIdArmorGenerator>(result);
-                    m_armorView.reset_view(GetGenerator());
+                    armor_source_refr_ = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId);
+                    m_armorView.reset_view(armor_source_, armor_source_refr_);
                 }
             }
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorGenerator.AllArmors")))
+        if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.AllArmors")))
         {
             if (isTabItemAppear())
             {
-                armorGenerator = std::make_unique<BasicArmorGenerator>();
-                m_armorView.reset_view(GetGenerator());
+                armor_source_      = ArmorSource::All;
+                armor_source_refr_ = nullptr;
+                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
             ImGui::EndTabItem();
         }
@@ -402,17 +450,16 @@ void OutfitEditPanel::DrawArmorGeneratorTabBar()
 
 void OutfitEditPanel::DrawArmorViewFilter()
 {
-    ImGui::SameLine();
     if (m_armorView.armor_name_filter_.Draw())
     {
         m_armorView.armor_name_filter_.dirty = false;
-        m_armorView.reset_view_data(GetGenerator());
+        m_armorView.reset_view_data(armor_source_, armor_source_refr_);
     }
 }
 
 void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
 {
-    if (m_armorView.get_view_data().empty())
+    if (m_armorView.view_data_.empty())
     {
         return;
     }
@@ -421,12 +468,12 @@ void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
     const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_FramePadding>({3.0F, 3.0F});
     if (ImGui::BeginTable("##ArmorCandidates", 6, flags))
     {
-        DrawArmorViewContent(editingOutfit, m_armorView.get_view_data());
+        DrawArmorViewContent(editingOutfit, m_armorView.view_data_);
         ImGui::EndTable();
     }
 }
 
-void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<RankedArmor> &viewData)
+void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<const Armor *> &viewData)
 {
     ImGui::TableSetupScrollFreeze(1, 1);
     ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed());
@@ -552,7 +599,7 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
     }
 }
 
-void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<RankedArmor> &viewData, const DrawArmorEntry &drawArmorEntry)
+void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<const Armor *> &viewData, const DrawArmorEntry &drawArmorEntry)
 {
     static bool ascend = true;
     ImGuiUtil::may_update_table_sort_dir(ascend);
@@ -576,14 +623,14 @@ void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<RankedArmor> &
         {
             for (const auto &armor : viewData | std::views::drop(clipper.DisplayStart) | std::views::take(itemCount))
             {
-                drawArmorEntry(armor.data(), index++);
+                drawArmorEntry(armor, index++);
             }
         }
         else
         {
             for (const auto &armor : viewData | std::views::reverse | std::views::drop(clipper.DisplayStart) | std::views::take(itemCount))
             {
-                drawArmorEntry(armor.data(), index++);
+                drawArmorEntry(armor, index++);
             }
         }
     }
@@ -604,19 +651,19 @@ void OutfitEditPanel::DrawArmorViewModNameFilterer()
     }
     if (needResetView)
     {
-        m_armorView.reset_view_data(GetGenerator());
+        m_armorView.reset_view_data(armor_source_, armor_source_refr_);
     }
 }
 
-void OutfitEditPanel::DrawArmorViewSlotFilterer(const SosUiOutfit *editing)
+void OutfitEditPanel::DrawArmorViewSlotFilterer()
 {
-    const std::string name = std::format("All({}/{})##AllSlot", m_armorView.get_view_data().size(), m_armorView.armor_container_.Size());
+    const std::string name = std::format("All({}/{})##AllSlot", m_armorView.view_data_.size(), m_armorView.armor_count);
 
     const auto &slotFilterer = m_armorView.slot_filterer_;
     bool        checkedAll   = slotFilterer.is_enable_all_slots();
     if (ImGui::Checkbox(name.c_str(), &checkedAll))
     {
-        m_armorView.filterer_enable_all_slots(checkedAll, GetGenerator(), editing);
+        m_armorView.filterer_enable_all_slots(checkedAll, armor_source_, armor_source_refr_);
     }
 
     for (SlotType idx = 0; idx < RE::BIPED_OBJECT::kEditorTotal; ++idx)
@@ -627,7 +674,7 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer(const SosUiOutfit *editing)
         bool checked   = slotFilterer.is_slot_selected(idx);
         if (ImGui::Checkbox(slotLabel.c_str(), &checked))
         {
-            m_armorView.filterer_select_slot(idx, checked, GetGenerator(), editing);
+            m_armorView.filterer_select_slot(idx, checked, armor_source_, armor_source_refr_);
         }
         ImGui::PopID();
     }
@@ -652,9 +699,8 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
     ImGuiID            nextId = 0;
     for (; m_armorView.multi_selection_.GetNextSelectedItem(&it, &nextId); m_armorView.multi_selection_.SetItemSelected(nextId, false))
     {
-        const auto &rankedArmor = m_armorView.get_view_data().at(nextId);
-        const auto *armor       = rankedArmor.data();
-        if (usedSlot.all(rankedArmor->GetSlotMask().get()) || outfitIt->IsConflictWith(armor))
+        const auto &armor = m_armorView.view_data_.at(nextId);
+        if (usedSlot.all(armor->GetSlotMask().get()) || outfitIt->IsConflictWith(armor))
         {
             if (conflict_solution_ == ConflictSolution::none)
             {
@@ -682,7 +728,7 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
             };
         }
 
-        usedSlot.set(rankedArmor->GetSlotMask().get());
+        usedSlot.set(armor->GetSlotMask().get());
         +[&] {
             return m_outfitService.AddArmor(outfitIt->GetId(), outfitIt->GetName(), armor);
         };

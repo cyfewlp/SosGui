@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BaseGui.h"
-#include "data/ArmorGenerator.h"
+#include "data/ArmorSource.h"
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
 #include "gui/ArmorView.h"
@@ -26,28 +26,8 @@ public:
 private:
     static bool IsArmorNonPlayable(const Armor *armor) { return (armor->formFlags & Armor::RecordFlags::kNonPlayable) != 0; }
 
-    struct ArmorGeneratorTabBar
-    {
-        std::unique_ptr<ArmorGenerator> generator     = std::make_unique<BasicArmorGenerator>();
-        RE::Actor                      *selectedActor = nullptr;
-    } m_armorGeneratorTabBar;
-
-    struct EditContext
-    {
-        bool ShowAllSlotOutfitArmors = false;
-        bool dirty                   = true;
-
-        void Clear();
-    } m_editContext = {};
-
 public:
     explicit OutfitEditPanel(SosUiData &uiData, OutfitService &outfitService) : m_uiData(uiData), m_outfitService(outfitService) {}
-
-    void Show() override
-    {
-        BaseGui::Show();
-        m_armorView.init();
-    }
 
     void OnRefresh() override;
     void Cleanup() override;
@@ -73,17 +53,14 @@ private:
     void HighlightConflictSlot(Slot slot) const;
     void SlotPolicyCombo(const EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
 
-    // FIXME: may return null
-    auto GetGenerator() const -> ArmorGenerator * { return m_armorGeneratorTabBar.generator.get(); }
-
     using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
-    void DrawArmorGeneratorTabBar();
+    void DrawArmorSourcesTabBar();
     void DrawArmorViewFilter();
     void DrawArmorView(const EditingOutfit &editingOutfit);
-    void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<RankedArmor> &viewData);
-    void DrawArmorViewTableContent(const std::vector<RankedArmor> &viewData, const DrawArmorEntry &drawArmorEntry);
+    void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<const Armor *> &viewData);
+    void DrawArmorViewTableContent(const std::vector<const Armor *> &viewData, const DrawArmorEntry &drawArmorEntry);
     void DrawArmorViewModNameFilterer();
-    void DrawArmorViewSlotFilterer(const SosUiOutfit *editing);
+    void DrawArmorViewSlotFilterer();
 
     void AddSelectArmors(OutfitId id);
     void DeleteArmor(OutfitId id, const Armor *armor);
@@ -98,11 +75,16 @@ private:
         Suspend,      ///< waiting user choose a solution
     };
 
-    ArmorView        m_armorView{};
-    std::string      m_windowTitle;
-    SosUiData       &m_uiData;
-    OutfitService   &m_outfitService;
-    int              waiting_add_armor_count_ = 0;
-    ConflictSolution conflict_solution_       = ConflictSolution::none;
+    ArmorView                        m_armorView{};
+    std::string                      m_windowTitle;
+    SosUiData                       &m_uiData;
+    OutfitService                   &m_outfitService;
+    int                              waiting_add_armor_count_ = 0;
+    ConflictSolution                 conflict_solution_       = ConflictSolution::none;
+    ArmorSource                      armor_source_            = ArmorSource::None;
+    bool                             show_all_outfit_slots_   = false;
+    bool                             should_refresh_view_     = true;
+    RE::TESObjectREFR               *armor_source_refr_       = nullptr;
+    std::vector<RE::TESObjectREFR *> near_objects_;
 };
 } // namespace SosGui

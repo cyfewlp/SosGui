@@ -5,8 +5,7 @@
 #pragma once
 
 #include "SosDataType.h"
-#include "data/ArmorContainer.h"
-#include "data/ArmorGenerator.h"
+#include "data/ArmorSource.h"
 #include "data/SosUiData.h"
 #include "gui/widgets.h"
 #include "util/ImGuiUtil.h"
@@ -47,6 +46,18 @@ public:
     [[nodiscard]] auto is_slot_selected(SlotType slotPos) const -> bool { return selected_slots_.test(slotPos); }
 
     void select_slot(SlotType slotPos, bool select = true) { selected_slots_.set(slotPos, select); }
+
+    void select_slots(Slot slots, bool select = true)
+    {
+        if (select)
+        {
+            selected_slots_ |= static_cast<uint32_t>(slots);
+        }
+        else
+        {
+            selected_slots_ &= ~static_cast<uint32_t>(slots);
+        }
+    }
 
     void enable_all_slots(bool check = true) { enable_all_slot_ = check; }
 
@@ -104,25 +115,21 @@ public:
 };
 } // namespace armor_view
 
-// A wrap class. Be used to cache armor rank(sort by name).
-class RankedArmor;
-
 class ArmorView final
 {
 public:
-    using SlotCounter = std::array<uint16_t, SLOT_COUNT>;
+    using SlotCounter    = std::array<uint16_t, SLOT_COUNT>;
+    using const_iterator = std::vector<const Armor *>::const_iterator;
 
-    std::vector<RankedArmor>        view_data_{};
-    ArmorContainer                  armor_container_{};
+    std::vector<const Armor *>      view_data_{};
     SlotCounter                     slot_counter_;
     armor_view::ArmorNameFilter     armor_name_filter_;
     armor_view::ModFilterer         mod_filterer_;
     armor_view::SlotFilterer        slot_filterer_;
     armor_view::ArmorMultiSelection multi_selection_;
+    size_t                          armor_count;
     bool                            contain_non_playable_armor_ = true;
     bool                            contain_template_armor_     = false;
-
-    using const_iterator = std::vector<RankedArmor>::const_iterator;
 
     enum class error : uint8_t
     {
@@ -134,21 +141,20 @@ public:
 
     ////////////////////////////////////////////////////////////////////
     // mod filterer -> slot-filterer -> armor-name filter
-    void               init();
     void               on_refresh();
     void               clear();
     void               clear_view_data();
     [[nodiscard]] auto add_armor(const Armor *armor) -> std::expected<void, error>;
-    void               add_armors_has_slot(ArmorGenerator *generator, const SosUiOutfit *editing_outfit, Slot slots);
+    void               add_armors_has_slot(ArmorSource source, RE::TESObjectREFR *source_ref, Slot slots);
     bool               remove_armor(const Armor *armor);
     void               remove_armors_has_slot(Slot slots);
     void               remove_armors_no_has_slots(Slot slots);
     void               reset_counter();
-    void               reset_view_data(ArmorGenerator *generator);
-    void               reset_view(ArmorGenerator *generator);
+    void               reset_view_data(ArmorSource source, RE::TESObjectREFR *source_ref);
+    void               reset_view(ArmorSource source, RE::TESObjectREFR *source_ref);
     bool               filter(const Armor *armor) const;
-    void               filterer_enable_all_slots(bool enable_all, ArmorGenerator *generator, const SosUiOutfit *editing_outfit);
-    void               filterer_select_slot(SlotType slotPos, bool select, ArmorGenerator *generator, const SosUiOutfit *editing_outfit);
+    void               filterer_enable_all_slots(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref);
+    void               filterer_select_slot(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref);
 
     [[nodiscard]] auto get_armor_count(SlotType slotPos) const -> std::uint16_t { return slot_counter_.at(slotPos); }
 
@@ -170,35 +176,27 @@ public:
     }
 
 private:
-    auto find_armor(const Armor *armor) const -> std::expected<const_iterator, error>;
+    auto find(const Armor *armor) const -> const_iterator;
 
-public:
-    [[nodiscard]] auto get_view_data() const -> const std::vector<RankedArmor> & { return view_data_; }
+    void add_armor_log_error(const Armor *armor)
+    {
+        if (const auto expected = add_armor(armor); !expected && expected.error() != error::armor_already_exists)
+        {
+            logger::error("Can't add armor[{}]: {}", armor->formID, to_error_message(expected.error()));
+        }
+    }
 
-    auto swap_view_data(std::vector<RankedArmor> &other) -> void { view_data_.swap(other); }
+    auto is_armor_can_display(const Armor *armor) const -> bool
+    {
+        bool result = false;
+        if (armor != nullptr && !std::string_view(armor->GetName()).empty())
+        {
+            if (armor->templateArmor == nullptr || contain_template_armor_)
+            {
+                result = true;
+            }
+        }
+        return result;
+    }
 };
-
-class RankedArmor
-{
-    const Armor *armor;
-    size_t       rank = std::numeric_limits<size_t>::max();
-
-public:
-    explicit RankedArmor(const Armor *const armor, const size_t rank) : armor(armor), rank(rank) {}
-
-    [[nodiscard]] auto get_rank() const -> size_t { return rank; }
-
-    [[nodiscard]] auto data() const -> const Armor * { return armor; }
-
-    auto operator->() const -> const Armor * { return armor; }
-
-    friend bool operator<(const RankedArmor &lhs, const RankedArmor &rhs) { return lhs.rank < rhs.rank; }
-};
-
 } // namespace SosGui
-
-template <>
-struct std::less<SosGui::RankedArmor>
-{
-    bool operator()(const SosGui::RankedArmor &lhs, const SosGui::RankedArmor &rhs) const noexcept { return lhs.get_rank() < rhs.get_rank(); }
-};
