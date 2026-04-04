@@ -11,7 +11,6 @@
 #include "gui/widgets.h"
 #include "i18n/translator_manager.h"
 #include "imgui.h"
-#include "imgui_internal.h"
 #include "imguiex/ImGuiEx.h"
 #include "imguiex/imguiex_enum_wrap.h"
 #include "util/ImGuiUtil.h"
@@ -345,22 +344,15 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
     ImGui::Separator();
     if (ImGui::BeginTabBar("ArmorSourceTabBar", ImGuiEx::TabBarFlags().DrawSelectedOverline().Reorderable()))
     {
-        const auto *tabBar          = ImGui::GetCurrentTabBar();
-        const auto  nextTabId       = tabBar->NextSelectedTabId;
-        const auto  selectedId      = tabBar->SelectedTabId;
-        auto        isTabItemAppear = [&] {
-            const ImGuiTabItem *tabItem = ImGui::TabBarGetCurrentTab(ImGui::GetCurrentTabBar());
-            return selectedId == 0 || (selectedId != nextTabId && tabItem->ID == nextTabId);
-        };
-        auto *player = RE::PlayerCharacter::GetSingleton();
+        auto      *player         = RE::PlayerCharacter::GetSingleton();
+        const auto oldArmorSource = armor_source_;
         if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.NearObjectInventory")))
         {
-            if (isTabItemAppear())
+            armor_source_ = ArmorSource::Inventory;
+            if (oldArmorSource != armor_source_)
             {
                 near_objects_      = get_near_objects_has_armor();
-                armor_source_      = ArmorSource::Inventory;
                 armor_source_refr_ = near_objects_.empty() ? player : near_objects_[0];
-                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
 
             if (ImGui::BeginCombo("##NearObjects", armor_source_refr_->GetDisplayFullName(), ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
@@ -382,12 +374,11 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
 
         if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.NearNpcCarried")))
         {
-            if (isTabItemAppear())
+            armor_source_ = ArmorSource::Carried;
+            if (oldArmorSource != armor_source_)
             {
                 near_objects_      = get_near_objects_has_armor();
-                armor_source_      = ArmorSource::Carried;
                 armor_source_refr_ = player;
-                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
 
             if (ImGui::BeginCombo("##NearActors", armor_source_refr_->GetDisplayFullName(), ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
@@ -410,11 +401,10 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
 
         if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.ByFormID")))
         {
-            if (isTabItemAppear())
+            armor_source_ = ArmorSource::Armor;
+            if (oldArmorSource != armor_source_)
             {
-                armor_source_      = ArmorSource::Armor;
                 armor_source_refr_ = nullptr;
-                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
             ImGui::Text("0x");
             ImGui::SameLine();
@@ -436,14 +426,19 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
 
         if (ImGui::BeginTabItem(Translate1("Panels.OutfitEdit.ArmorSource.AllArmors")))
         {
-            if (isTabItemAppear())
+            armor_source_ = ArmorSource::All;
+            if (oldArmorSource != armor_source_)
             {
-                armor_source_      = ArmorSource::All;
                 armor_source_refr_ = nullptr;
-                m_armorView.reset_view(armor_source_, armor_source_refr_);
             }
             ImGui::EndTabItem();
         }
+
+        if (oldArmorSource != armor_source_)
+        {
+            m_armorView.reset_view(armor_source_, armor_source_refr_);
+        }
+
         ImGui::EndTabBar();
     }
 }
