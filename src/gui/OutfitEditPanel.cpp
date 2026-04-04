@@ -476,7 +476,7 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
     ImGui::TableSetupColumn("FormID", ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
     ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.ModName"), ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
     ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.Playable"), ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
-    ImGui::TableSetupColumn(Translate1("Add"), ImGuiEx::TableColumnFlags().NoSort());
+    ImGui::TableSetupColumn(Translate1("##Add"), ImGuiEx::TableColumnFlags().NoSort());
     ImGui::TableHeadersRow();
 
     bool wantAddArmor   = false;

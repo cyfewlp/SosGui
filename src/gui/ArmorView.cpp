@@ -237,7 +237,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
         case ArmorSource::None:
             break;
         case ArmorSource::Armor: {
-            if (const auto armor = source_ref != nullptr ? source_ref->As<Armor>() : nullptr; is_armor_can_display(armor))
+            if (const auto armor = source_ref != nullptr ? source_ref->As<Armor>() : nullptr; filter(armor))
             {
                 view_data_.emplace_back(armor);
             }
@@ -247,7 +247,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             if (source_ref == nullptr) break;
             for (const auto &pair : source_ref->GetInventory())
             {
-                if (const auto *armor = pair.first->As<Armor>(); is_armor_can_display(armor))
+                if (const auto *armor = pair.first->As<Armor>(); filter(armor))
                 {
                     view_data_.emplace_back(armor);
                 }
@@ -262,7 +262,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
                 changes->VisitWornItems(visitor);
                 for (const auto &armor : visitor.armors)
                 {
-                    if (is_armor_can_display(armor))
+                    if (filter(armor))
                     {
                         view_data_.emplace_back(armor);
                     }
@@ -275,7 +275,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             const auto &armorArray  = dataHandler->GetFormArray<RE::TESObjectARMO>();
             for (const auto &armor : armorArray)
             {
-                if (is_armor_can_display(armor))
+                if (filter(armor))
                 {
                     view_data_.emplace_back(armor);
                 }
