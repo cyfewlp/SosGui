@@ -16,7 +16,7 @@ namespace
 {
 struct ArmorNameLessComparator
 {
-    auto operator()(const Armor *lhs, const Armor *rhs) -> bool { return util::StrLess(lhs->GetName(), rhs->GetName()); }
+    auto operator()(const ArmorEntry &lhs, const ArmorEntry &rhs) -> bool { return util::StrLess(lhs.name, rhs.name); }
 };
 } // namespace
 
@@ -101,7 +101,7 @@ auto ArmorView::add_armor(const Armor *armor) -> std::expected<void, error>
         {
             return std::unexpected{error::armor_already_exists};
         }
-        view_data_.insert(found, armor);
+        view_data_.emplace(found, armor);
     }
     return {};
 }
@@ -239,7 +239,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
         case ArmorSource::Armor: {
             if (const auto armor = source_ref != nullptr ? source_ref->As<Armor>() : nullptr; is_armor_can_display(armor))
             {
-                view_data_.push_back(armor);
+                view_data_.emplace_back(armor);
             }
             break;
         }
@@ -249,7 +249,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             {
                 if (const auto *armor = pair.first->As<Armor>(); is_armor_can_display(armor))
                 {
-                    view_data_.push_back(armor);
+                    view_data_.emplace_back(armor);
                 }
             }
             break;
@@ -264,7 +264,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
                 {
                     if (is_armor_can_display(armor))
                     {
-                        view_data_.push_back(armor);
+                        view_data_.emplace_back(armor);
                     }
                 }
             }
@@ -277,7 +277,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             {
                 if (is_armor_can_display(armor))
                 {
-                    view_data_.push_back(armor);
+                    view_data_.emplace_back(armor);
                 }
             }
             break;
@@ -383,6 +383,7 @@ void ArmorView::filterer_select_slot(SlotType slotPos, bool select, ArmorSource 
 
 auto ArmorView::find(const Armor *armor) const -> const_iterator
 {
-    return std::ranges::lower_bound(view_data_, armor, ArmorNameLessComparator());
+    ArmorEntry armorEntry(armor);
+    return std::ranges::lower_bound(view_data_, armorEntry, ArmorNameLessComparator());
 }
 } // namespace SosGui

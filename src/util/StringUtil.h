@@ -8,14 +8,24 @@
 namespace SosGui::util
 {
 
-static auto UnicodeStringCompare(const wchar_t *lhs, const wchar_t *rhs) -> bool
+static auto UnicodeStringCompare(std::wstring_view wsView1, std::wstring_view wsView2) -> bool
 {
-    if (lhs == nullptr || rhs == nullptr)
+    if (wsView1.empty() || wsView2.empty())
     {
         return false;
     }
 
-    const int result = ::CompareStringEx(LOCALE_NAME_SYSTEM_DEFAULT, 0, lhs, -1, rhs, -1, NULL, NULL, NULL);
+    const int result = ::CompareStringEx(
+        LOCALE_NAME_SYSTEM_DEFAULT,
+        0,
+        wsView1.data(),
+        static_cast<int>(wsView1.size()),
+        wsView2.data(),
+        static_cast<int>(wsView2.size()),
+        NULL,
+        NULL,
+        NULL
+    );
     return result > 0 && result == CSTR_LESS_THAN;
 }
 

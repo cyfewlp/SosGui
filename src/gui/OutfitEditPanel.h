@@ -46,7 +46,7 @@ private:
 
     static void PushError(Error error);
 
-    void DrawSideBar(const SosUiOutfit *editingOutfit);
+    void DrawSideBar();
     void UpdateWindowTitle(const std::string &outfitName);
 
     void DrawOutfitArmors(const EditingOutfit &editingOutfit);
@@ -57,8 +57,8 @@ private:
     void DrawArmorSourcesTabBar();
     void DrawArmorViewFilter();
     void DrawArmorView(const EditingOutfit &editingOutfit);
-    void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<const Armor *> &viewData);
-    void DrawArmorViewTableContent(const std::vector<const Armor *> &viewData, const DrawArmorEntry &drawArmorEntry);
+    void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData);
+    void DrawArmorViewTableContent(const std::vector<ArmorEntry> &viewData, const DrawArmorEntry &drawArmorEntry);
     void DrawArmorViewModNameFilterer();
     void DrawArmorViewSlotFilterer();
 

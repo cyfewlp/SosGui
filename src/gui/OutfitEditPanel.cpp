@@ -159,7 +159,7 @@ void OutfitEditPanel::Draw(const EditingOutfit &editingOutfit)
         }
         if (ImGui::BeginChild("##OutfitEditPanelSideBar", {200, 0}, ImGuiEx::ChildFlags().Borders().ResizeX()))
         {
-            DrawSideBar(editingOutfit.GetSourceOutfit());
+            DrawSideBar();
         }
         ImGui::EndChild();
 
@@ -192,7 +192,7 @@ void OutfitEditPanel::DrawOutfitPanel(const EditingOutfit &editingOutfit)
     }
 }
 
-void OutfitEditPanel::DrawSideBar(const SosUiOutfit *editingOutfit)
+void OutfitEditPanel::DrawSideBar()
 {
     ImGui::TextUnformatted(Translate1("Panels.Outfit.ModList"));
     constexpr int maxChildItemCount = 10;
@@ -473,7 +473,7 @@ void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
     }
 }
 
-void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<const Armor *> &viewData)
+void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData)
 {
     ImGui::TableSetupScrollFreeze(1, 1);
     ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed());
@@ -599,7 +599,7 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
     }
 }
 
-void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<const Armor *> &viewData, const DrawArmorEntry &drawArmorEntry)
+void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<ArmorEntry> &viewData, const DrawArmorEntry &drawArmorEntry)
 {
     static bool ascend = true;
     ImGuiUtil::may_update_table_sort_dir(ascend);

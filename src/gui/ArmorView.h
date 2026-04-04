@@ -115,13 +115,28 @@ public:
 };
 } // namespace armor_view
 
+/**
+ * @brief Wrap `Armor`. Cache utf16 name to speed up sort and compare.
+ */
+struct ArmorEntry
+{
+    const Armor *armor;
+    std::wstring name;
+
+    explicit ArmorEntry(const Armor *armor) : armor(armor) { name = SKSE::stl::utf8_to_utf16(armor->GetName()).value_or(L""); }
+
+    auto operator->() const -> const Armor * { return armor; }
+
+    operator const Armor *() const { return armor; }
+};
+
 class ArmorView final
 {
 public:
     using SlotCounter    = std::array<uint16_t, SLOT_COUNT>;
-    using const_iterator = std::vector<const Armor *>::const_iterator;
+    using const_iterator = std::vector<ArmorEntry>::const_iterator;
 
-    std::vector<const Armor *>      view_data_{};
+    std::vector<ArmorEntry>         view_data_{};
     SlotCounter                     slot_counter_;
     armor_view::ArmorNameFilter     armor_name_filter_;
     armor_view::ModFilterer         mod_filterer_;
