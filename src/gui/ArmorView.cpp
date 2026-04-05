@@ -87,6 +87,7 @@ void ArmorView::clear()
 
 void ArmorView::clear_view_data()
 {
+    armor_count = 0;
     view_data_.clear();
     multi_selection_.Clear();
 }
@@ -239,17 +240,23 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
         case ArmorSource::Armor: {
             if (const auto armor = source_ref != nullptr ? source_ref->As<Armor>() : nullptr; filter(armor))
             {
+                armor_count = 1;
                 view_data_.emplace_back(armor);
             }
             break;
         }
         case ArmorSource::Inventory: {
             if (source_ref == nullptr) break;
-            for (const auto &pair : source_ref->GetInventory())
+            const auto objects = source_ref->GetInventory() | std::views::keys;
+            for (const auto &object : objects)
             {
-                if (const auto *armor = pair.first->As<Armor>(); filter(armor))
+                if (const auto *armor = object->As<Armor>(); armor != nullptr)
                 {
-                    view_data_.emplace_back(armor);
+                    armor_count += 1;
+                    if (filter(armor))
+                    {
+                        view_data_.emplace_back(armor);
+                    }
                 }
             }
             break;
@@ -260,6 +267,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             {
                 ArmorItemVisitor visitor;
                 changes->VisitWornItems(visitor);
+                armor_count = visitor.armors.size();
                 for (const auto &armor : visitor.armors)
                 {
                     if (filter(armor))
@@ -273,6 +281,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
         case ArmorSource::All: {
             auto       *dataHandler = RE::TESDataHandler::GetSingleton();
             const auto &armorArray  = dataHandler->GetFormArray<RE::TESObjectARMO>();
+            armor_count             = armorArray.size();
             for (const auto &armor : armorArray)
             {
                 if (filter(armor))
