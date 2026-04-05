@@ -12,6 +12,7 @@
 #include "imguiex/imguiex_enum_wrap.h"
 #include "service/SosDataCoordinator.h"
 #include "task.h"
+#include "util/utils.h"
 
 namespace SosGui
 {

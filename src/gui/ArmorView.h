@@ -47,17 +47,7 @@ public:
 
     void select_slot(SlotType slotPos, bool select = true) { selected_slots_.set(slotPos, select); }
 
-    void select_slots(Slot slots, bool select = true)
-    {
-        if (select)
-        {
-            selected_slots_ |= static_cast<uint32_t>(slots);
-        }
-        else
-        {
-            selected_slots_ &= ~static_cast<uint32_t>(slots);
-        }
-    }
+    void set_select_slots(Slot slots) { selected_slots_ = static_cast<uint32_t>(slots); }
 
     void enable_all_slots(bool check = true) { enable_all_slot_ = check; }
 
@@ -142,7 +132,7 @@ public:
     armor_view::ModFilterer         mod_filterer_;
     armor_view::SlotFilterer        slot_filterer_;
     armor_view::ArmorMultiSelection multi_selection_;
-    size_t                          armor_count;
+    size_t                          armor_count;  ///< Available armors count
     bool                            contain_non_playable_armor_ = true;
     bool                            contain_template_armor_     = false;
 
@@ -156,20 +146,18 @@ public:
 
     ////////////////////////////////////////////////////////////////////
     // mod filterer -> slot-filterer -> armor-name filter
-    void               on_refresh();
-    void               clear();
+    void               clear_all();
     void               clear_view_data();
     [[nodiscard]] auto add_armor(const Armor *armor) -> std::expected<void, error>;
-    void               add_armors_has_slot(ArmorSource source, RE::TESObjectREFR *source_ref, Slot slots);
+    void               add_armors_for_slots(ArmorSource source, RE::TESObjectREFR *source_ref, Slot slots);
     bool               remove_armor(const Armor *armor);
-    void               remove_armors_has_slot(Slot slots);
-    void               remove_armors_no_has_slots(Slot slots);
+    void               prune_view_by_slot_filter();
     void               reset_counter();
     void               reset_view_data(ArmorSource source, RE::TESObjectREFR *source_ref);
     void               reset_view(ArmorSource source, RE::TESObjectREFR *source_ref);
     bool               filter(const Armor *armor) const;
-    void               filterer_enable_all_slots(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref);
-    void               filterer_select_slot(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref);
+    void               set_enable_all_slots_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref);
+    void               set_slot_filter(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref);
 
     [[nodiscard]] auto get_armor_count(SlotType slotPos) const -> std::uint16_t { return slot_counter_.at(slotPos); }
 
@@ -193,7 +181,7 @@ public:
 private:
     auto find(const Armor *armor) const -> const_iterator;
 
-    void add_armor_log_error(const Armor *armor)
+    void try_add_armor(const Armor *armor)
     {
         if (const auto expected = add_armor(armor); !expected && expected.error() != error::armor_already_exists)
         {

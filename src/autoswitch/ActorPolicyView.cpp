@@ -8,6 +8,8 @@
 #include "imguiex/imguiex_enum_wrap.h"
 #include "service/SosDataCoordinator.h"
 
+#include <i18n/translator_manager.h>
+
 namespace SosGui::AutoSwitch
 {
 void ActorPolicyView::Draw(
@@ -34,7 +36,7 @@ void ActorPolicyView::Draw(
         ImGui::EndChild();
         return;
     }
-    static uint32_t selectedPolicyId = 0;
+    static Policy selectedPolicy = Policy::None;
     if (ImGui::BeginTable("##AutoSwitchStateList", 2, ImGuiEx::TableFlags().Resizable().SizingStretchProp().RowBg().Borders()))
     {
         ImGui::TableSetupColumn("$SosGui_TableHeader_Location"_T.c_str());
@@ -62,10 +64,10 @@ void ActorPolicyView::Draw(
             if (ImGui::TableNextColumn())
             {
                 auto       key        = std::format("$SkyOutSys_Text_Autoswitch{}", policyId);
-                const bool isSelected = selectedPolicyId == policyId;
+                const bool isSelected = selectedPolicy == policy;
                 if (constexpr auto flags = ImGuiEx::SelectableFlags().AllowOverlap().SpanAllColumns(); Selectable(key.c_str(), isSelected, flags))
                 {
-                    selectedPolicyId = policyId;
+                    selectedPolicy = policy;
 
                     outfitSelectPopup = std::make_unique<Popup>(currentActor, policyId);
                 }
@@ -75,7 +77,7 @@ void ActorPolicyView::Draw(
                 }
             }
 
-            Column1Outfit(currentActor->GetFormID(), policyId, uiData);
+            Column1Outfit(currentActor->GetFormID(), policy, uiData);
             ImGui::PopID();
         }
         ImGui::EndTable();
@@ -99,7 +101,7 @@ void ActorPolicyView::Draw(
     ImGui::EndChild();
 }
 
-void ActorPolicyView::Column1Outfit(const RE::FormID actorId, const uint32_t policyId, SosUiData &uiData)
+void ActorPolicyView::Column1Outfit(const RE::FormID actorId, Policy policy, SosUiData &uiData)
 {
     const auto &view       = uiData.GetAutoSwitchPolicyContainer();
     auto       &outfitList = uiData.GetOutfitContainer();
@@ -108,18 +110,15 @@ void ActorPolicyView::Column1Outfit(const RE::FormID actorId, const uint32_t pol
     {
         return;
     }
-    const auto name = view.TryFind(actorId, policyId)
-                          .map([](auto &it) {
-                              return it->outfitId;
-                          })
-                          .flat_map([&](auto &outfitId) {
-                              return boost::make_optional(*outfitList.find(outfitId));
-                          })
-                          .map(GetOutfitName)
-                          .value_or_eval([] {
-                              return Translation::Translate("$SkyOutSys_AutoswitchEdit_None");
-                          });
-    ImGui::Text("%s", name.c_str());
+    std::string_view name = Translate("Panels.Actor.NoAutoSwittch");
+    if (const auto policyEntryOpt = view.find(actorId, policy); policyEntryOpt.has_value())
+    {
+        if (const auto outfitIt = outfitList.find(policyEntryOpt.value()->outfit_id); outfitIt != outfitList.end())
+        {
+            name = outfitIt->GetName();
+        }
+    }
+    ImGuiUtil::Text(name);
 }
 
 } // namespace SosGui::AutoSwitch

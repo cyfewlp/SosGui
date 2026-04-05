@@ -273,8 +273,6 @@ void OutfitListTable::DrawOutfitTableContent(RE::Actor *editingActor)
 
                     if (ImGui::BeginPopupContextItem())
                     {
-                        const auto &outfitName = outfit.GetName();
-
                         ImGui::Separator();
                         if (ImGui::MenuItem(Translate1("Panels.Outfit.MarkFavorite")))
                         {

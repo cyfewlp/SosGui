@@ -14,6 +14,7 @@
 #include "task.h"
 #include "util/ImGuiUtil.h"
 #include "util/UiSettingsLoader.h"
+#include "util/utils.h"
 
 #include <windows.h>
 

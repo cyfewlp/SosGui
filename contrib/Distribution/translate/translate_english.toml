@@ -41,6 +41,8 @@ Disable = "Disable"
 MissingActorHint = "Please selec an actor to edit"
 ModList = "Mod List"
 BodySlots = "Body Slots"
+[Panels.Actor]
+NoAutoSwitch = "[No Autoswitch]"
 
 [Panels.OutfitEdit]
 Title = "Outfit Edit Panel"

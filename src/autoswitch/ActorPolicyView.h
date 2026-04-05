@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "data/ActorPolicyContainer.h"
 #include "gui/popup/OutfitSelectPopup.h"
 
 #include <limits>
@@ -31,7 +32,7 @@ public:
     void Draw(const RE::Actor *currentActor, SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
 
 private:
-    static void Column1Outfit(RE::FormID actorId, uint32_t policyId, SosUiData &uiData);
+    static void Column1Outfit(RE::FormID actorId, Policy policy, SosUiData &uiData);
 
     std::unique_ptr<Popup> outfitSelectPopup = nullptr;
 };

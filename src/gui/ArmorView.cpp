@@ -7,6 +7,7 @@
 #include "SosDataType.h"
 #include "gui/icon.h"
 #include "imgui.h"
+#include "util/utils.h"
 
 #include <ranges>
 
@@ -45,11 +46,7 @@ bool armor_view::ArmorNameFilter::Draw()
 
 auto armor_view::SlotFilterer::pass_filter(const Armor *armor) const -> bool
 {
-    if (enable_all_slot_ || armor->HasPartOf(static_cast<Slot>(selected_slots_.to_ulong())))
-    {
-        return true;
-    }
-    return false;
+    return enable_all_slot_ || util::IsArmorHasAnySlotOf(armor, get_selected_slots());
 }
 
 bool armor_view::ModFilterer::PassFilter(const Armor *armor) const
@@ -70,9 +67,10 @@ bool armor_view::ModFilterer::PassFilter(const Armor *armor) const
     return result;
 }
 
-void ArmorView::on_refresh()
+void ArmorView::clear_all()
 {
     view_data_.clear();
+    armor_count = 0;
     slot_counter_.fill(0);
     slot_filterer_.clear();
     multi_selection_.Clear();
@@ -80,14 +78,8 @@ void ArmorView::on_refresh()
     mod_filterer_.clear();
 }
 
-void ArmorView::clear()
-{
-    on_refresh();
-}
-
 void ArmorView::clear_view_data()
 {
-    armor_count = 0;
     view_data_.clear();
     multi_selection_.Clear();
 }
@@ -98,7 +90,11 @@ auto ArmorView::add_armor(const Armor *armor) -> std::expected<void, error>
     {
         auto found = find(armor);
 
-        if (found != view_data_.end() && (*found)->GetFormID() == armor->GetFormID())
+        while (found != view_data_.end() && (*found)->GetFormID() != armor->GetFormID() && (*found)->GetName() == armor->GetName())
+        {
+            ++found;
+        }
+        if ((*found)->GetFormID() == armor->GetFormID())
         {
             return std::unexpected{error::armor_already_exists};
         }
@@ -107,11 +103,10 @@ auto ArmorView::add_armor(const Armor *armor) -> std::expected<void, error>
     return {};
 }
 
-void ArmorView::add_armors_has_slot(ArmorSource source, RE::TESObjectREFR *source_ref, Slot slots)
+void ArmorView::add_armors_for_slots(ArmorSource source, RE::TESObjectREFR *source_ref, Slot slots)
 {
     const auto oldSlots = slot_filterer_.get_selected_slots();
-    slot_filterer_.select_slots(Slot::kNone);
-    slot_filterer_.select_slots(slots);
+    slot_filterer_.set_select_slots(slots);
     switch (source)
     {
         case ArmorSource::None:
@@ -119,7 +114,7 @@ void ArmorView::add_armors_has_slot(ArmorSource source, RE::TESObjectREFR *sourc
         case ArmorSource::Armor: {
             if (const auto armor = source_ref != nullptr ? source_ref->As<Armor>() : nullptr; armor != nullptr)
             {
-                add_armor_log_error(armor);
+                try_add_armor(armor);
             }
             break;
         }
@@ -127,7 +122,7 @@ void ArmorView::add_armors_has_slot(ArmorSource source, RE::TESObjectREFR *sourc
             if (source_ref == nullptr) break;
             for (const auto &object : source_ref->GetInventory() | std::views::keys)
             {
-                add_armor_log_error(object->As<Armor>());
+                try_add_armor(object->As<Armor>());
             }
             break;
         }
@@ -139,7 +134,7 @@ void ArmorView::add_armors_has_slot(ArmorSource source, RE::TESObjectREFR *sourc
                 changes->VisitWornItems(visitor);
                 for (const auto &armor : visitor.armors)
                 {
-                    add_armor_log_error(armor);
+                    try_add_armor(armor);
                 }
             }
             break;
@@ -149,13 +144,12 @@ void ArmorView::add_armors_has_slot(ArmorSource source, RE::TESObjectREFR *sourc
             const auto &armorArray  = dataHandler->GetFormArray<RE::TESObjectARMO>();
             for (const auto &armor : armorArray)
             {
-                add_armor_log_error(armor);
+                try_add_armor(armor);
             }
             break;
         }
     }
-    slot_filterer_.select_slots(Slot::kNone);
-    slot_filterer_.select_slots(oldSlots);
+    slot_filterer_.set_select_slots(oldSlots);
 }
 
 bool ArmorView::remove_armor(const Armor *armor)
@@ -175,37 +169,19 @@ bool ArmorView::remove_armor(const Armor *armor)
     return false;
 }
 
-void ArmorView::remove_armors_has_slot(Slot slots)
+void ArmorView::prune_view_by_slot_filter()
 {
     multi_selection_.Clear();
     for (auto itBegin = view_data_.begin(); itBegin != view_data_.end();)
     {
         const auto &armor = *itBegin;
-        if (armor->HasPartOf(slots) && util::IsArmorNotHasSlotOf(armor, slot_filterer_.get_selected_slots()))
-        {
-            itBegin = view_data_.erase(itBegin);
-        }
-        else
+        if (slot_filterer_.pass_filter(armor))
         {
             ++itBegin;
         }
-    }
-}
-
-void ArmorView::remove_armors_no_has_slots(Slot slots)
-{
-    multi_selection_.Clear();
-    const auto selectedSlots = slot_filterer_.get_selected_slots();
-    for (auto itBegin = view_data_.begin(); itBegin != view_data_.end();)
-    {
-        const auto &armor = *itBegin;
-        if (util::IsArmorNotHasSlotOf(armor, slots) && util::IsArmorNotHasSlotOf(armor, selectedSlots))
-        {
-            itBegin = view_data_.erase(itBegin);
-        }
         else
         {
-            ++itBegin;
+            itBegin = view_data_.erase(itBegin);
         }
     }
 }
@@ -233,6 +209,7 @@ void ArmorView::reset_counter()
 void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_ref)
 {
     clear_view_data();
+    armor_count = 0;
     switch (source)
     {
         case ArmorSource::None:
@@ -333,11 +310,11 @@ auto ArmorView::filter(const Armor *armor) const -> bool
     return true;
 }
 
-void ArmorView::filterer_enable_all_slots(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref)
+void ArmorView::set_enable_all_slots_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref)
 {
-    const auto old = slot_filterer_.is_enable_all_slots();
-    if (old == enable_all) return;
+    const auto oldIsAllSlotsEnabled = slot_filterer_.is_all_slots_enabled();
     slot_filterer_.enable_all_slots(enable_all);
+    if (oldIsAllSlotsEnabled == slot_filterer_.is_all_slots_enabled()) return;
 
     if (slot_filterer_.is_enable_all_slots())
     {
@@ -349,11 +326,11 @@ void ArmorView::filterer_enable_all_slots(bool enable_all, ArmorSource source, R
     }
     else
     {
-        remove_armors_no_has_slots(slot_filterer_.get_selected_slots());
+        prune_view_by_slot_filter();
     }
 }
 
-void ArmorView::filterer_select_slot(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref)
+void ArmorView::set_slot_filter(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref)
 {
     if (const auto old = slot_filterer_.is_slot_selected(slotPos); old == select)
     {
@@ -377,11 +354,11 @@ void ArmorView::filterer_select_slot(SlotType slotPos, bool select, ArmorSource 
         const Slot slot = util::ToSlot(slotPos);
         if (select)
         {
-            add_armors_has_slot(source, source_ref, slot);
+            add_armors_for_slots(source, source_ref, slot);
         }
         else
         {
-            remove_armors_has_slot(slot);
+            prune_view_by_slot_filter();
         }
     }
     else if (!slot_filterer_.is_all_slots_enabled())

@@ -107,13 +107,13 @@ auto get_near_objects_has_armor() -> std::vector<RE::TESObjectREFR *>
 void OutfitEditPanel::OnRefresh()
 {
     should_refresh_view_ = true;
-    m_armorView.on_refresh();
+    m_armorView.clear_all();
 }
 
 void OutfitEditPanel::Cleanup()
 {
     should_refresh_view_ = true;
-    m_armorView.clear();
+    m_armorView.clear_all();
 }
 
 void OutfitEditPanel::Focus()
@@ -658,7 +658,7 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer()
     bool        checkedAll   = slotFilterer.is_enable_all_slots();
     if (ImGui::Checkbox(name.c_str(), &checkedAll))
     {
-        m_armorView.filterer_enable_all_slots(checkedAll, armor_source_, armor_source_refr_);
+        m_armorView.set_enable_all_slots_filter(checkedAll, armor_source_, armor_source_refr_);
     }
 
     for (SlotType idx = 0; idx < RE::BIPED_OBJECT::kEditorTotal; ++idx)
@@ -669,7 +669,7 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer()
         bool checked   = slotFilterer.is_slot_selected(idx);
         if (ImGui::Checkbox(slotLabel.c_str(), &checked))
         {
-            m_armorView.filterer_select_slot(idx, checked, armor_source_, armor_source_refr_);
+            m_armorView.set_slot_filter(idx, checked, armor_source_, armor_source_refr_);
         }
         ImGui::PopID();
     }
