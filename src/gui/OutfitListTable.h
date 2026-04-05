@@ -27,7 +27,7 @@ class OutfitListTable final : public BaseGui
     OutfitService           &m_outfitService;
     OutfitEditPanel         &m_editPanel;
     EditingOutfit            m_wantEdit = UNTITLED_OUTFIT;
-    MultiSelection           m_outfitMultiSelection;
+    MultiSelection           multi_selection_;
     ImGuiUtil::DebounceInput m_outfitFilterInput{};
     ImGuiID                  m_editingInputId = 0;
     OutfitNameBuffer         m_outfitNameBuffer{};
@@ -44,21 +44,20 @@ public:
     void OnRefresh() override;
     void Cleanup() override;
 
-    void Draw(RE::Actor *editingActor);
+    void Draw();
 
     auto GetEditingOutfit() -> EditingOutfit & { return m_wantEdit; }
 
 private:
     // refresh, filterer, favorite checkbox...
     void DrawToolWidgets();
-    void DrawOutfitTable(RE::Actor *editingActor);
-    void DrawOutfitTableContent(RE::Actor *editingActor);
+    void DrawOutfitTable();
+    void DrawOutfitTableContent();
     void DrawCreateOutfitPopup(const char *name);
-    bool ConfirmDeleteOutfitPopup(const char *popupName, const SosUiOutfit *outfit);
 
     void OnAcceptEditOutfit(const EditingOutfit &lastEdit, const EditingOutfit &editingOutfit) const;
     // check MultiSelection and set all selected outfit to favorite
     void OnAcceptSetFavoriteOutfits(bool toFavorite);
-    void DeleteAllSelectOutfits(const SosUiOutfit *clickedOutfit);
+    void DeleteAllSelectOutfits();
 };
 } // namespace SosGui

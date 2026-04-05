@@ -52,7 +52,7 @@ AlignConsecutiveMacros:
 # short code statements
 
 AllowShortIfStatementsOnASingleLine: WithoutElse
-AllowShortLambdasOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: All
 AllowShortBlocksOnASingleLine : Empty
 AllowShortFunctionsOnASingleLine: Inline
 

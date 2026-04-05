@@ -53,10 +53,6 @@ private:
 public:
     void Cleanup() override
     {
-        if (!m_resumeQueue.empty())
-        {
-            ExecuteUiTasks();
-        }
         m_actors.clear();
         m_NearActors.clear();
         m_enabled           = false;
@@ -65,53 +61,6 @@ public:
         outfit_container_.get_all().clear();
         actor_policy_container_.actor_policies.clear();
         m_autoSwitchEnabled.clear();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // UI Tasks
-    ////////////////////////////////////////////////////////////////////////////
-
-    struct awaitable
-    {
-        SosUiData *self;
-
-        bool await_ready() const noexcept { return false; }
-
-        auto await_suspend(std::coroutine_handle<> a_handle) const noexcept
-        {
-            std::lock_guard lock(self->m_mutex);
-            self->m_resumeQueue.push(a_handle);
-        }
-
-        void await_resume() {}
-    };
-
-    awaitable await_execute_on_ui() { return awaitable{this}; }
-
-    void ExecuteUiTasks()
-    {
-        std::queue<std::coroutine_handle<>> localQueue;
-        {
-            std::lock_guard lock(m_mutex);
-            localQueue.swap(m_resumeQueue);
-        }
-        while (!localQueue.empty())
-        {
-            auto &coroutineHandle = localQueue.front();
-            try
-            {
-                if (coroutineHandle)
-                {
-                    coroutineHandle();
-                }
-            }
-            catch (const std::exception &ex)
-            {
-                logger::error("Coroutine task occurs exception: ", ex.what());
-                logger::LogStacktrace();
-            }
-            localQueue.pop();
-        }
     }
 
     ////////////////////////////////////////////////////////////////////////////

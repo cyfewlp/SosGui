@@ -328,9 +328,7 @@ void OutfitEditPanel::SlotPolicyCombo(const EditingOutfit &editingOutfit, const 
             {
                 if (!editingOutfit.IsUntitled())
                 {
-                    +[&] {
-                        return m_outfitService.SetSlotPolicy(editingOutfit.GetId(), editingOutfit.GetName(), slotIdx, policy);
-                    };
+                    spawn([&] { return m_outfitService.SetSlotPolicy(editingOutfit.GetId(), editingOutfit.GetName(), slotIdx, policy); });
                 }
             }
             ImGuiUtil::SetItemTooltip(SlotPolicyToTooltipString(policy));
@@ -718,29 +716,21 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
                 conflict_solution_ = ConflictSolution::none;
             }
 
-            +[&] {
-                return m_outfitService.DeleteConflictArmors(outfitIt->GetName(), armor);
-            };
+            spawn([&] { return m_outfitService.DeleteConflictArmors(outfitIt->GetName(), armor); });
         }
 
         usedSlot.set(armor->GetSlotMask().get());
-        +[&] {
-            return m_outfitService.AddArmor(outfitIt->GetId(), outfitIt->GetName(), armor);
-        };
+        spawn([&] { return m_outfitService.AddArmor(outfitIt->GetId(), outfitIt->GetName(), armor); });
     }
 
-    +[&] {
-        return m_outfitService.GetOutfitArmors(outfitIt->GetId(), outfitIt->GetName());
-    };
+    spawn([&] { return m_outfitService.GetOutfitArmors(outfitIt->GetId(), outfitIt->GetName()); });
 }
 
 void OutfitEditPanel::DeleteArmor(const OutfitId id, const Armor *armor)
 {
     if (const auto it = m_uiData.GetOutfitContainer().find(id); it != m_uiData.GetOutfitContainer().end())
     {
-        +[&] {
-            return m_outfitService.RemoveArmor(it->GetId(), it->GetName(), armor);
-        };
+        spawn([&] { return m_outfitService.RemoveArmor(it->GetId(), it->GetName(), armor); });
     }
     else
     {

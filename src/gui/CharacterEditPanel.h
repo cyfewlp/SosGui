@@ -2,34 +2,38 @@
 // Created by jamie on 2025/5/25.
 //
 
-#include "autoswitch/ActorPolicyView.h"
+#include "data/ActorPolicyContainer.h"
 #include "gui/BaseGui.h"
+#include "util/ImGuiUtil.h"
 
 namespace SosGui
 {
+
+class SosUiData;
+class SosDataCoordinator;
+class OutfitService;
+
 class CharacterEditPanel final : public BaseGui
 {
 public:
     void Focus() override;
 
-    void OnRefresh() override { m_selectedActorIndex = 0; }
+    void Cleanup() override {}
 
-    void Cleanup() override { m_selectedActorIndex = 0; }
-
-    void DrawOutfitSelectPopup(RE::Actor *const &selectedActor, SosUiData &uiData, const OutfitService &outfitService);
     void Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
 
-    auto GetSelectedActorIndex() const -> int { return m_selectedActorIndex; }
-
 private:
-    std::unique_ptr<OutfitSelectPopup> m_outfitSelectPopup = nullptr;
-    AutoSwitch::ActorPolicyView        m_autoSwitchOutfitView{};
-    int                                m_selectedActorIndex = 0;
-
     void DrawCharactersPanel(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
-    void DrawCharactersTable(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
+    void DrawCharactersInfo(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
+    void DrawOutfitsCombo(SosUiData &uiData, const OutfitService &outfitService, RE::Actor *actor);
+    auto get_outfit_display_name(const RE::Actor *currentActor, Policy policy, SosUiData &uiData) -> std::string_view;
+    void draw_auto_switch(
+        const RE::Actor *currentActor, SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService
+    );
 
-    auto GetSelectedActor(SosUiData &uiData) const -> RE::Actor *;
+    ImGuiUtil::DebounceInput debounce_input_;
+    const RE::Actor         *outfit_popup_target_actor_{nullptr};
+    Policy                   selected_policy_ = Policy::None;
 };
 
 } // namespace SosGui

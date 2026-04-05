@@ -1,6 +1,5 @@
 #pragma once
 
-#include "autoswitch/ActorPolicyView.h"
 #include "data/SosUiData.h"
 #include "gui/BaseGui.h"
 #include "gui/CharacterEditPanel.h"
@@ -36,11 +35,7 @@ class SosGuiWindow
     OutfitEditPanel    m_outfitEditPanel;
     OutfitListTable    m_outfitListTable;
     i18n::Translator   m_translator;
-
-    bool m_isShowPanels = true;
-
-    AutoSwitch::ActorPolicyView        m_autoSwitchOutfitView{};
-    std::unique_ptr<OutfitSelectPopup> m_outfitSelectPopup = nullptr;
+    bool               m_isShowPanels = true;
 
 public:
     SosGuiWindow();

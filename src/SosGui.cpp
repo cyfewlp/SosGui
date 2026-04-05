@@ -70,7 +70,6 @@ auto SosGuiWindow::OnPostDisplay() -> void
 {
     ImGuiEx::NewFrame();
 
-    m_uiData.ExecuteUiTasks();
     Draw();
 
     ImGuiEx::Render();
@@ -96,10 +95,7 @@ auto SosGuiWindow::Draw() -> void
     try
     {
         m_characterEditPanel.Draw(m_uiData, m_dataCoordinator, m_outfitService);
-
-        const auto &selectActorIndex = m_characterEditPanel.GetSelectedActorIndex();
-        RE::Actor  *selectedActor    = GetSelectedActor(selectActorIndex);
-        m_outfitListTable.Draw(selectedActor);
+        m_outfitListTable.Draw();
 
         const auto &editingOutfit = m_outfitListTable.GetEditingOutfit();
         m_outfitEditPanel.Draw(editingOutfit);
@@ -193,9 +189,7 @@ void SosGuiWindow::Toolbar()
             bool fEnabled = m_uiData.IsEnabled();
             if (ImGui::Checkbox(Translate1("Enabled"), &fEnabled))
             {
-                +[&] {
-                    return m_dataCoordinator.RequestEnable(fEnabled);
-                };
+                spawn([&] { return m_dataCoordinator.RequestEnable(fEnabled); });
             }
         }
 
@@ -214,16 +208,12 @@ void SosGuiWindow::Toolbar()
         if (ImGui::MenuItem(Translate1("ToolBar.Import")))
         {
             OnImportSettings();
-            +[&] {
-                return m_dataCoordinator.RequestImportSettings();
-            };
+            spawn([&] { return m_dataCoordinator.RequestImportSettings(); });
         }
 
         if (ImGui::MenuItem(Translate1("ToolBar.Export")))
         {
-            +[&] {
-                return m_dataCoordinator.RequestExportSettings();
-            };
+            spawn([&] { return m_dataCoordinator.RequestExportSettings(); });
         }
         ImGui::EndMenu();
     }

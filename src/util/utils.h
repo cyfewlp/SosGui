@@ -1,5 +1,6 @@
 #pragma once
 
+#include <i18n/translator_manager.h>
 #include <utility>
 
 namespace SosGui::util
@@ -50,6 +51,19 @@ constexpr auto ToSlot(const RE::BIPED_OBJECT equipIndex) -> RE::BipedObjectSlot
         return RE::BipedObjectSlot::kNone;
     }
     return static_cast<RE::BipedObjectSlot>(1 << equipIndex);
+}
+
+/// @brief Supports only one replacement translate key, and the template string must be "{}"
+template <typename Arg>
+constexpr auto TranslateEx(std::string_view key, Arg arg) -> std::string
+{
+    constexpr std::string_view placeholder = "{}";
+    std::string                message(Translate(key));
+    if (auto off = message.find(placeholder); off != std::string::npos)
+    {
+        message.replace(off, placeholder.size(), std::format("{}", arg));
+    }
+    return message;
 }
 
 } // namespace SosGui::util

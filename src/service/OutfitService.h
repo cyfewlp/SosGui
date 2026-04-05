@@ -15,7 +15,7 @@ class OutfitService
 {
     using Armor    = RE::TESObjectARMO;
     using Variable = RE::BSScript::Variable;
-    SosUiData  &m_uiData;
+    SosUiData       &m_uiData;
     OutfitContainer &outfit_container_;
 
 public:
@@ -55,6 +55,6 @@ public:
 
     auto GetActorAllStateOutfit(RE::Actor *actor) const -> Task;
 
-    auto SetActorStateOutfit(const RE::Actor *actor, uint32_t policyId, OutfitId outfitId) const -> Task;
+    auto SetActorStateOutfit(const RE::Actor *actor, Policy policy, OutfitId outfitId) const -> Task;
 };
 } // namespace SosGui

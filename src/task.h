@@ -135,7 +135,7 @@ struct EagerTask
 };
 
 template <typename Task>
-EagerTask operator+(Task &&task)
+EagerTask spawn(Task &&task)
 {
     logger::debug("start {}", __FUNCTION__);
     co_await task();

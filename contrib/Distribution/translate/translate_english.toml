@@ -24,6 +24,30 @@ QuickSlotsToolTip = "Adds a spell to your character, to allow quick switching be
 
 [Panels]
 
+[Panels.Characters]
+Refresh = "Refresh Characters"
+ActiveOutfit = "Active Outfit"
+
+[Panels.Characters.AutoSwitch]
+Empty = "[No Autoswitch]"
+Title = "Location-Based Autoswitch"
+Enable = "Enable"
+Location = "Location"
+State = "State"
+Policy0 = "World"
+Policy1 = "Towns"
+Policy2 = "Dungeons"
+Policy9 = "City"
+Policy3 = "World (Snowy)"
+Policy4 = "Towns (Snowy)"
+Policy5 = "Dungeons (Snowy)"
+Policy10 = "City (Snowy)"
+Policy6 = "World (Rainy)"
+Policy7 = "Towns (Rainy)"
+Policy8 = "Dungeons (Rainy)"
+Policy11 = "City (Rainy)"
+Policy12 = "Combat"
+
 [Panels.Outfit]
 Title = "Your Outfits"
 Refresh = "Refresh Outfits"
@@ -41,8 +65,6 @@ Disable = "Disable"
 MissingActorHint = "Please selec an actor to edit"
 ModList = "Mod List"
 BodySlots = "Body Slots"
-[Panels.Actor]
-NoAutoSwitch = "[No Autoswitch]"
 
 [Panels.OutfitEdit]
 Title = "Outfit Edit Panel"
@@ -57,7 +79,9 @@ ShowAllSlots = "Show All Body Slots"
 AddAll = "Add All Selected Armors"
 RemoveArmor = "Remove Armor"
 ConfirmRemoveConflictArmors = "This armor conflicts with some of the armor already in the outfit.\n\nWould you like to remove the conflicting pieces, and add this piece?"
-Delete = "Delete outfit"
+DeleteMultiple = "Are you sure you want to delete the following {} outfits?"
+DeleteMultipleAdditionalTips = "...{} additional outfits not shown"
+DeleteOne = "Are you sure you want to delete '{}'?"
 Slot = "Slot"
 SlotPolicies = "Slot Policies"
 SlotPolicyHelp = "Slot Policy Help"

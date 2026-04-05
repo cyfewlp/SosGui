@@ -75,6 +75,16 @@ public:
         return false;
     }
 
+    constexpr auto erase(const_iterator it) -> bool
+    {
+        if (it != outfits_.end())
+        {
+            outfits_.erase(it);
+            return true;
+        }
+        return false;
+    }
+
     [[nodiscard]] constexpr auto exists(OutfitId id) const -> bool { return find(id) != outfits_.end(); }
 
     [[nodiscard]] constexpr auto end() const -> const_iterator { return outfits_.end(); }
