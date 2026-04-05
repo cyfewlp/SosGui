@@ -6,7 +6,7 @@
 
 #include "Cleanable.h"
 #include "OutfitContainer.h"
-#include "data/ActorOutfitMap.h"
+#include "data/ActorOutfitContainer.h"
 #include "data/ActorPolicyContainer.h"
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
@@ -42,7 +42,7 @@ private:
     std::vector<RE::Actor *> m_NearActors;
     bool                     m_enabled           = false;
     bool                     m_fQuickSlotEnabled = false;
-    ActorOutfitMap           m_actorOutfitMap;
+    ActorOutfitContainer           m_actorOutfitMap;
     OutfitContainer          outfit_container_{};
     ActorPolicyContainer     actor_policy_container_;
 
@@ -61,7 +61,7 @@ public:
         m_NearActors.clear();
         m_enabled           = false;
         m_fQuickSlotEnabled = false;
-        m_actorOutfitMap.Clear();
+        m_actorOutfitMap.container.clear();
         outfit_container_.get_all().clear();
         actor_policy_container_.actor_policies.clear();
         m_autoSwitchEnabled.clear();
@@ -170,12 +170,6 @@ public:
 
     [[nodiscard]] auto GetOutfitContainer() -> OutfitContainer & { return outfit_container_; }
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Active outfit
-    ////////////////////////////////////////////////////////////////////////////
-
-    [[nodiscard]] auto GetActorOutfitMap() const -> const ActorOutfitMap & { return m_actorOutfitMap; }
-
-    [[nodiscard]] auto GetActorOutfitMap() -> ActorOutfitMap & { return m_actorOutfitMap; }
+    [[nodiscard]] auto GetActorOutfitContainer() -> ActorOutfitContainer & { return m_actorOutfitMap; }
 };
 } // namespace SosGui

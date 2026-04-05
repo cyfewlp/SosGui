@@ -86,7 +86,6 @@ target_include_directories(
     ${IMGUIEX_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${DETOURS_INCLUDE_DIRS}
-    $ENV{BOOST_DIR}
 )
 
 # linkage

@@ -127,7 +127,7 @@ auto OutfitService::SetActorOutfit(RE::Actor *actor, const OutfitId id, std::str
 {
     if (outfit_container_.exists(id))
     {
-        m_uiData.GetActorOutfitMap().SetOutfit(actor, id);
+        m_uiData.GetActorOutfitContainer().set(actor->formID, id);
         co_await SosNativeCaller::ActiveOutfit(actor, std::string(outfitName));
     }
 }
@@ -141,7 +141,7 @@ auto OutfitService::GetActorOutfit(RE::Actor *actor) const -> Task
     }
     if (const auto it = outfit_container_.find(outfitNameVar.Unpack<std::string>()); it != outfit_container_.end())
     {
-        m_uiData.GetActorOutfitMap().SetOutfit(actor, it->GetId());
+        m_uiData.GetActorOutfitContainer().set(actor->formID, it->GetId());
     }
 }
 

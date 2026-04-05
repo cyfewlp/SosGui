@@ -14,7 +14,6 @@
 #include "util/ImGuiUtil.h"
 
 #include <array>
-#include <boost/optional/detail/optional_reference_spec.hpp>
 #include <functional>
 #include <ranges>
 #include <string>

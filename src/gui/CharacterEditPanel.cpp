@@ -103,15 +103,18 @@ void CharacterEditPanel::DrawCharactersPanel(SosUiData &uiData, const SosDataCoo
 
 static auto GetActorOutfitName(SosUiData &uiData, RE::Actor *actor) -> std::string
 {
-    return uiData.GetActorOutfitMap()
-        .TryGetOutfitId(actor)
-        .flat_map([&](auto &id) {
-            return boost::make_optional(*uiData.GetOutfitContainer().find(id));
-        })
-        .map([](const auto &outfit) {
-            return outfit.GetName();
-        })
-        .value_or("No outfit");
+    const auto &actorOutfis = uiData.GetActorOutfitContainer();
+    const auto &outfits     = uiData.GetOutfitContainer();
+    const auto  it          = uiData.GetActorOutfitContainer().find(actor->formID);
+    if (it != actorOutfis.end())
+    {
+        if (const auto outfitIt = outfits.find(it->outfit_id); outfitIt != outfits.end())
+        {
+            return outfitIt->GetName();
+        }
+    }
+
+    return "[No Outfit]";
 }
 
 void CharacterEditPanel::DrawCharactersTable(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
