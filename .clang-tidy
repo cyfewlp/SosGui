@@ -15,11 +15,11 @@ Checks: >
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-vararg,
   -misc-include-cleaner,
   -google-readability-namespace-comments,
   -readability-braces-around-statements,
 #  portability-*,
-#  -cppcoreguidelines-pro-type-vararg,
 #  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
 #  -performance-no-automatic-move,
 HeaderFileExtensions:
@@ -39,4 +39,5 @@ CheckOptions:
   readability-convert-member-functions-to-static.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.Threshold: '25'
   cppcoreguidelines-pro-bounds-avoid-unchecked-container-access.ExcludeClasses: '::ImGuiEx::M3::ColorScheme;::ImGuiEx::M3::M3Styles'
+  modernize-use-trailing-return-type.TransformLambdas: "none"
 FormatStyle: file
