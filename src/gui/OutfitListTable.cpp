@@ -39,14 +39,12 @@ void OutfitListTable::OnRefresh()
 {
     m_wantEdit = UNTITLED_OUTFIT;
     multi_selection_.Clear();
-    m_outfitFilterInput.Clear();
+    outfit_name_buffer_[0] = '\0';
 }
 
 void OutfitListTable::Cleanup()
 {
-    m_wantEdit = UNTITLED_OUTFIT;
-    multi_selection_.Clear();
-    m_outfitFilterInput.Clear();
+    OnRefresh();
 }
 
 void OutfitListTable::Draw()
@@ -88,17 +86,19 @@ void OutfitListTable::DrawToolWidgets()
     ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.Refresh"));
 
     ImGui::SameLine();
-    if (ImGui::Checkbox(Translate1("Panels.Outfit.ShowFavorites"), &show_favorites_))
-    {
-        m_outfitFilterInput.dirty = true;
-    }
+    ImGui::Checkbox(Translate1("Panels.Outfit.ShowFavorites"), &show_favorites_);
 
     ImGui::AlignTextToFramePadding();
     ImGuiUtil::IconButton(ICON_SEARCH);
     ImGui::SameLine(0.F, 0.F);
 
     ImGui::PushItemWidth(-FLT_MIN);
-    m_outfitFilterInput.Draw("##filter", Translate1("Panels.Outfit.Filter"));
+    ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_F, ImGuiInputFlags_Tooltip);
+    ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
+    ImGui::InputTextWithHint(
+        "##filterer", Translate1("Panels.Outfit.Filter"), outfit_name_buffer_.data(), outfit_name_buffer_.size(), ImGuiInputTextFlags_EscapeClearsAll
+    );
+    ImGui::PopItemFlag();
     ImGui::PopItemWidth();
 }
 
@@ -183,9 +183,9 @@ void OutfitListTable::DrawOutfitTableContent()
     static bool ascend = true;
     ImGuiUtil::may_update_table_sort_dir(ascend);
 
-    auto OnRename = [this](const ImGuiID inputId, const std::string &outfitName) {
-        m_editingInputId = inputId;
-        outfitName.copy(m_outfitNameBuffer.data(), m_outfitNameBuffer.size());
+    auto OnRename = [this](const ImGuiID inputId, const std::string &outfitName) -> void {
+        active_input_id_ = inputId;
+        outfitName.copy(outfit_name_buffer_.data(), outfit_name_buffer_.size());
         ImGui::ActivateItemByID(inputId);
     };
 
@@ -246,21 +246,21 @@ void OutfitListTable::DrawOutfitTableContent()
 
             if (ImGui::TableNextColumn()) // outfit name column
             {
-                if (const auto thisInputId = ImGui::GetID(OUTFIT_NAME_INPUT_LABEL); m_editingInputId == thisInputId)
+                if (const auto thisInputId = ImGui::GetID(OUTFIT_NAME_INPUT_LABEL); active_input_id_ == thisInputId)
                 {
                     ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::InputTextWithHint(OUTFIT_NAME_INPUT_LABEL, "rename outfit", m_outfitNameBuffer.data(), m_outfitNameBuffer.size());
+                    ImGui::InputTextWithHint(OUTFIT_NAME_INPUT_LABEL, "rename outfit", outfit_name_buffer_.data(), outfit_name_buffer_.size());
 
                     if (ImGui::IsItemDeactivated())
                     {
-                        std::string_view newNameSv(m_outfitNameBuffer.data());
+                        std::string_view newNameSv(outfit_name_buffer_.data());
                         if (!newNameSv.empty() && newNameSv != outfit.GetName())
                         {
-                            logger::info("Rename outfit {} to {}", outfit.GetName(), m_outfitNameBuffer.data());
+                            logger::info("Rename outfit {} to {}", outfit.GetName(), outfit_name_buffer_.data());
                             spawn([&] { return m_outfitService.RenameOutfit(outfit.GetId(), outfit.GetName(), std::string(newNameSv)); });
                         }
-                        m_outfitNameBuffer[0] = '\0';
-                        m_editingInputId      = 0;
+                        outfit_name_buffer_[0] = '\0';
+                        active_input_id_       = 0;
                     }
                 }
                 else
@@ -331,26 +331,32 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name)
     {
         // Clear the active id that rename input item if exists.
         // It should unreachable.
-        if (m_editingInputId != 0 && m_editingInputId == ImGui::GetActiveID())
+        if (active_input_id_ != 0 && active_input_id_ == ImGui::GetActiveID())
         {
             ImGui::ClearActiveID();
         }
 
         ImGui::PushItemWidth(-FLT_MIN);
-        ImGui::InputTextWithHint("##CreateNewOutfit", Translate1("Panels.Outfit.CreateHint"), m_outfitNameBuffer.data(), m_outfitNameBuffer.size());
+        ImGui::InputTextWithHint(
+            "##CreateNewOutfit",
+            Translate1("Panels.Outfit.CreateHint"),
+            outfit_name_buffer_.data(),
+            outfit_name_buffer_.size(),
+            ImGuiEx::InputTextFlags().AutoSelectAll()
+        );
         ImGui::PopItemWidth();
 
-        ImGui::BeginDisabled(m_outfitNameBuffer[0] == '\0');
+        ImGui::BeginDisabled(outfit_name_buffer_[0] == '\0');
         if (ImGui::Button(Translate1("Panels.Outfit.Create")))
         {
-            spawn([&] { return m_outfitService.CreateOutfit(std::string(m_outfitNameBuffer.data())); });
+            spawn([&] { return m_outfitService.CreateOutfit(std::string(outfit_name_buffer_.data())); });
             ImGui::CloseCurrentPopup();
         }
 
         ImGui::SameLine();
         if (ImGui::Button(Translate1("Panels.Outfit.CreateFromWorn")))
         {
-            spawn([&] { return m_outfitService.CreateOutfitFromWorn(std::string(m_outfitNameBuffer.data())); });
+            spawn([&] { return m_outfitService.CreateOutfitFromWorn(std::string(outfit_name_buffer_.data())); });
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndDisabled();
