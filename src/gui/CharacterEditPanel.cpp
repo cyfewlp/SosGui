@@ -19,19 +19,19 @@ namespace SosGui
 namespace
 {
 constexpr auto POLICIES_DRAW_LIST = {
-    Policy::Combat,
-    Policy::World,
-    Policy::WorldSnowy,
-    Policy::WorldRainy,
-    Policy::City,
-    Policy::CitySnowy,
-    Policy::CityRainy,
-    Policy::Town,
-    Policy::TownSnowy,
-    Policy::TownRainy,
-    Policy::Dungeon,
-    Policy::DungeonSnowy,
-    Policy::DungeonRainy
+    AutoSwitch::Combat,
+    AutoSwitch::World,
+    AutoSwitch::WorldSnowy,
+    AutoSwitch::WorldRainy,
+    AutoSwitch::City,
+    AutoSwitch::CitySnowy,
+    AutoSwitch::CityRainy,
+    AutoSwitch::Town,
+    AutoSwitch::TownSnowy,
+    AutoSwitch::TownRainy,
+    AutoSwitch::Dungeon,
+    AutoSwitch::DungeonSnowy,
+    AutoSwitch::DungeonRainy
 };
 
 auto GetActorOutfitName(SosUiData &uiData, RE::Actor *actor) -> std::string
@@ -145,7 +145,7 @@ void CharacterEditPanel::DrawOutfitsCombo(SosUiData &uiData, const OutfitService
     }
 }
 
-std::string_view CharacterEditPanel::get_outfit_display_name(const RE::Actor *currentActor, Policy policy, SosUiData &uiData)
+std::string_view CharacterEditPanel::get_outfit_display_name(const RE::Actor *currentActor, AutoSwitch policy, SosUiData &uiData)
 {
     const auto      &view       = uiData.GetAutoSwitchPolicyContainer();
     auto            &outfitList = uiData.GetOutfitContainer();
@@ -170,13 +170,13 @@ void CharacterEditPanel::draw_auto_switch(
         spawn([&] { return dataCoordinator.RequestSetActorAutoSwitchState(currentActor, enabled); });
     }
 
-    Policy oldSelectedPolicy = selected_policy_;
+    AutoSwitch oldSelectedPolicy = selected_policy_;
     if (ImGui::BeginTable("##AutoSwitchStateList", 2, ImGuiEx::TableFlags().Resizable().SizingStretchProp().RowBg().Borders()))
     {
         ImGui::TableSetupColumn(Translate1("Panels.Characters.AutoSwitch.Location"));
         ImGui::TableSetupColumn(Translate1("Panels.Characters.AutoSwitch.State"));
         ImGui::TableHeadersRow();
-        for (Policy policy : POLICIES_DRAW_LIST)
+        for (AutoSwitch policy : POLICIES_DRAW_LIST)
         {
             int policyId = static_cast<int>(policy);
 

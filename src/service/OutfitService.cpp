@@ -269,14 +269,14 @@ auto OutfitService::GetActorStateOutfit(RE::Actor *actor, uint32_t policyId) con
 
     if (auto it = outfit_container_.find(outfitVar.Unpack<std::string>()); it != outfit_container_.end())
     {
-        const auto policyEntryOpt = m_uiData.GetAutoSwitchPolicyContainer().find(actor->GetFormID(), static_cast<Policy>(policyId));
+        const auto policyEntryOpt = m_uiData.GetAutoSwitchPolicyContainer().find(actor->GetFormID(), static_cast<AutoSwitch>(policyId));
         if (policyEntryOpt.has_value())
         {
             policyEntryOpt.value()->outfit_id = it->GetId();
         }
         else
         {
-            m_uiData.GetAutoSwitchPolicyContainer().emplace_back(actor->GetFormID(), static_cast<Policy>(policyId), it->GetId());
+            m_uiData.GetAutoSwitchPolicyContainer().emplace_back(actor->GetFormID(), static_cast<AutoSwitch>(policyId), it->GetId());
         }
     }
 }
@@ -285,7 +285,7 @@ auto OutfitService::GetActorAllStateOutfit(RE::Actor *actor) const -> Task
 {
     auto &view = m_uiData.GetAutoSwitchPolicyContainer();
     view.erase_actor(actor->GetFormID());
-    for (uint32_t policyId = 0; policyId < static_cast<uint32_t>(Policy::Count); ++policyId)
+    for (uint32_t policyId = 0; policyId < static_cast<uint32_t>(AutoSwitch::Count); ++policyId)
     {
         Variable outfitVar = co_await SosNativeCaller::GetStateOutfit(actor, std::move(policyId));
         if (!outfitVar.IsString())
@@ -294,14 +294,14 @@ auto OutfitService::GetActorAllStateOutfit(RE::Actor *actor) const -> Task
         }
         if (auto it = outfit_container_.find(outfitVar.Unpack<std::string>()); it != outfit_container_.end())
         {
-            view.emplace_back(actor->GetFormID(), static_cast<Policy>(policyId), it->GetId());
+            view.emplace_back(actor->GetFormID(), static_cast<AutoSwitch>(policyId), it->GetId());
         }
     }
 }
 
-auto OutfitService::SetActorStateOutfit(const RE::Actor *actor, Policy policy, const OutfitId outfitId) const -> Task
+auto OutfitService::SetActorStateOutfit(const RE::Actor *actor, AutoSwitch policy, const OutfitId outfitId) const -> Task
 {
-    if (policy >= Policy::Count)
+    if (policy >= AutoSwitch::Count)
     {
         ErrorNotifier::GetInstance().Error(std::format("Invalid outfit policy: {}", static_cast<uint32_t>(policy)));
         co_return;
