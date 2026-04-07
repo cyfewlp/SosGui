@@ -69,14 +69,10 @@ void OutfitListTable::DrawToolWidgets()
     ImGuiUtil::IconButton(ICON_SEARCH);
     ImGui::SameLine(0.F, 0.F);
 
-    ImGui::PushItemWidth(-FLT_MIN);
     ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_F, ImGuiInputFlags_Tooltip);
     ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
-    ImGui::InputTextWithHint(
-        "##filterer", Translate1("Panels.Outfit.Filter"), outfit_name_buffer_.data(), outfit_name_buffer_.size(), ImGuiInputTextFlags_EscapeClearsAll
-    );
+    name_filterer_.Draw("##filterer", -FLT_MIN);
     ImGui::PopItemFlag();
-    ImGui::PopItemWidth();
 }
 
 void OutfitListTable::DrawOutfitTable()
@@ -195,7 +191,7 @@ void OutfitListTable::DrawOutfitTableContent()
         {
             const auto  uIndex = static_cast<ImGuiID>(index);
             const auto &outfit = outfits[uIndex];
-            if (show_favorites_ && !outfit.IsFavorite()) continue;
+            if (!pass_filter(outfit)) continue;
 
             ImGui::PushID(index);
             ImGui::TableNextRow();
@@ -344,6 +340,13 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name)
 
         ImGui::EndPopup();
     }
+}
+
+auto OutfitListTable::pass_filter(const SosUiOutfit &outfit) -> bool
+{
+    const auto &name = outfit.GetName();
+    return name_filterer_.PassFilter(name.c_str(), name.c_str() + name.size()) && // filter by name
+           (!show_favorites_ || outfit.IsFavorite());                             // or only favorites if checked
 }
 
 void OutfitListTable::OnAcceptEditOutfit(const EditingOutfit &lastEdit, const EditingOutfit &editingOutfit) const

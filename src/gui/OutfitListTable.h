@@ -26,6 +26,7 @@ class OutfitListTable final
     using DrawOutfitEntry  = std::function<void(const SosUiOutfit &, ImGuiID)>;
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
+    ImGuiTextFilter  name_filterer_;
     SosUiData       &m_uiData;
     OutfitService   &m_outfitService;
     EditingOutfit    editing_ = UNTITLED_OUTFIT;
@@ -49,6 +50,8 @@ private:
     void DrawOutfitTable();
     void DrawOutfitTableContent();
     void DrawCreateOutfitPopup(const char *name);
+
+    auto pass_filter(const SosUiOutfit &outfit) -> bool;
 
     void OnAcceptEditOutfit(const EditingOutfit &lastEdit, const EditingOutfit &editingOutfit) const;
     // check MultiSelection and set all selected outfit to favorite
