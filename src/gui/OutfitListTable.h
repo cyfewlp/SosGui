@@ -1,10 +1,8 @@
 #pragma once
 
-#include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
 #include "gui/BaseGui.h"
-#include "gui/widgets.h"
 #include "popup/Popup.h"
 #include "service/OutfitService.h"
 #include "util/ImGuiUtil.h"
@@ -26,36 +24,31 @@ class OutfitListTable final
     using DrawOutfitEntry  = std::function<void(const SosUiOutfit &, ImGuiID)>;
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
-    ImGuiTextFilter  name_filterer_;
-    SosUiData       &m_uiData;
-    OutfitService   &m_outfitService;
-    EditingOutfit    editing_ = UNTITLED_OUTFIT;
-    MultiSelection   multi_selection_;
-    OutfitNameBuffer outfit_name_buffer_{};
-    ImGuiID          active_input_id_ = 0;
-    bool             show_favorites_  = false;
+    ImGuiTextFilter            name_filterer_;
+    EditingOutfit              editing_ = UNTITLED_OUTFIT;
+    ImGuiSelectionBasicStorage multi_selection_;
+    OutfitNameBuffer           outfit_name_buffer_{};
+    ImGuiID                    active_input_id_ = 0;
+    bool                       show_favorites_  = false;
 
 public:
-    OutfitListTable(SosUiData &uiData, OutfitService &outfitService) : m_uiData(uiData), m_outfitService(outfitService) {}
-
     void OnRefresh();
 
-    void Draw();
+    void Draw(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
 
     auto GetEditingOutfit() -> EditingOutfit & { return editing_; }
 
 private:
     // refresh, filterer, favorite checkbox...
-    void DrawToolWidgets();
-    void DrawOutfitTable();
-    void DrawOutfitTableContent();
-    void DrawCreateOutfitPopup(const char *name);
+    void DrawToolWidgets(OutfitService &outfitService);
+    void DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
+    void DrawCreateOutfitPopup(const char *name, OutfitService &outfitService);
 
     auto pass_filter(const SosUiOutfit &outfit) -> bool;
 
-    void OnAcceptEditOutfit(const EditingOutfit &lastEdit, const EditingOutfit &editingOutfit) const;
+    void OnAcceptEditOutfit(const EditingOutfit &editingOutfit, OutfitService &outfitService) const;
     // check MultiSelection and set all selected outfit to favorite
-    void OnAcceptSetFavoriteOutfits(bool toFavorite);
-    void DeleteAllSelectOutfits();
+    void OnAcceptSetFavoriteOutfits(bool toFavorite, const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
+    void DeleteAllSelectOutfits(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
 };
 } // namespace SosGui

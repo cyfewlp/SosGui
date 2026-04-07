@@ -28,8 +28,7 @@ private:
     static auto IsArmorNonPlayable(const Armor *armor) -> bool { return (armor->formFlags & Armor::RecordFlags::kNonPlayable) != 0; }
 
 public:
-    explicit OutfitEditPanel(SosUiData &uiData, OutfitService &outfitService)
-        : m_uiData(uiData), m_outfitService(outfitService), outfit_list_table_(uiData, outfitService)
+    explicit OutfitEditPanel(SosUiData &uiData, OutfitService &outfitService) : m_uiData(uiData), m_outfitService(outfitService)
     {
         last_editing_outfit_id_ = std::numeric_limits<OutfitId>::max();
         UpdateWindowTitle(outfit_list_table_.GetEditingOutfit());
@@ -83,7 +82,7 @@ private:
     std::string                      window_title_;
     SosUiData                       &m_uiData;
     OutfitService                   &m_outfitService;
-    OutfitListTable                  outfit_list_table_;
+    OutfitListTable                  outfit_list_table_{};
     int                              waiting_add_armor_count_ = 0;
     OutfitId                         last_editing_outfit_id_;
     ConflictSolution                 conflict_solution_     = ConflictSolution::none;

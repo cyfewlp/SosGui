@@ -151,7 +151,7 @@ void OutfitEditPanel::Draw()
             armor_view_.reset_view(armor_source_, armor_source_refr_);
         }
 
-        outfit_list_table_.Draw();
+        outfit_list_table_.Draw(m_uiData.GetOutfitContainer().get_all(), m_outfitService);
 
         ImGui::SameLine();
         draw_filterers();
