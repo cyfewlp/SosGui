@@ -13,8 +13,6 @@
 
 namespace SosGui
 {
-class OutfitEditPanel;
-class OutfitContainer;
 
 class OutfitListTable final
 {

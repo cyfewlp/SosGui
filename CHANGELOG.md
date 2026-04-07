@@ -1,3 +1,55 @@
+## [unreleased]
+
+### 🚀 Features
+
+- *(Add Armors)* Show a progress bar in popup and show conflict solution for user.
+- Add `ArmorEntry` to wrap raw `Armor` pointer. This can be speed up armor sort and compare.
+- OutfitList: default focus the input-text item.
+
+### 🐛 Bug Fixes
+
+- Add lucide icon font to imgui;
+- Remove `ImportSettings` result verify: no settings also return false;
+- *(ArmorView)* Call filter before emplace armor in `reset_view_data`
+- *(ArmorView)* Set `armor_count` before filter
+- `OutfitList` clear `editing` outfit when no select outfit.
+- `OutfitList`: fix the name filter;
+
+### 💼 Other
+
+- Install translate files; remove nerd font file
+
+### 🚜 Refactor
+
+- Remove MultiSelection flags build functions; fix some spell
+- Remove all modal popup class
+- Use GetPluginInterfaceDir API
+- *(edit panel)* Move `playable` and "template armor" checkout to sidebar;
+- Remove "remove armors in outfit" feature
+- Remove the OutfitList: bad usage, slow
+- Remove outfit edit in list context menu: unnecessary
+- Migrate to RE Awaitable
+- Remove ArmorContainer; remove ArmorGenerator and replaced by ArmorSource + `armor_source_refr_`;
+- *(edit panel)* Remove `isTabItemAppear` and replaced by compare old `ArmorSource`; remove `imgui_internal` dependency;
+- Replace `ActorPolicyContainer` implement from boost to STL map; fix `ArmorView` slot filter bug.
+- Remove boost features; Refactor `ActorOutfitMap` to `ActorOutfitContainer` and implement by STL `vector`;
+- Remove `ActorPolicyView` and merged to `CharacterEditPanel`; `CharacterEditPanel` use the `TreeNode` renter actor state and auto-switch ;rename `EagerTask` build to spawn;
+- Merge `OutfitListTable` and `OutfitEditPanel`
+- Outfit view show name in tab-item title.
+- EditPanel: move the `DrawArmorViewFilter` to the `DrawArmorView` inner;
+- Remove main view sidebar;
+- Move global `translator` to `SosGuiMenu`: initialized before `SosGuiWindow`
+- `OutfitList`: remove `SosUiData` and `OutftiService` dependencies and replaced by params;
+
+### ⚡ Performance
+
+- *(outfit list)* Remove `DebounceInput`
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove unused test
+- Clang-tidy: disable c-style vararg fun and trailing return-tyle on lambda warnings
+- Upgrade imgui to v1.92.7
 ## [0.1.0] - 2026-03-30
 
 ### 🚀 Features
