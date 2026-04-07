@@ -22,7 +22,8 @@ class OutfitListTable final
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
     ImGuiTextFilter            name_filterer_;
-    EditingOutfit              editing_ = UNTITLED_OUTFIT;
+    OutfitId                   editing_id_ = INVALID_OUTFIT_ID;
+    EditingOutfit              editing_    = UNTITLED_OUTFIT;
     ImGuiSelectionBasicStorage multi_selection_;
     OutfitNameBuffer           outfit_name_buffer_{};
     ImGuiID                    active_input_id_ = 0;

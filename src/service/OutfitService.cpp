@@ -138,6 +138,7 @@ auto OutfitService::GetActorOutfit(RE::Actor *actor) const -> Task
     if (!outfitNameVar.IsString())
     {
         ErrorNotifier::GetInstance().Error("Can't get actor's active outfit");
+        co_return;
     }
     if (const auto it = outfit_container_.find(outfitNameVar.Unpack<std::string>()); it != outfit_container_.end())
     {
@@ -186,7 +187,7 @@ auto OutfitService::DeleteConflictArmors(std::string outfitName, const Armor *ar
         co_return;
     }
     co_await SosNativeCaller::RemoveConflictingArmorsFrom(armor, std::move(outfitName));
-    // We no need update UI data because we default directly override armor in slot
+    // We don't need update UI data because we default directly override armor in slot
 }
 
 auto OutfitService::RemoveArmor(const OutfitId id, std::string outfitName, const Armor *armor) const -> Task
@@ -260,6 +261,12 @@ auto OutfitService::GetSlotPolicy(EditingOutfit &editingOutfit) const -> Task
 
 auto OutfitService::GetActorStateOutfit(RE::Actor *actor, uint32_t policyId) const -> Task
 {
+    auto &actorOutfitContainer = m_uiData.GetActorOutfitContainer();
+    if (actor == nullptr || !actorOutfitContainer.exists(actor->formID))
+    {
+        co_return;
+    }
+
     const Variable outfitVar = co_await SosNativeCaller::GetStateOutfit(actor, std::move(policyId));
     if (!outfitVar.IsString())
     {
@@ -269,22 +276,24 @@ auto OutfitService::GetActorStateOutfit(RE::Actor *actor, uint32_t policyId) con
 
     if (auto it = outfit_container_.find(outfitVar.Unpack<std::string>()); it != outfit_container_.end())
     {
-        const auto policyEntryOpt = m_uiData.GetAutoSwitchPolicyContainer().find(actor->GetFormID(), static_cast<AutoSwitch>(policyId));
-        if (policyEntryOpt.has_value())
-        {
-            policyEntryOpt.value()->outfit_id = it->GetId();
-        }
-        else
-        {
-            m_uiData.GetAutoSwitchPolicyContainer().emplace_back(actor->GetFormID(), static_cast<AutoSwitch>(policyId), it->GetId());
-        }
+        actorOutfitContainer.set_auto_switch_outfit(actor->formID, static_cast<AutoSwitch>(policyId), it->GetId());
     }
 }
 
 auto OutfitService::GetActorAllStateOutfit(RE::Actor *actor) const -> Task
 {
-    auto &view = m_uiData.GetAutoSwitchPolicyContainer();
-    view.erase_actor(actor->GetFormID());
+    if (actor == nullptr)
+    {
+        co_return;
+    }
+    auto &actorOutfitContainer = m_uiData.GetActorOutfitContainer();
+    auto  it                   = actorOutfitContainer.find(actor->formID);
+    if (it == actorOutfitContainer.end())
+    {
+        co_return;
+    }
+
+    it->auto_switch_outfits.clear();
     for (uint32_t policyId = 0; policyId < static_cast<uint32_t>(AutoSwitch::Count); ++policyId)
     {
         Variable outfitVar = co_await SosNativeCaller::GetStateOutfit(actor, std::move(policyId));
@@ -292,35 +301,27 @@ auto OutfitService::GetActorAllStateOutfit(RE::Actor *actor) const -> Task
         {
             continue;
         }
-        if (auto it = outfit_container_.find(outfitVar.Unpack<std::string>()); it != outfit_container_.end())
+        if (auto outfit_it = outfit_container_.find(outfitVar.Unpack<std::string>()); outfit_it != outfit_container_.end())
         {
-            view.emplace_back(actor->GetFormID(), static_cast<AutoSwitch>(policyId), it->GetId());
+            it->auto_switch_outfits.emplace_back(static_cast<AutoSwitch>(policyId), outfit_it->GetId());
         }
     }
 }
 
 auto OutfitService::SetActorStateOutfit(const RE::Actor *actor, AutoSwitch policy, const OutfitId outfitId) const -> Task
 {
-    if (policy >= AutoSwitch::Count)
+    auto &actorOutfitContainer = m_uiData.GetActorOutfitContainer();
+    if (actor == nullptr || !actorOutfitContainer.exists(actor->formID) || policy >= AutoSwitch::Count)
     {
         ErrorNotifier::GetInstance().Error(std::format("Invalid outfit policy: {}", static_cast<uint32_t>(policy)));
         co_return;
     }
-    auto &view = m_uiData.GetAutoSwitchPolicyContainer();
-
     OutfitId newOutfitId = INVALID_OUTFIT_ID;
     if (auto it = outfit_container_.find(outfitId); it != outfit_container_.end())
     {
         co_await SosNativeCaller::SetStateOutfit(actor, static_cast<uint32_t>(policy), it->GetName().c_str());
         newOutfitId = outfitId;
     }
-    if (const auto policyEntryOpt = view.find(actor->formID, policy); policyEntryOpt.has_value())
-    {
-        policyEntryOpt.value()->outfit_id = newOutfitId;
-    }
-    else
-    {
-        view.emplace_back(actor->formID, policy, newOutfitId);
-    }
+    actorOutfitContainer.set_auto_switch_outfit(actor->formID, policy, newOutfitId);
 }
 } // namespace SosGui

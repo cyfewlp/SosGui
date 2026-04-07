@@ -147,12 +147,13 @@ void CharacterEditPanel::DrawOutfitsCombo(SosUiData &uiData, const OutfitService
 
 std::string_view CharacterEditPanel::get_outfit_display_name(const RE::Actor *currentActor, AutoSwitch policy, SosUiData &uiData)
 {
-    const auto      &view       = uiData.GetAutoSwitchPolicyContainer();
-    auto            &outfitList = uiData.GetOutfitContainer();
-    std::string_view name       = Translate("Panels.Characters.AutoSwitch.Empty");
-    if (const auto policyEntryOpt = view.find(currentActor->GetFormID(), policy); policyEntryOpt.has_value())
+    const auto      &actor_outfit_container = uiData.GetActorOutfitContainer();
+    std::string_view name                   = Translate("Panels.Characters.AutoSwitch.Empty");
+
+    if (const auto auto_switch_outfit_opt = actor_outfit_container.find_auto_switch_outfit(currentActor->formID, policy); auto_switch_outfit_opt)
     {
-        if (const auto outfitIt = outfitList.find(policyEntryOpt.value()->outfit_id); outfitIt != outfitList.end())
+        const auto &outfitList = uiData.GetOutfitContainer();
+        if (const auto outfitIt = outfitList.find(auto_switch_outfit_opt.value()->outfit_id); outfitIt != outfitList.end())
         {
             name = outfitIt->GetName();
         }

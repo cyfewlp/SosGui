@@ -7,7 +7,6 @@
 #include "Cleanable.h"
 #include "OutfitContainer.h"
 #include "data/ActorOutfitContainer.h"
-#include "data/ActorPolicyContainer.h"
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
 #include "imguiex/ErrorNotifier.h"
@@ -42,9 +41,8 @@ private:
     std::vector<RE::Actor *> m_NearActors;
     bool                     m_enabled           = false;
     bool                     m_fQuickSlotEnabled = false;
-    ActorOutfitContainer           m_actorOutfitMap;
+    ActorOutfitContainer     actor_outfit_container_;
     OutfitContainer          outfit_container_{};
-    ActorPolicyContainer     actor_policy_container_;
 
     std::unordered_map<RE::FormID, bool> m_autoSwitchEnabled;
     std::queue<std::coroutine_handle<>>  m_resumeQueue;
@@ -57,9 +55,8 @@ public:
         m_NearActors.clear();
         m_enabled           = false;
         m_fQuickSlotEnabled = false;
-        m_actorOutfitMap.container.clear();
+        actor_outfit_container_.container.clear();
         outfit_container_.get_all().clear();
-        actor_policy_container_.actor_policies.clear();
         m_autoSwitchEnabled.clear();
     }
 
@@ -113,12 +110,8 @@ public:
 
     void SetAutoSwitchEnabled(const RE::FormID actorId, const bool autoSwitchEnabled) { m_autoSwitchEnabled[actorId] = autoSwitchEnabled; }
 
-    auto GetAutoSwitchPolicyContainer() const -> const ActorPolicyContainer & { return actor_policy_container_; }
-
-    auto GetAutoSwitchPolicyContainer() -> ActorPolicyContainer & { return actor_policy_container_; }
-
     [[nodiscard]] auto GetOutfitContainer() -> OutfitContainer & { return outfit_container_; }
 
-    [[nodiscard]] auto GetActorOutfitContainer() -> ActorOutfitContainer & { return m_actorOutfitMap; }
+    [[nodiscard]] auto GetActorOutfitContainer() -> ActorOutfitContainer & { return actor_outfit_container_; }
 };
 } // namespace SosGui

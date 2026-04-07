@@ -57,6 +57,20 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
         }
     }
     ImGui::EndChild();
+
+    if (editing_.GetId() != editing_id_)
+    {
+        const auto it = std::ranges::find_if(outfits, [this](const SosUiOutfit &outfit) { return outfit.GetId() == editing_id_; });
+        if (it != outfits.end())
+        {
+            editing_ = *it;
+            spawn([&] { return outfitService.GetSlotPolicy(editing_); });
+        }
+        else
+        {
+            editing_id_ = editing_.GetId();
+        }
+    }
 }
 
 void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
@@ -231,9 +245,8 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
                     if (constexpr auto flags = ImGuiEx::SelectableFlags().AllowDoubleClick().AllowOverlap().SpanAllColumns();
                         ImGui::Selectable(outfit.GetName().c_str(), multi_selection_.Contains(uIndex), flags))
                     {
-                        editing_ = outfit;
+                        editing_id_ = outfit.GetId();
                         spawn([&] { return outfitService.GetOutfitArmors(outfit.GetId(), outfit.GetName()); });
-                        spawn([&] { return outfitService.GetSlotPolicy(editing_); });
                         if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                         {
                             wantRename = true;
@@ -312,6 +325,7 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name, OutfitService &out
         ImGui::BeginDisabled(outfit_name_buffer_[0] == '\0');
         if (ImGui::Button(Translate1("Panels.Outfit.Create")))
         {
+            editing_ = UNTITLED_OUTFIT;
             spawn([&] { return outfitService.CreateOutfit(std::string(outfit_name_buffer_.data())); });
             ImGui::CloseCurrentPopup();
         }
@@ -319,6 +333,7 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name, OutfitService &out
         ImGui::SameLine();
         if (ImGui::Button(Translate1("Panels.Outfit.CreateFromWorn")))
         {
+            editing_ = UNTITLED_OUTFIT;
             spawn([&] { return outfitService.CreateOutfitFromWorn(std::string(outfit_name_buffer_.data())); });
             ImGui::CloseCurrentPopup();
         }
@@ -352,6 +367,7 @@ void OutfitListTable::OnAcceptSetFavoriteOutfits(const bool toFavorite, const st
 void OutfitListTable::DeleteAllSelectOutfits(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
     if (multi_selection_.Size <= 0) return;
+    editing_ = UNTITLED_OUTFIT;
 
     void   *it = nullptr;
     ImGuiID index;

@@ -2,7 +2,7 @@
 // Created by jamie on 2025/5/25.
 //
 
-#include "data/ActorPolicyContainer.h"
+#include "data/ActorOutfitContainer.h"
 #include "gui/BaseGui.h"
 #include "util/ImGuiUtil.h"
 
@@ -33,7 +33,7 @@ private:
 
     ImGuiUtil::DebounceInput debounce_input_;
     const RE::Actor         *outfit_popup_target_actor_{nullptr};
-    AutoSwitch                   selected_policy_ = AutoSwitch::None;
+    AutoSwitch               selected_policy_ = AutoSwitch::None;
 };
 
 } // namespace SosGui
