@@ -2,8 +2,8 @@
 
 #include "SKSE/Impl/PCH.h"
 #include "SosDataType.h"
-#include "Translation.h"
 #include "data/id.h"
+#include "i18n/translator_manager.h"
 
 #include <RE/B/BGSBipedObjectForm.h>
 #include <RE/T/TESObjectARMO.h>
@@ -92,9 +92,9 @@ struct EditingOutfit
 
     [[nodiscard]] auto IsUntitled() const -> bool { return GetId() == UNTITLED_OUTFIT_ID; }
 
-    [[nodiscard]] auto GetName() const
+    [[nodiscard]] auto GetName() const -> std::string_view
     {
-        if (IsUntitled()) return Translation::Translate("$SosGui_Untitled");
+        if (IsUntitled()) return Translate("Panels.Outfit.Untitled");
         return source_outfit->GetName();
     }
 

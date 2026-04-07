@@ -229,7 +229,7 @@ auto OutfitService::SetSlotPolicy(EditingOutfit &editingOutfit, const uint32_t s
     if (outfit_container_.exists(editingOutfit.GetId()))
     {
         editingOutfit.slot_policies[slotPos] = policy;
-        co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(editingOutfit.GetName(), slotPos, slot_policy_code(policy));
+        co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(std::string(editingOutfit.GetName()), slotPos, slot_policy_code(policy));
     }
 }
 
@@ -239,7 +239,7 @@ auto OutfitService::GetSlotPolicy(EditingOutfit &editingOutfit) const -> Task
     {
         co_return;
     }
-    const Variable variable = co_await SosNativeCaller::BodySlotPolicyNamesForOutfit(editingOutfit.GetName());
+    const Variable variable = co_await SosNativeCaller::BodySlotPolicyNamesForOutfit(std::string(editingOutfit.GetName()));
     if (!variable.IsLiteralArray())
     {
         ErrorNotifier::GetInstance().Error("Can't get outfit slot policies");
