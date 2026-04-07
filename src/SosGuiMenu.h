@@ -13,7 +13,8 @@ namespace SosGui
 
 class SosGuiMenu : public RE::IMenu
 {
-    bool                          m_fShow  = false;
+    bool                          m_fShow = false;
+    i18n::Translator              translator_;
     std::unique_ptr<SosGuiWindow> m_sosGui = nullptr;
 
 public:

@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include "log.h"
 
+#include <path_utils.h>
 #include <unordered_map>
 
 namespace RE
@@ -99,6 +100,9 @@ void SosGuiMenu::OnShow()
 {
     m_fShow = true;
     logger::debug("SosGuiMenu::kShow");
+
+    i18n::SetTranslator(&translator_);
+    i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
     m_sosGui = std::make_unique<SosGuiWindow>();
     m_sosGui->Refresh();
     m_sosGui->Show();
@@ -108,6 +112,8 @@ void SosGuiMenu::OnHide()
 {
     m_fShow = false;
     m_sosGui.reset();
+    i18n::SetTranslator(nullptr);
+
     logger::debug("SosGuiMenu::kHide");
     auto &io = ImGui::GetIO();
     io.ClearInputKeys();

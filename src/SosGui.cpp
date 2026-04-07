@@ -22,8 +22,6 @@ namespace SosGui
 {
 SosGuiWindow::SosGuiWindow() : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), m_outfitEditPanel(m_uiData, m_outfitService)
 {
-    i18n::SetTranslator(&m_translator);
-    i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
 }
 
 SosGuiWindow::~SosGuiWindow()
@@ -71,12 +69,6 @@ auto SosGuiWindow::OnPostDisplay() -> void
 
     ImGuiEx::Render();
     ImGuiEx::EndFrame();
-}
-
-void SosGuiWindow::OnImportSettings()
-{
-    m_characterEditPanel.OnRefresh();
-    m_outfitEditPanel.OnRefresh();
 }
 
 auto SosGuiWindow::Draw() -> void
@@ -210,6 +202,12 @@ void SosGuiWindow::MainMenuBar()
 
     ImGui::PopStyleVar();
     ImGui::EndMainMenuBar();
+}
+
+void SosGuiWindow::OnImportSettings()
+{
+    m_characterEditPanel.OnRefresh();
+    m_outfitEditPanel.OnRefresh();
 }
 
 EagerTask waitImport(const SosDataCoordinator &dataCoordinator)

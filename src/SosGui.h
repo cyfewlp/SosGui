@@ -33,7 +33,6 @@ class SosGuiWindow
     SosDataCoordinator m_dataCoordinator;
     CharacterEditPanel m_characterEditPanel;
     OutfitEditPanel    m_outfitEditPanel;
-    i18n::Translator   m_translator;
     bool               m_isShowPanels = true;
 
 public:
