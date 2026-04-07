@@ -21,8 +21,7 @@
 namespace SosGui
 {
 SosGuiWindow::SosGuiWindow()
-    : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), m_outfitEditPanel(m_uiData, m_outfitService),
-      m_outfitListTable(m_uiData, m_outfitService, m_outfitEditPanel)
+    : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), m_outfitEditPanel(m_uiData, m_outfitService)
 {
     i18n::SetTranslator(&m_translator);
     i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
@@ -31,7 +30,6 @@ SosGuiWindow::SosGuiWindow()
 SosGuiWindow::~SosGuiWindow()
 {
     m_characterEditPanel.Cleanup();
-    m_outfitListTable.Cleanup();
     m_outfitEditPanel.Cleanup();
     m_isShowPanels = true;
     i18n::SetTranslator(nullptr);
@@ -79,7 +77,6 @@ auto SosGuiWindow::OnPostDisplay() -> void
 void SosGuiWindow::OnImportSettings()
 {
     m_characterEditPanel.OnRefresh();
-    m_outfitListTable.OnRefresh();
     m_outfitEditPanel.OnRefresh();
 }
 
@@ -95,10 +92,7 @@ auto SosGuiWindow::Draw() -> void
     try
     {
         m_characterEditPanel.Draw(m_uiData, m_dataCoordinator, m_outfitService);
-        m_outfitListTable.Draw();
-
-        const auto &editingOutfit = m_outfitListTable.GetEditingOutfit();
-        m_outfitEditPanel.Draw(editingOutfit);
+        m_outfitEditPanel.Draw();
     }
     catch (const std::exception &e)
     {
@@ -140,7 +134,6 @@ auto SosGuiWindow::DrawSidebar() -> float
         };
 
         FocusWindowButton(ICON_USERS, Translate1("CharacterEditPanel"), m_characterEditPanel);
-        FocusWindowButton(ICON_SHIRT, Translate1("Outfit"), m_outfitListTable);
         FocusWindowButton(ICON_FILE_PLUS_CORNER, Translate1("EditOutfit"), m_outfitEditPanel);
         ImGui::PopFont();
     }

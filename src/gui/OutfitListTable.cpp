@@ -23,44 +23,21 @@
 
 namespace SosGui
 {
-void OutfitListTable::Show()
-{
-    BaseGui::Show();
-    OnAcceptEditOutfit(m_wantEdit, m_wantEdit); // trigger OutfitEditPanel#UpdateWindowTitle
-}
-
-void OutfitListTable::Focus()
-{
-    ImGui::SetWindowFocus(Translate1("Panels.Outfit.Title"));
-    BaseGui::Focus();
-}
-
 void OutfitListTable::OnRefresh()
 {
-    m_wantEdit = UNTITLED_OUTFIT;
+    editing_ = UNTITLED_OUTFIT;
     multi_selection_.Clear();
     outfit_name_buffer_[0] = '\0';
 }
 
-void OutfitListTable::Cleanup()
-{
-    OnRefresh();
-}
-
 void OutfitListTable::Draw()
 {
-    if (!IsShowing())
-    {
-        return;
-    }
-    ImGui::SetNextWindowPos(ImVec2(DEFAULT_OUTFIT_LIST_WINDOW_POS_X, DEFAULT_WINDOW_POS_Y), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(DEFAULT_WINDOW_WIDTH_SMALL, DEFAULT_WINDOW_HEIGHT), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(Translate1("Panels.Outfit.Title"), &m_show, ImGuiEx::WindowFlags()))
+    if (ImGui::BeginChild(Translate1("Panels.Outfit.Title"), {}, ImGuiEx::ChildFlags().AutoResizeX()))
     {
         DrawToolWidgets();
         DrawOutfitTable();
     }
-    ImGui::End();
+    ImGui::EndChild();
 }
 
 void OutfitListTable::DrawToolWidgets()
@@ -271,8 +248,8 @@ void OutfitListTable::DrawOutfitTableContent()
                         ImGui::Selectable(outfit.GetName().c_str(), multi_selection_.Contains(uIndex), flags))
                     {
                         const EditingOutfit currentEditing(outfit);
-                        OnAcceptEditOutfit(m_wantEdit, currentEditing);
-                        m_wantEdit = currentEditing;
+                        OnAcceptEditOutfit(editing_, currentEditing);
+                        editing_ = currentEditing;
                         if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                         {
                             wantRename = true;
@@ -373,7 +350,7 @@ void OutfitListTable::OnAcceptEditOutfit(const EditingOutfit &lastEdit, const Ed
         spawn([&] { return m_outfitService.GetSlotPolicy(editingOutfit.GetId(), editingOutfit.GetName()); });
     }
 
-    m_editPanel.OnSelectOutfit(lastEdit, editingOutfit);
+    // m_editPanel.OnSelectOutfit(lastEdit, editingOutfit); TODO
 }
 
 // ReSharper disable once CppDFAUnreachableFunctionCall

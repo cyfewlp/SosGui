@@ -3,7 +3,7 @@
 #include "data/SosUiData.h"
 #include "gui/BaseGui.h"
 #include "gui/CharacterEditPanel.h"
-#include "gui/OutfitListTable.h"
+#include "gui/OutfitEditPanel.h"
 #include "gui/popup/OutfitSelectPopup.h"
 #include "i18n/Translator.h"
 #include "i18n/translator_manager.h"
@@ -33,7 +33,6 @@ class SosGuiWindow
     SosDataCoordinator m_dataCoordinator;
     CharacterEditPanel m_characterEditPanel;
     OutfitEditPanel    m_outfitEditPanel;
-    OutfitListTable    m_outfitListTable;
     i18n::Translator   m_translator;
     bool               m_isShowPanels = true;
 
@@ -48,7 +47,6 @@ public:
     void Show()
     {
         m_characterEditPanel.Show();
-        m_outfitListTable.Show();
         m_outfitEditPanel.Show();
     }
 

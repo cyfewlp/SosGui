@@ -59,8 +59,6 @@ public:
 
     [[nodiscard]] auto GetSlotPolicies() const -> const SlotPolicyArray & { return m_slotPolicies; }
 
-    [[nodiscard]] auto GetUniqueArmors() const -> std::unordered_set<const Armor *>;
-
     void AddArmor(const Armor *armor);
 
     void RemoveArmor(const Armor *armor);
@@ -79,8 +77,6 @@ class EditingOutfit
 
 public:
     explicit EditingOutfit(const SosUiOutfit &outfit) : m_sourceOutfit(&outfit) {}
-
-    [[nodiscard]] auto GetSourceOutfit() const -> const SosUiOutfit * { return m_sourceOutfit; }
 
     [[nodiscard]] auto GetId() const -> OutfitId { return m_sourceOutfit->GetId(); }
 

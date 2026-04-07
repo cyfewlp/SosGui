@@ -7,6 +7,7 @@ file-plus-corner
 funnel-plus
 heart
 heart-off
+menu
 refresh-cw
 search
 settings

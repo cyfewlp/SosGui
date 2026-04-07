@@ -4,18 +4,21 @@
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
 #include "gui/BaseGui.h"
-#include "gui/OutfitEditPanel.h"
+#include "gui/widgets.h"
 #include "popup/Popup.h"
 #include "service/OutfitService.h"
 #include "util/ImGuiUtil.h"
 
+#include <array>
+#include <functional>
 #include <string>
 
 namespace SosGui
 {
+class OutfitEditPanel;
 class OutfitContainer;
 
-class OutfitListTable final : public BaseGui
+class OutfitListTable final
 {
     static constexpr int        MAX_OUTFIT_NAME_BYTES = 256;
     static inline auto          OUTFIT                = SosUiOutfit();
@@ -23,30 +26,22 @@ class OutfitListTable final : public BaseGui
     using DrawOutfitEntry  = std::function<void(const SosUiOutfit &, ImGuiID)>;
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
-    SosUiData               &m_uiData;
-    OutfitService           &m_outfitService;
-    OutfitEditPanel         &m_editPanel;
-    EditingOutfit            m_wantEdit = UNTITLED_OUTFIT;
-    MultiSelection           multi_selection_;
-    ImGuiUtil::DebounceInput m_outfitFilterInput{};
-    ImGuiID                  m_editingInputId = 0;
-    OutfitNameBuffer         m_outfitNameBuffer{};
-    bool                     show_favorites_ = false;
+    SosUiData       &m_uiData;
+    OutfitService   &m_outfitService;
+    EditingOutfit    editing_ = UNTITLED_OUTFIT;
+    MultiSelection   multi_selection_;
+    OutfitNameBuffer outfit_name_buffer_{};
+    ImGuiID          active_input_id_ = 0;
+    bool             show_favorites_  = false;
 
 public:
-    OutfitListTable(SosUiData &uiData, OutfitService &outfitService, OutfitEditPanel &editPanel)
-        : m_uiData(uiData), m_outfitService(outfitService), m_editPanel(editPanel)
-    {
-    }
+    OutfitListTable(SosUiData &uiData, OutfitService &outfitService) : m_uiData(uiData), m_outfitService(outfitService) {}
 
-    void Show() override;
-    void Focus() override;
-    void OnRefresh() override;
-    void Cleanup() override;
+    void OnRefresh();
 
     void Draw();
 
-    auto GetEditingOutfit() -> EditingOutfit & { return m_wantEdit; }
+    auto GetEditingOutfit() -> EditingOutfit & { return editing_; }
 
 private:
     // refresh, filterer, favorite checkbox...

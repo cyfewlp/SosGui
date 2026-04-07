@@ -20,17 +20,19 @@ static auto constexpr ICON_FUNNEL_PLUS          = ImGuiEx::icon<0xE006>;
 static auto constexpr ICON_HEART_OFF            = ImGuiEx::icon<0xE007>;
 // ICON_HEART -> U+E008 (heart.svg)
 static auto constexpr ICON_HEART                = ImGuiEx::icon<0xE008>;
-// ICON_REFRESH_CW -> U+E009 (refresh-cw.svg)
-static auto constexpr ICON_REFRESH_CW           = ImGuiEx::icon<0xE009>;
-// ICON_SEARCH -> U+E00A (search.svg)
-static auto constexpr ICON_SEARCH               = ImGuiEx::icon<0xE00A>;
-// ICON_SETTINGS -> U+E00B (settings.svg)
-static auto constexpr ICON_SETTINGS             = ImGuiEx::icon<0xE00B>;
-// ICON_SHIRT -> U+E00C (shirt.svg)
-static auto constexpr ICON_SHIRT                = ImGuiEx::icon<0xE00C>;
-// ICON_SQUARE_PEN -> U+E00D (square-pen.svg)
-static auto constexpr ICON_SQUARE_PEN           = ImGuiEx::icon<0xE00D>;
-// ICON_USERS -> U+E00E (users.svg)
-static auto constexpr ICON_USERS                = ImGuiEx::icon<0xE00E>;
-// ICON_X -> U+E00F (x.svg)
-static auto constexpr ICON_X                    = ImGuiEx::icon<0xE00F>;
+// ICON_MENU -> U+E009 (menu.svg)
+static auto constexpr ICON_MENU                 = ImGuiEx::icon<0xE009>;
+// ICON_REFRESH_CW -> U+E00A (refresh-cw.svg)
+static auto constexpr ICON_REFRESH_CW           = ImGuiEx::icon<0xE00A>;
+// ICON_SEARCH -> U+E00B (search.svg)
+static auto constexpr ICON_SEARCH               = ImGuiEx::icon<0xE00B>;
+// ICON_SETTINGS -> U+E00C (settings.svg)
+static auto constexpr ICON_SETTINGS             = ImGuiEx::icon<0xE00C>;
+// ICON_SHIRT -> U+E00D (shirt.svg)
+static auto constexpr ICON_SHIRT                = ImGuiEx::icon<0xE00D>;
+// ICON_SQUARE_PEN -> U+E00E (square-pen.svg)
+static auto constexpr ICON_SQUARE_PEN           = ImGuiEx::icon<0xE00E>;
+// ICON_USERS -> U+E00F (users.svg)
+static auto constexpr ICON_USERS                = ImGuiEx::icon<0xE00F>;
+// ICON_X -> U+E010 (x.svg)
+static auto constexpr ICON_X                    = ImGuiEx::icon<0xE010>;

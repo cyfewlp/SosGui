@@ -5,6 +5,7 @@
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
 #include "gui/ArmorView.h"
+#include "gui/OutfitListTable.h"
 #include "popup/Popup.h"
 #include "service/OutfitService.h"
 
@@ -24,18 +25,22 @@ public:
     static constexpr int MAX_FILTER_ARMOR_NAME = 256;
 
 private:
-    static bool IsArmorNonPlayable(const Armor *armor) { return (armor->formFlags & Armor::RecordFlags::kNonPlayable) != 0; }
+    static auto IsArmorNonPlayable(const Armor *armor) -> bool { return (armor->formFlags & Armor::RecordFlags::kNonPlayable) != 0; }
 
 public:
-    explicit OutfitEditPanel(SosUiData &uiData, OutfitService &outfitService) : m_uiData(uiData), m_outfitService(outfitService) {}
+    explicit OutfitEditPanel(SosUiData &uiData, OutfitService &outfitService)
+        : m_uiData(uiData), m_outfitService(outfitService), outfit_list_table_(uiData, outfitService)
+    {
+        last_editing_outfit_id_ = std::numeric_limits<OutfitId>::max();
+        UpdateWindowTitle(outfit_list_table_.GetEditingOutfit());
+    }
 
     void OnRefresh() override;
     void Cleanup() override;
     void Focus() override;
 
-    void Draw(const EditingOutfit &editingOutfit);
+    void Draw();
     void DrawOutfitPanel(const EditingOutfit &editingOutfit);
-    void OnSelectOutfit(const EditingOutfit &lastEdit, const EditingOutfit &editing);
 
 private:
     enum class Error
@@ -46,8 +51,8 @@ private:
 
     static void PushError(Error error);
 
-    void DrawSideBar();
-    void UpdateWindowTitle(const std::string &outfitName);
+    void draw_filterers();
+    void UpdateWindowTitle(const EditingOutfit &editingOutfit);
 
     void DrawOutfitArmors(const EditingOutfit &editingOutfit);
     void HighlightConflictSlot(Slot slot) const;
@@ -75,16 +80,18 @@ private:
         Suspend,      ///< waiting user choose a solution
     };
 
-    ArmorView                        m_armorView{};
-    std::string                      m_windowTitle;
+    ArmorView                        armor_view_{};
+    std::string                      window_title_;
     SosUiData                       &m_uiData;
     OutfitService                   &m_outfitService;
+    OutfitListTable                  outfit_list_table_;
     int                              waiting_add_armor_count_ = 0;
-    ConflictSolution                 conflict_solution_       = ConflictSolution::none;
-    ArmorSource                      armor_source_            = ArmorSource::None;
-    bool                             show_all_outfit_slots_   = false;
-    bool                             should_refresh_view_     = true;
-    RE::TESObjectREFR               *armor_source_refr_       = nullptr;
+    OutfitId                         last_editing_outfit_id_;
+    ConflictSolution                 conflict_solution_     = ConflictSolution::none;
+    bool                             show_all_outfit_slots_ = false;
+    bool                             should_refresh_view_   = true;
+    ArmorSource                      armor_source_          = ArmorSource::None;
+    RE::TESObjectREFR               *armor_source_refr_     = nullptr;
     std::vector<RE::TESObjectREFR *> near_objects_;
 };
 } // namespace SosGui

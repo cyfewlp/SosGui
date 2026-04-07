@@ -1,16 +1,9 @@
 #include "data/SosUiOutfit.h"
 
+#include "util/utils.h"
+
 #include <RE/B/BGSBipedObjectForm.h>
 #include <cstdint>
-
-template <>
-struct std::hash<RE::TESObjectARMO *>
-{
-    _NODISCARD _STATIC_CALL_OPERATOR size_t operator()(const RE::TESObjectARMO *_Keyval) _CONST_CALL_OPERATOR noexcept
-    {
-        return _Hash_representation(_Keyval->GetFormID());
-    }
-};
 
 namespace SosGui
 {
@@ -26,9 +19,9 @@ void SosUiOutfit::AddArmor(const Armor *armor)
     {
         return;
     }
-    for (uint32_t idx = 0; idx < SLOT_COUNT; ++idx)
+    for (uint32_t idx = 0; idx < m_armors.size(); ++idx)
     {
-        if (armor->HasPartOf(static_cast<Slot>(1 << idx)))
+        if (armor->HasPartOf(util::ToSlot(idx)))
         {
             m_armors[idx] = armor;
         }
@@ -47,14 +40,10 @@ void SosUiOutfit::RemoveArmor(const Armor *armor)
     {
         return;
     }
-    for (uint32_t idx = 0; idx < SLOT_COUNT; ++idx)
+    for (uint32_t idx = 0; idx < m_armors.size(); ++idx)
     {
-        if (armor->HasPartOf(static_cast<Slot>(1 << idx)))
+        if (m_armors[idx] == armor)
         {
-            if (m_armors[idx] != armor)
-            {
-                return;
-            }
             m_armors[idx] = nullptr;
         }
     }
@@ -86,16 +75,4 @@ auto SosUiOutfit::HasArmor(const Armor *armor) const -> bool
     return false;
 }
 
-auto SosUiOutfit::GetUniqueArmors() const -> std::unordered_set<const Armor *>
-{
-    std::unordered_set<const Armor *> ret;
-    for (uint32_t idx = 0; idx < m_armors.size(); ++idx)
-    {
-        if (m_armors[idx] != nullptr)
-        {
-            ret.insert(m_armors[idx]);
-        }
-    }
-    return ret;
-}
 } // namespace SosGui
