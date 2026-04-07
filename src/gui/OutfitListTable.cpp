@@ -288,6 +288,10 @@ void OutfitListTable::DrawOutfitTableContent()
         }
     }
     multi_selection_.ApplyRequests(ImGui::EndMultiSelect());
+    if (multi_selection_.Size == 0)
+    {
+        editing_ = UNTITLED_OUTFIT;
+    }
 
     if (wantDeleteOutfit && multi_selection_.Size > 0)
     {
