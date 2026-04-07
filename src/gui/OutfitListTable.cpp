@@ -306,11 +306,9 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name)
     bool open = true;
     if (ImGui::BeginPopupModal(name, &open))
     {
-        // Clear the active id that rename input item if exists.
-        // It should unreachable.
-        if (active_input_id_ != 0 && active_input_id_ == ImGui::GetActiveID())
+        if (ImGui::IsWindowAppearing())
         {
-            ImGui::ClearActiveID();
+            ImGui::SetKeyboardFocusHere();
         }
 
         ImGui::PushItemWidth(-FLT_MIN);
