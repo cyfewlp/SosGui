@@ -38,8 +38,7 @@ auto GetActorOutfitName(SosUiData &uiData, RE::Actor *actor) -> std::string
 {
     const auto &actorOutfits = uiData.GetActorOutfitContainer();
     const auto &outfits      = uiData.GetOutfitContainer();
-    const auto  it           = uiData.GetActorOutfitContainer().find(actor->formID);
-    if (it != actorOutfits.end())
+    if (const auto it = actorOutfits.find(actor->formID); it != actorOutfits.end())
     {
         if (const auto outfitIt = outfits.find(it->outfit_id); outfitIt != outfits.end())
         {

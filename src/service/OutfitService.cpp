@@ -267,9 +267,9 @@ auto OutfitService::GetActorStateOutfit(RE::Actor *actor, uint32_t policyId) con
         co_return;
     }
 
-    const auto policyEntryOpt = m_uiData.GetAutoSwitchPolicyContainer().find(actor->GetFormID(), static_cast<Policy>(policyId));
     if (auto it = outfit_container_.find(outfitVar.Unpack<std::string>()); it != outfit_container_.end())
     {
+        const auto policyEntryOpt = m_uiData.GetAutoSwitchPolicyContainer().find(actor->GetFormID(), static_cast<Policy>(policyId));
         if (policyEntryOpt.has_value())
         {
             policyEntryOpt.value()->outfit_id = it->GetId();
@@ -308,14 +308,13 @@ auto OutfitService::SetActorStateOutfit(const RE::Actor *actor, Policy policy, c
     }
     auto &view = m_uiData.GetAutoSwitchPolicyContainer();
 
-    const auto policyEntryOpt = view.find(actor->formID, policy);
-    OutfitId   newOutfitId    = INVALID_OUTFIT_ID;
+    OutfitId newOutfitId = INVALID_OUTFIT_ID;
     if (auto it = outfit_container_.find(outfitId); it != outfit_container_.end())
     {
         co_await SosNativeCaller::SetStateOutfit(actor, static_cast<uint32_t>(policy), it->GetName().c_str());
         newOutfitId = outfitId;
     }
-    if (policyEntryOpt.has_value())
+    if (const auto policyEntryOpt = view.find(actor->formID, policy); policyEntryOpt.has_value())
     {
         policyEntryOpt.value()->outfit_id = newOutfitId;
     }
