@@ -56,8 +56,7 @@ public:
 private:
     auto Draw() -> void;
     auto DrawSidebar() -> float;
-    void DockSpace();
-    void Toolbar();
+    void MainMenuBar();
 
     auto GetSelectedActor(int index) -> RE::Actor *
     {

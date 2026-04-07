@@ -20,8 +20,7 @@
 
 namespace SosGui
 {
-SosGuiWindow::SosGuiWindow()
-    : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), m_outfitEditPanel(m_uiData, m_outfitService)
+SosGuiWindow::SosGuiWindow() : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), m_outfitEditPanel(m_uiData, m_outfitService)
 {
     i18n::SetTranslator(&m_translator);
     i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
@@ -82,7 +81,7 @@ void SosGuiWindow::OnImportSettings()
 
 auto SosGuiWindow::Draw() -> void
 {
-    DockSpace();
+    MainMenuBar();
     ErrorNotifier::GetInstance().Show();
 
     if (!m_isShowPanels)
@@ -142,38 +141,12 @@ auto SosGuiWindow::DrawSidebar() -> float
     return width;
 }
 
-void SosGuiWindow::DockSpace()
+void SosGuiWindow::MainMenuBar()
 {
-    float sideBarWidth = DrawSidebar();
-
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos({sideBarWidth, viewport->WorkPos.y});
-    ImGui::SetNextWindowSize(viewport->WorkSize);
-    // ImGui::SetNextWindowViewport(viewport->ID);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    constexpr auto windowFlags =
-        ImGuiEx::WindowFlags().MenuBar().NoTitleBar().NoCollapse().NoResize().NoMove().NoBringToFrontOnFocus().NoNavFocus().NoBackground();
-    ImGui::PushStyleVarY(ImGuiStyleVar_FramePadding, ImGui::GetFontSize() * 0.3f); // padding menu bar
-    ImGui::Begin("DockSpace Demo", nullptr, windowFlags);
-    ImGui::PopStyleVar(4);
-
-    // Submit the DockSpace
-    // const ImGuiID dockSpaceId = ImGui::GetID("MyDockSpace");
-    // ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
-
-    if (ImGui::BeginMenuBar())
+    if (!ImGui::BeginMainMenuBar())
     {
-        Toolbar();
-        ImGui::EndMenuBar();
+        return;
     }
-
-    ImGui::End();
-}
-
-void SosGuiWindow::Toolbar()
-{
     ImGui::PushStyleVarX(ImGuiStyleVar_ItemSpacing, 15);
     const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_FramePadding>({3.0F, 3.0F});
     if (ImGui::BeginMenu(Translate1("ToolBar.File")))
@@ -236,6 +209,7 @@ void SosGuiWindow::Toolbar()
     Popup::DrawAboutPopup("A Extra GUI for SkyrimOutfitSystemRE");
 
     ImGui::PopStyleVar();
+    ImGui::EndMainMenuBar();
 }
 
 EagerTask waitImport(const SosDataCoordinator &dataCoordinator)
