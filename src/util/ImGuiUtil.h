@@ -44,13 +44,6 @@ constexpr auto SetItemTooltip(const char *content) -> void
     ImGui::SetItemTooltip("%s", g_widgetName.c_str());
 }
 
-template <typename String>
-constexpr auto SetItemTooltip(String &&content) -> void
-{
-    Translation::Translate(content.c_str(), g_widgetName);
-    ImGui::SetItemTooltip("%s", g_widgetName.c_str());
-}
-
 template <typename ValueType>
 constexpr auto Value(const char *label, ValueType value) -> void
 {

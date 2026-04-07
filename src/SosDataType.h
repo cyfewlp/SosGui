@@ -134,60 +134,37 @@ static constexpr std::array AVAILABLE_SLOT_POLICY = {
 
 enum class SlotPolicy : uint8_t
 {
+    None,
     Inherit,
     RequireEquipped,
     AlwaysUseOutfit,
-    Passthrough
+    Passthrough,
 };
 
-inline auto SlotPolicyToUiKey(SlotPolicy policy) -> const char *
+// ReSharper disable all
+constexpr auto slot_policy_from_string(std::string_view str_policy) -> SlotPolicy
 {
-    switch (policy)
+    SlotPolicy policy = SlotPolicy::None;
+    if (str_policy == "$SkyOutSys_Desc_PolicyName_INHERIT")
     {
-        case SlotPolicy::Inherit:
-            return "$SkyOutSys_Desc_PolicyName_INHERIT";
-        case SlotPolicy::RequireEquipped:
-            return "$SkyOutSys_Desc_EasyPolicyName_XXXO";
-        case SlotPolicy::AlwaysUseOutfit:
-            return "$SkyOutSys_Desc_EasyPolicyName_XXOO";
-        case SlotPolicy::Passthrough:
-            return "$SkyOutSys_Desc_EasyPolicyName_XEXO";
-        default:
-            return "$SkyOutSys_Desc_EasyPolicyName_UNKNOWN";
+        policy = SlotPolicy::Inherit;
     }
-}
-
-inline auto SlotPolicyToUiString(SlotPolicy policy) -> std::string
-{
-    auto key = SlotPolicyToUiKey(policy);
-    return Translation::Translate(key);
-}
-
-inline auto SlotPolicyToTooltipKey(SlotPolicy policy) -> const char *
-{
-    switch (policy)
+    else if (str_policy == "$SkyOutSys_Desc_EasyPolicyName_XXXO")
     {
-        case SlotPolicy::Inherit:
-            return "";
-        case SlotPolicy::RequireEquipped:
-            return "$SkyOutSys_Desc_PolicyName_XXXO";
-        case SlotPolicy::AlwaysUseOutfit:
-            return "$SkyOutSys_Desc_PolicyName_XXOO";
-        case SlotPolicy::Passthrough:
-            return "$SkyOutSys_Desc_PolicyName_XEXO";
-        default:
-            return "$SkyOutSys_Desc_PolicyName_UNKNOWN";
+        policy = SlotPolicy::RequireEquipped;
     }
+    else if (str_policy == "$SkyOutSys_Desc_EasyPolicyName_XXOO")
+    {
+        policy = SlotPolicy::AlwaysUseOutfit;
+    }
+    else if (str_policy == "$SkyOutSys_Desc_EasyPolicyName_XEXO")
+    {
+        policy = SlotPolicy::Passthrough;
+    }
+    return policy;
 }
 
-inline auto SlotPolicyToTooltipString(SlotPolicy policy) -> std::string
-{
-    auto key = SlotPolicyToTooltipKey(policy);
-    return Translation::Translate(key);
-}
-
-// used for SkyrimOutfitSystem
-inline auto SlotPolicyToCode(const SlotPolicy policy) -> std::string
+inline auto slot_policy_code(const SlotPolicy policy) -> std::string
 {
     switch (policy)
     {
@@ -201,6 +178,42 @@ inline auto SlotPolicyToCode(const SlotPolicy policy) -> std::string
             return "XEXO";
         default:
             return "UNKNOWN";
+    }
+}
+
+// ReSharper Restore all
+
+constexpr auto slot_policy_token(SlotPolicy policy) -> const char *
+{
+    switch (policy)
+    {
+        case SlotPolicy::Inherit:
+            return "Panels.OutfitEdit.SlotPolicy.Inherit";
+        case SlotPolicy::RequireEquipped:
+            return "Panels.OutfitEdit.SlotPolicy.RequireEquipped";
+        case SlotPolicy::AlwaysUseOutfit:
+            return "Panels.OutfitEdit.SlotPolicy.AlwaysUseOutfit";
+        case SlotPolicy::Passthrough:
+            return "Panels.OutfitEdit.SlotPolicy.Passthrough";
+        default:
+            return "Panels.OutfitEdit.SlotPolicy.Unknown";
+    }
+}
+
+constexpr auto slot_policy_tooltip(SlotPolicy policy) -> const char *
+{
+    switch (policy)
+    {
+        case SlotPolicy::Inherit:
+            return "Panels.OutfitEdit.SlotPolicy.InheritTooltip";
+        case SlotPolicy::RequireEquipped:
+            return "Panels.OutfitEdit.SlotPolicy.RequireEquippedTooltip";
+        case SlotPolicy::AlwaysUseOutfit:
+            return "Panels.OutfitEdit.SlotPolicy.AlwaysUseOutfitTooltip";
+        case SlotPolicy::Passthrough:
+            return "Panels.OutfitEdit.SlotPolicy.PassthroughTooltip";
+        default:
+            return "Panels.OutfitEdit.SlotPolicy.UnknownTooltip";
     }
 }
 

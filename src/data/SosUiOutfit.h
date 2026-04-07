@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SKSE/Impl/PCH.h"
+#include "SosDataType.h"
 #include "Translation.h"
 #include "data/id.h"
 
@@ -66,7 +67,7 @@ public:
 
 struct EditingOutfit
 {
-    using SlotPolicyArray = std::array<std::string, RE::BIPED_OBJECT::kEditorTotal>;
+    using SlotPolicyArray = std::array<SlotPolicy, RE::BIPED_OBJECT::kEditorTotal>;
 
     const SosUiOutfit *source_outfit;
     SlotPolicyArray    slot_policies;
@@ -83,7 +84,7 @@ struct EditingOutfit
     auto operator=(const SosUiOutfit &outfit) -> EditingOutfit &
     {
         source_outfit = &outfit;
-        slot_policies.fill("[N/A]");
+        slot_policies.fill(SlotPolicy::None);
         return *this;
     }
 

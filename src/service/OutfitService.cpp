@@ -228,8 +228,8 @@ auto OutfitService::SetSlotPolicy(EditingOutfit &editingOutfit, const uint32_t s
 {
     if (outfit_container_.exists(editingOutfit.GetId()))
     {
-        editingOutfit.slot_policies[slotPos] = SlotPolicyToUiString(policy);
-        co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(editingOutfit.GetName(), slotPos, SlotPolicyToCode(policy));
+        editingOutfit.slot_policies[slotPos] = policy;
+        co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(editingOutfit.GetName(), slotPos, slot_policy_code(policy));
     }
 }
 
@@ -254,9 +254,7 @@ auto OutfitService::GetSlotPolicy(EditingOutfit &editingOutfit) const -> Task
     for (SlotType slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; ++slotPos)
     {
         const auto &var                      = array->operator[](slotPos);
-        editingOutfit.slot_policies[slotPos] = var.GetString();
-        // SOs return $$SkyOutSys_Desc_EasyPolicyName_XXXO
-        // TODO: split and convert to policy index
+        editingOutfit.slot_policies[slotPos] = slot_policy_from_string(var.GetString());
     }
 }
 

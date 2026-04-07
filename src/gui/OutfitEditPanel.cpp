@@ -44,9 +44,9 @@ void DrawSlotPolicyHelpPopup(const char *name)
 {
     if (ImGui::BeginPopupModal(name))
     {
-        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText1"));
-        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText2"));
-        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicyHelpText3"));
+        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicy.HelpText1"));
+        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicy.HelpText2"));
+        ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicy.HelpText3"));
         ImGui::EndPopup();
     }
 }
@@ -248,7 +248,7 @@ void OutfitEditPanel::DrawOutfitArmors(EditingOutfit &editingOutfit)
 
     ImGui::Checkbox(Translate1("Panels.OutfitEdit.ShowAllSlots"), &show_all_outfit_slots_);
     ImGui::SameLine();
-    if (ImGui::Button(Translate1("Panels.OutfitEdit.SlotPolicies")))
+    if (ImGui::Button(Translate1("Panels.OutfitEdit.SlotPolicy.Name")))
     {
         ImGui::OpenPopup(SLOT_POLICY_HELP_POPUP_TITLE);
     }
@@ -260,7 +260,7 @@ void OutfitEditPanel::DrawOutfitArmors(EditingOutfit &editingOutfit)
         ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoHide());
         ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.Slot"), ImGuiEx::TableColumnFlags().NoSort());
         ImGui::TableSetupColumn(Translate1("Armor"), ImGuiEx::TableColumnFlags().NoSort());
-        ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.SlotPolicies"), ImGuiEx::TableColumnFlags().WidthFixed().NoSort());
+        ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.SlotPolicy.Name"), ImGuiEx::TableColumnFlags().WidthFixed().NoSort());
         ImGui::TableSetupColumn(Translate1("Delete"), ImGuiEx::TableColumnFlags().WidthFixed().NoSort());
         ImGui::TableHeadersRow();
 
@@ -323,22 +323,19 @@ void OutfitEditPanel::HighlightConflictSlot(const Slot slot) const
 
 void OutfitEditPanel::SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const
 {
-    auto       &policyNameKey = editingOutfit.slot_policies[slotIdx];
-    std::string policyName;
-
-    if (ImGui::BeginCombo("##SlotPolicy", Translate1(policyNameKey), ImGuiComboFlags_WidthFitPreview))
+    const auto  preview_policy = editingOutfit.slot_policies[slotIdx];
+    if (ImGui::BeginCombo("##SlotPolicy", Translate1(slot_policy_token(preview_policy)), ImGuiComboFlags_WidthFitPreview))
     {
         for (const auto &policy : {SlotPolicy::Inherit, SlotPolicy::Passthrough, SlotPolicy::RequireEquipped, SlotPolicy::AlwaysUseOutfit})
         {
-            policyName = SlotPolicyToUiString(policy);
-            if (ImGui::Selectable(policyName.c_str(), false))
+            if (ImGui::Selectable(Translate1(slot_policy_token(policy)), false))
             {
                 if (!editingOutfit.IsUntitled())
                 {
                     spawn([&] { return m_outfitService.SetSlotPolicy(editingOutfit, slotIdx, policy); });
                 }
             }
-            ImGuiUtil::SetItemTooltip(SlotPolicyToTooltipString(policy));
+            ImGui::SetItemTooltip("%s", Translate1(slot_policy_tooltip(policy)));
         }
         ImGui::EndCombo();
     }
