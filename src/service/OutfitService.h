@@ -47,9 +47,9 @@ public:
 
     auto GetOutfitArmors(OutfitId id, std::string outfitName) const -> Task;
 
-    auto SetSlotPolicy(OutfitId id, std::string outfitName, uint32_t slotPos, SlotPolicy policy) const -> Task;
+    auto SetSlotPolicy(EditingOutfit &editingOutfit, uint32_t slotPos, SlotPolicy policy) const -> Task;
 
-    auto GetSlotPolicy(OutfitId id, std::string outfitName) const -> Task;
+    auto GetSlotPolicy(EditingOutfit &editingOutfit) const -> Task;
 
     auto GetActorStateOutfit(RE::Actor *actor, uint32_t policyId) const -> Task;
 

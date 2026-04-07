@@ -22,10 +22,8 @@ public:
     static constexpr int SLOT_COUNT = RE::BIPED_OBJECT::kEditorTotal;
     using Slot                      = RE::BIPED_MODEL::BipedObjectSlot;
     using Armor                     = RE::TESObjectARMO;
-    using SlotPolicyArray           = std::array<std::string, SLOT_COUNT>;
 
 private:
-    SlotPolicyArray                       m_slotPolicies;
     std::array<const Armor *, SLOT_COUNT> m_armors{};
     std::string                           m_name       = "Untitled";
     REX::EnumSet<Slot, uint32_t>          m_slotMask   = Slot::kNone;
@@ -57,8 +55,6 @@ public:
 
     [[nodiscard]] auto IsEmpty() const -> bool { return m_slotMask.underlying() == 0; }
 
-    [[nodiscard]] auto GetSlotPolicies() const -> const SlotPolicyArray & { return m_slotPolicies; }
-
     void AddArmor(const Armor *armor);
 
     void RemoveArmor(const Armor *armor);
@@ -66,46 +62,53 @@ public:
     void SetName(const std::string &newName) { m_name.assign(newName); }
 
     void SetFavorite(const bool isFavorite) { m_isFavorite = isFavorite; }
-
-    void SetSlotPolicy(const uint32_t slotPos, const std::string &policy) { m_slotPolicies.at(slotPos) = policy; }
 };
 
-// TODO: may remove
-class EditingOutfit
+struct EditingOutfit
 {
-    const SosUiOutfit *m_sourceOutfit;
+    using SlotPolicyArray = std::array<std::string, RE::BIPED_OBJECT::kEditorTotal>;
 
-public:
-    explicit EditingOutfit(const SosUiOutfit &outfit) : m_sourceOutfit(&outfit) {}
+    const SosUiOutfit *source_outfit;
+    SlotPolicyArray    slot_policies;
 
-    [[nodiscard]] auto GetId() const -> OutfitId { return m_sourceOutfit->GetId(); }
+    explicit EditingOutfit() : source_outfit(nullptr) {}
+
+    explicit EditingOutfit(const SosUiOutfit &outfit) : source_outfit(&outfit) {}
+
+    EditingOutfit(const EditingOutfit &other)                         = default;
+    EditingOutfit(EditingOutfit &&other) noexcept                     = default;
+    auto operator=(const EditingOutfit &other) -> EditingOutfit &     = default;
+    auto operator=(EditingOutfit &&other) noexcept -> EditingOutfit & = default;
+
+    auto operator=(const SosUiOutfit &outfit) -> EditingOutfit &
+    {
+        source_outfit = &outfit;
+        slot_policies.fill("[N/A]");
+        return *this;
+    }
+
+    [[nodiscard]] auto GetId() const -> OutfitId { return source_outfit == nullptr ? UNTITLED_OUTFIT_ID : source_outfit->GetId(); }
 
     [[nodiscard]] auto IsUntitled() const -> bool { return GetId() == UNTITLED_OUTFIT_ID; }
 
     [[nodiscard]] auto GetName() const
     {
-        if ((m_sourceOutfit == nullptr) || IsUntitled()) return Translation::Translate("$SosGui_Untitled");
-        return m_sourceOutfit->GetName();
+        if (IsUntitled()) return Translation::Translate("$SosGui_Untitled");
+        return source_outfit->GetName();
     }
 
-    [[nodiscard]] auto IsConflictWith(const RE::TESObjectARMO *armor) const -> bool { return m_sourceOutfit->IsConflictWith(armor); }
+    [[nodiscard]] auto IsConflictWith(const RE::TESObjectARMO *armor) const -> bool
+    {
+        return source_outfit != nullptr && source_outfit->IsConflictWith(armor);
+    }
 
-    [[nodiscard]] auto IsEmpty() const -> bool { return m_sourceOutfit == nullptr || m_sourceOutfit->IsEmpty(); }
+    [[nodiscard]] auto IsEmpty() const -> bool { return source_outfit == nullptr || source_outfit->IsEmpty(); }
 
-    [[nodiscard]] auto GetArmorAt(const uint32_t slotIdx) const -> const RE::TESObjectARMO * { return m_sourceOutfit->GetArmorAt(slotIdx); }
+    [[nodiscard]] auto GetArmorAt(const uint32_t slotIdx) const -> const RE::TESObjectARMO *
+    {
+        return source_outfit != nullptr ? source_outfit->GetArmorAt(slotIdx) : nullptr;
+    }
 
-    [[nodiscard]] auto GetSlotPolicies() const -> const SosUiOutfit::SlotPolicyArray & { return m_sourceOutfit->GetSlotPolicies(); }
-
-    auto operator->() const -> const SosUiOutfit * { return m_sourceOutfit; }
+    operator bool() const { return source_outfit != nullptr; }
 };
-
-constexpr auto GetOutfitId(const SosUiOutfit &outfit)
-{
-    return outfit.GetId();
-}
-
-constexpr auto GetOutfitName(const SosUiOutfit &outfit)
-{
-    return outfit.GetName();
-}
 } // namespace SosGui

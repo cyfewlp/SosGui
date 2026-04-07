@@ -231,9 +231,9 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
                     if (constexpr auto flags = ImGuiEx::SelectableFlags().AllowDoubleClick().AllowOverlap().SpanAllColumns();
                         ImGui::Selectable(outfit.GetName().c_str(), multi_selection_.Contains(uIndex), flags))
                     {
-                        const EditingOutfit currentEditing(outfit);
-                        OnAcceptEditOutfit(currentEditing, outfitService);
-                        editing_ = currentEditing;
+                        editing_ = outfit;
+                        spawn([&] { return outfitService.GetOutfitArmors(outfit.GetId(), outfit.GetName()); });
+                        spawn([&] { return outfitService.GetSlotPolicy(editing_); });
                         if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                         {
                             wantRename = true;
@@ -333,15 +333,6 @@ auto OutfitListTable::pass_filter(const SosUiOutfit &outfit) -> bool
     const auto &name = outfit.GetName();
     return name_filterer_.PassFilter(name.c_str(), name.c_str() + name.size()) && // filter by name
            (!show_favorites_ || outfit.IsFavorite());                             // or only favorites if checked
-}
-
-void OutfitListTable::OnAcceptEditOutfit(const EditingOutfit &editingOutfit, OutfitService &outfitService) const
-{
-    if (!editingOutfit.IsUntitled())
-    {
-        spawn([&] { return outfitService.GetOutfitArmors(editingOutfit.GetId(), editingOutfit.GetName()); });
-        spawn([&] { return outfitService.GetSlotPolicy(editingOutfit.GetId(), editingOutfit.GetName()); });
-    }
 }
 
 // ReSharper disable once CppDFAUnreachableFunctionCall

@@ -173,7 +173,7 @@ void OutfitEditPanel::Draw()
 // Outfit Panel
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-void OutfitEditPanel::DrawOutfitPanel(const EditingOutfit &editingOutfit)
+void OutfitEditPanel::DrawOutfitPanel(EditingOutfit &editingOutfit)
 {
     if (ImGui::BeginTabBar("OutfitArmors"))
     {
@@ -231,7 +231,7 @@ void OutfitEditPanel::UpdateWindowTitle(const EditingOutfit &editingOutfit)
     last_editing_outfit_id_ = editingOutfit.GetId();
 }
 
-void OutfitEditPanel::DrawOutfitArmors(const EditingOutfit &editingOutfit)
+void OutfitEditPanel::DrawOutfitArmors(EditingOutfit &editingOutfit)
 {
     constexpr const char *SLOT_POLICY_HELP_POPUP_TITLE = "What is Slot Policy?";
 
@@ -321,12 +321,12 @@ void OutfitEditPanel::HighlightConflictSlot(const Slot slot) const
     }
 }
 
-void OutfitEditPanel::SlotPolicyCombo(const EditingOutfit &editingOutfit, const uint32_t &slotIdx) const
+void OutfitEditPanel::SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const
 {
-    auto       &policyNameKey = editingOutfit.GetSlotPolicies().at(slotIdx);
+    auto       &policyNameKey = editingOutfit.slot_policies[slotIdx];
     std::string policyName;
 
-    if (ImGui::BeginCombo("##SlotPolicy", Translation::Translate(policyNameKey).c_str(), ImGuiComboFlags_WidthFitPreview))
+    if (ImGui::BeginCombo("##SlotPolicy", Translate1(policyNameKey), ImGuiComboFlags_WidthFitPreview))
     {
         for (const auto &policy : {SlotPolicy::Inherit, SlotPolicy::Passthrough, SlotPolicy::RequireEquipped, SlotPolicy::AlwaysUseOutfit})
         {
@@ -335,7 +335,7 @@ void OutfitEditPanel::SlotPolicyCombo(const EditingOutfit &editingOutfit, const 
             {
                 if (!editingOutfit.IsUntitled())
                 {
-                    spawn([&] { return m_outfitService.SetSlotPolicy(editingOutfit.GetId(), editingOutfit.GetName(), slotIdx, policy); });
+                    spawn([&] { return m_outfitService.SetSlotPolicy(editingOutfit, slotIdx, policy); });
                 }
             }
             ImGuiUtil::SetItemTooltip(SlotPolicyToTooltipString(policy));

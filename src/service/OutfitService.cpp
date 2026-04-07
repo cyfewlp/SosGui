@@ -224,40 +224,39 @@ auto OutfitService::GetOutfitArmors(const OutfitId id, std::string outfitName) c
     }
 }
 
-auto OutfitService::SetSlotPolicy(const OutfitId id, std::string outfitName, const uint32_t slotPos, const SlotPolicy policy) const -> Task
+auto OutfitService::SetSlotPolicy(EditingOutfit &editingOutfit, const uint32_t slotPos, const SlotPolicy policy) const -> Task
 {
-    if (auto it = outfit_container_.find(id); it != outfit_container_.end())
+    if (outfit_container_.exists(editingOutfit.GetId()))
     {
-        it->SetSlotPolicy(slotPos, SlotPolicyToUiString(policy));
-        co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(std::move(outfitName), slotPos, SlotPolicyToCode(policy));
+        editingOutfit.slot_policies[slotPos] = SlotPolicyToUiString(policy);
+        co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(editingOutfit.GetName(), slotPos, SlotPolicyToCode(policy));
     }
 }
 
-auto OutfitService::GetSlotPolicy(const OutfitId id, std::string outfitName) const -> Task
+auto OutfitService::GetSlotPolicy(EditingOutfit &editingOutfit) const -> Task
 {
-    auto it = outfit_container_.find(id);
-    if (it == outfit_container_.end())
+    if (!outfit_container_.exists(editingOutfit.GetId()))
     {
         co_return;
     }
-    const Variable variable = co_await SosNativeCaller::BodySlotPolicyNamesForOutfit(std::move(outfitName));
+    const Variable variable = co_await SosNativeCaller::BodySlotPolicyNamesForOutfit(editingOutfit.GetName());
     if (!variable.IsLiteralArray())
     {
         ErrorNotifier::GetInstance().Error("Can't get outfit slot policies");
         co_return;
     }
     const auto array = variable.GetArray();
-    if (array->size() < SosUiOutfit::SLOT_COUNT)
+    if (array == nullptr || array->size() < SosUiOutfit::SLOT_COUNT)
     {
         ErrorNotifier::GetInstance().Error("Invalid outfit slot policies: slot count incorrect.");
         co_return;
     }
-    SlotType slotPos = 0;
-    for (const auto *iter = array->begin(); iter != array->end(); ++iter, ++slotPos)
+    for (SlotType slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; ++slotPos)
     {
-        const RE::BSScript::Variable var = *iter;
-
-        it->SetSlotPolicy(slotPos, std::string(var.GetString()));
+        const auto &var                      = array->operator[](slotPos);
+        editingOutfit.slot_policies[slotPos] = var.GetString();
+        // SOs return $$SkyOutSys_Desc_EasyPolicyName_XXXO
+        // TODO: split and convert to policy index
     }
 }
 

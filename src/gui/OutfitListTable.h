@@ -17,8 +17,7 @@ namespace SosGui
 class OutfitListTable final
 {
     static constexpr int        MAX_OUTFIT_NAME_BYTES = 256;
-    static inline auto          OUTFIT                = SosUiOutfit();
-    static inline EditingOutfit UNTITLED_OUTFIT{OUTFIT};
+    static inline EditingOutfit UNTITLED_OUTFIT;
     using DrawOutfitEntry  = std::function<void(const SosUiOutfit &, ImGuiID)>;
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
@@ -44,7 +43,6 @@ private:
 
     auto pass_filter(const SosUiOutfit &outfit) -> bool;
 
-    void OnAcceptEditOutfit(const EditingOutfit &editingOutfit, OutfitService &outfitService) const;
     // check MultiSelection and set all selected outfit to favorite
     void OnAcceptSetFavoriteOutfits(bool toFavorite, const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
     void DeleteAllSelectOutfits(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);

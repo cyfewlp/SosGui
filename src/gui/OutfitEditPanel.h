@@ -39,7 +39,7 @@ public:
     void Focus() override;
 
     void Draw();
-    void DrawOutfitPanel(const EditingOutfit &editingOutfit);
+    void DrawOutfitPanel(EditingOutfit &editingOutfit);
 
 private:
     enum class Error
@@ -53,9 +53,9 @@ private:
     void draw_filterers();
     void UpdateWindowTitle(const EditingOutfit &editingOutfit);
 
-    void DrawOutfitArmors(const EditingOutfit &editingOutfit);
+    void DrawOutfitArmors(EditingOutfit &editingOutfit);
     void HighlightConflictSlot(Slot slot) const;
-    void SlotPolicyCombo(const EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
+    void SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
 
     using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
     void DrawArmorSourcesTabBar();
