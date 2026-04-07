@@ -176,10 +176,9 @@ void OutfitEditPanel::Draw()
 
 void OutfitEditPanel::DrawOutfitPanel(const EditingOutfit &editingOutfit)
 {
-    ImGui::TextUnformatted(editingOutfit.GetName().c_str());
-    if (ImGui::BeginTabBar("##OutfitTabBarView"))
+    if (ImGui::BeginTabBar("OutfitArmors"))
     {
-        if (ImGui::BeginTabItem(Translate1("Armor"), nullptr, ImGuiTabItemFlags_Leading))
+        if (ImGui::BeginTabItem(std::format("{}###Outfit", editingOutfit.GetName()).c_str()))
         {
             DrawOutfitArmors(editingOutfit);
             ImGui::EndTabItem();
