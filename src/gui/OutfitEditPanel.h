@@ -60,7 +60,6 @@ private:
 
     using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
     void DrawArmorSourcesTabBar();
-    void DrawArmorViewFilter();
     void DrawArmorView(const EditingOutfit &editingOutfit);
     void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData);
     void DrawArmorViewTableContent(const std::vector<ArmorEntry> &viewData, const DrawArmorEntry &drawArmorEntry);

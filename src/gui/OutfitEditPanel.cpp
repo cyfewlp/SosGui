@@ -163,7 +163,6 @@ void OutfitEditPanel::Draw()
         ImGui::BeginGroup();
         DrawOutfitPanel(editingOutfit);
         DrawArmorSourcesTabBar();
-        DrawArmorViewFilter();
         DrawArmorView(editingOutfit);
         ImGui::EndGroup();
     }
@@ -449,17 +448,14 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
     }
 }
 
-void OutfitEditPanel::DrawArmorViewFilter()
+void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
 {
     if (armor_view_.armor_name_filter_.Draw())
     {
         armor_view_.armor_name_filter_.dirty = false;
         armor_view_.reset_view_data(armor_source_, armor_source_refr_);
     }
-}
 
-void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
-{
     if (armor_view_.view_data_.empty())
     {
         return;
