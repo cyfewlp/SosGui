@@ -26,8 +26,9 @@ class OutfitListTable final
     EditingOutfit              editing_    = UNTITLED_OUTFIT;
     ImGuiSelectionBasicStorage multi_selection_;
     OutfitNameBuffer           outfit_name_buffer_{};
-    ImGuiID                    active_input_id_ = 0;
-    bool                       show_favorites_  = false;
+    ImGuiID                    active_input_id_  = 0;
+    bool                       show_favorites_   = false;
+    bool                       name_sort_ascend_ = true;
 
 public:
     void OnRefresh();

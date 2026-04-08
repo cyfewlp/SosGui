@@ -95,8 +95,6 @@ constexpr void AddItemRect(const ImColor color, const float thickness = 1.0F)
     drawList->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), color, 0, ImDrawFlags_None, thickness);
 }
 
-void may_update_table_sort_dir(bool &ascend);
-
 constexpr void OpenPopup(std::string_view strId, ImGuiPopupFlags flags = ImGuiPopupFlags_None)
 {
     const auto popupId = ImGui::GetID(ImGuiEx::TextStart(strId), ImGuiEx::TextEnd(strId));

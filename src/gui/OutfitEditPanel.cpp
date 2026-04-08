@@ -323,7 +323,7 @@ void OutfitEditPanel::HighlightConflictSlot(const Slot slot) const
 
 void OutfitEditPanel::SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const
 {
-    const auto  preview_policy = editingOutfit.slot_policies[slotIdx];
+    const auto preview_policy = editingOutfit.slot_policies[slotIdx];
     if (ImGui::BeginCombo("##SlotPolicy", Translate1(slot_policy_token(preview_policy)), ImGuiComboFlags_WidthFitPreview))
     {
         for (const auto &policy : {SlotPolicy::Inherit, SlotPolicy::Passthrough, SlotPolicy::RequireEquipped, SlotPolicy::AlwaysUseOutfit})
@@ -478,6 +478,16 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
     ImGui::TableSetupColumn(Translate1("##Add"), ImGuiEx::TableColumnFlags().NoSort());
     ImGui::TableHeadersRow();
 
+    if (auto *sortSpecs = ImGui::TableGetSortSpecs(); sortSpecs != nullptr)
+    {
+        if (sortSpecs->SpecsDirty && sortSpecs->SpecsCount > 0)
+        {
+            const auto direction    = sortSpecs->Specs[0].SortDirection;
+            armor_name_sort_ascend_ = direction == ImGuiSortDirection_Ascending;
+            sortSpecs->SpecsDirty   = false;
+        }
+    }
+
     bool wantAddArmor   = false;
     auto drawArmorEntry = [&](const Armor *armor, const ImGuiID index) {
         ImGui::PushID(static_cast<int>(index));
@@ -595,8 +605,6 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
 
 void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<ArmorEntry> &viewData, const DrawArmorEntry &drawArmorEntry)
 {
-    static bool ascend = true;
-    ImGuiUtil::may_update_table_sort_dir(ascend);
     auto &multiSelection = armor_view_.multi_selection_;
     auto *msIO           = multiSelection.Begin(
         ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid(), static_cast<int>(viewData.size())
@@ -613,7 +621,7 @@ void OutfitEditPanel::DrawArmorViewTableContent(const std::vector<ArmorEntry> &v
     {
         const int itemCount = clipper.DisplayEnd - clipper.DisplayStart;
         auto      index     = static_cast<ImGuiID>(clipper.DisplayStart);
-        if (ascend)
+        if (armor_name_sort_ascend_)
         {
             for (const auto &armor : viewData | std::views::drop(clipper.DisplayStart) | std::views::take(itemCount))
             {

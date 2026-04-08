@@ -85,11 +85,12 @@ private:
     OutfitListTable                  outfit_list_table_{};
     int                              waiting_add_armor_count_ = 0;
     OutfitId                         last_editing_outfit_id_;
-    ConflictSolution                 conflict_solution_     = ConflictSolution::none;
-    bool                             show_all_outfit_slots_ = false;
-    bool                             should_refresh_view_   = true;
-    ArmorSource                      armor_source_          = ArmorSource::None;
-    RE::TESObjectREFR               *armor_source_refr_     = nullptr;
+    ConflictSolution                 conflict_solution_      = ConflictSolution::none;
+    bool                             show_all_outfit_slots_  = false;
+    bool                             should_refresh_view_    = true;
+    bool                             armor_name_sort_ascend_ = true;
+    ArmorSource                      armor_source_           = ArmorSource::None;
+    RE::TESObjectREFR               *armor_source_refr_      = nullptr;
     std::vector<RE::TESObjectREFR *> near_objects_;
 };
 } // namespace SosGui

@@ -10,19 +10,6 @@ void ImGuiUtil::AddItemRectWithCol(const ImGuiCol colorIndex, const float thickn
     drawList->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), color, 0, ImDrawFlags_None, thickness);
 }
 
-void ImGuiUtil::may_update_table_sort_dir(bool &ascend)
-{
-    if (auto *sortSpecs = ImGui::TableGetSortSpecs(); sortSpecs != nullptr)
-    {
-        if (sortSpecs->SpecsDirty)
-        {
-            const auto direction  = sortSpecs->Specs[0].SortDirection;
-            ascend                = direction == ImGuiSortDirection_Ascending;
-            sortSpecs->SpecsDirty = false;
-        }
-    }
-}
-
 namespace
 {
 /**

@@ -87,6 +87,16 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
             ImGui::TableSetupColumn(Translate1("Panels.Outfit.Title"), ImGuiEx::TableColumnFlags().DefaultSort());
             ImGui::TableHeadersRow();
 
+            if (auto *sortSpecs = ImGui::TableGetSortSpecs(); sortSpecs != nullptr)
+            {
+                if (sortSpecs->SpecsDirty && sortSpecs->SpecsCount > 0)
+                {
+                    const auto direction  = sortSpecs->Specs[0].SortDirection;
+                    name_sort_ascend_     = direction == ImGuiSortDirection_Ascending;
+                    sortSpecs->SpecsDirty = false;
+                }
+            }
+
             DrawOutfitTableContent(outfits, outfitService);
             ImGui::EndTable();
         }
@@ -151,9 +161,6 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
         return;
     }
 
-    static bool ascend = true;
-    ImGuiUtil::may_update_table_sort_dir(ascend);
-
     auto OnRename = [this](const ImGuiID inputId, const std::string &outfitName) -> void {
         active_input_id_ = inputId;
         outfitName.copy(outfit_name_buffer_.data(), outfit_name_buffer_.size());
@@ -163,7 +170,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
     auto          *msIO    = ImGui::BeginMultiSelect(msFlags, multi_selection_.Size, static_cast<int>(outfits.size()));
 
     multi_selection_.ApplyRequests(msIO);
-    const bool reverse          = !ascend;
+    const bool reverse          = !name_sort_ascend_;
     const int  start            = reverse ? static_cast<int>(outfits.size()) - 1 : 0;
     const int  end              = reverse ? 0 : static_cast<int>(outfits.size()) - 1;
     const int  step             = reverse ? -1 : 1;
