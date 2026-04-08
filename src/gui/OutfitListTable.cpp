@@ -19,6 +19,52 @@
 
 namespace SosGui
 {
+
+namespace
+{
+
+auto DrawConfirmDeleteOutfitsPopup(const char *name, ImGuiSelectionBasicStorage &selection, const std::vector<SosUiOutfit> &outfits) -> bool
+{
+    bool confirmed = false;
+    bool open      = true;
+    if (ImGui::BeginPopupModal(name, &open, ImGuiEx::WindowFlags().AlwaysAutoResize()))
+    {
+        void   *it = nullptr;
+        ImGuiID id = 0;
+        if (selection.GetNextSelectedItem(&it, &id) && id < outfits.size())
+        {
+            if (selection.Size > 1)
+            {
+                ImGuiUtil::Text(util::TranslateEx("Panels.OutfitEdit.DeleteMultiple", selection.Size));
+                ImGuiUtil::Text(outfits[id].GetName());
+                constexpr int maxShowCount   = 10;
+                int           remainingCount = maxShowCount;
+                while (--remainingCount > 0 && selection.GetNextSelectedItem(&it, &id))
+                {
+                    ImGuiUtil::Text(outfits[id].GetName());
+                }
+                if (remainingCount == 0)
+                {
+                    ImGuiUtil::Text(util::TranslateEx("Panels.OutfitEdit.DeleteMultipleAdditionalTips", selection.Size - maxShowCount));
+                }
+            }
+            else
+            {
+                ImGuiUtil::Text(util::TranslateEx("Panels.OutfitEdit.DeleteOne", outfits[id].GetName()));
+            }
+            confirmed = Popup::DrawActionButtons();
+        }
+        else
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+    return confirmed;
+}
+} // namespace
+
 void OutfitListTable::OnRefresh()
 {
     editing_ = UNTITLED_OUTFIT;
@@ -32,23 +78,12 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
     {
         DrawToolWidgets(outfitService);
         const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_CellPadding>(ImVec2(10, 5));
-        if (ImGui::BeginTable(
-                "##OutfitLists",
-                2,
-                ImGuiEx::TableFlags()
-                    .Borders()
-                    .Resizable()
-                    .Hideable()
-                    .Reorderable()
-                    .Sortable()
-                    .SizingStretchProp()
-                    .ScrollY()
-                    .NoHostExtendX()
-                    .ContextMenuInBody()
-            ))
+        const auto flags =
+            ImGuiEx::TableFlags().Borders().Resizable().Hideable().Reorderable().Sortable().SizingStretchProp().ScrollY().ContextMenuInBody();
+        if (ImGui::BeginTable("##OutfitLists", 2, flags))
         {
             ImGui::TableSetupScrollFreeze(1, 1);
-            ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed(), 56);
+            ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort(), 56);
             ImGui::TableSetupColumn(Translate1("Panels.Outfit.Title"), ImGuiEx::TableColumnFlags().DefaultSort());
             ImGui::TableHeadersRow();
 
@@ -106,55 +141,15 @@ void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
     ImGui::PopItemFlag();
 }
 
-namespace
-{
-
-auto DrawConfirmDeleteOutfitsPopup(const char *name, ImGuiSelectionBasicStorage &selection, const std::vector<SosUiOutfit> &outfits) -> bool
-{
-    bool confirmed = false;
-    bool open      = true;
-    if (ImGui::BeginPopupModal(name, &open, ImGuiEx::WindowFlags().AlwaysAutoResize()))
-    {
-        void   *it = nullptr;
-        ImGuiID id = 0;
-        if (selection.GetNextSelectedItem(&it, &id) && id < outfits.size())
-        {
-            if (selection.Size > 1)
-            {
-                ImGuiUtil::Text(util::TranslateEx("Panels.OutfitEdit.DeleteMultiple", selection.Size));
-                ImGuiUtil::Text(outfits[id].GetName());
-                constexpr int maxShowCount   = 10;
-                int           remainingCount = maxShowCount;
-                while (--remainingCount > 0 && selection.GetNextSelectedItem(&it, &id))
-                {
-                    ImGuiUtil::Text(outfits[id].GetName());
-                }
-                if (remainingCount == 0)
-                {
-                    ImGuiUtil::Text(util::TranslateEx("Panels.OutfitEdit.DeleteMultipleAdditionalTips", selection.Size - maxShowCount));
-                }
-            }
-            else
-            {
-                ImGuiUtil::Text(util::TranslateEx("Panels.OutfitEdit.DeleteOne", outfits[id].GetName()));
-            }
-            confirmed = Popup::DrawActionButtons();
-        }
-        else
-        {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-    return confirmed;
-}
-} // namespace
-
 void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
     constexpr const char *OUTFIT_NAME_INPUT_LABEL            = "##editableOutfitNameId";
     constexpr const char *CONFIRM_DELETE_OUTFITS_POPUP_TITLE = "Delete";
+
+    if (outfits.empty())
+    {
+        return;
+    }
 
     static bool ascend = true;
     ImGuiUtil::may_update_table_sort_dir(ascend);
@@ -162,127 +157,110 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
     auto OnRename = [this](const ImGuiID inputId, const std::string &outfitName) -> void {
         active_input_id_ = inputId;
         outfitName.copy(outfit_name_buffer_.data(), outfit_name_buffer_.size());
-        // ImGui::ActivateItemByID(inputId);
     };
 
-    ImGuiListClipper clipper;
-    clipper.Begin(static_cast<int>(outfits.size()));
     constexpr auto msFlags = ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid();
-    auto          *msIO    = ImGui::BeginMultiSelect(msFlags, multi_selection_.Size, clipper.ItemsCount);
+    auto          *msIO    = ImGui::BeginMultiSelect(msFlags, multi_selection_.Size, static_cast<int>(outfits.size()));
 
     multi_selection_.ApplyRequests(msIO);
-    if (msIO->RangeSrcItem != -1)
-    {
-        clipper.IncludeItemByIndex(static_cast<int>(msIO->RangeSrcItem));
-    }
     const bool reverse          = !ascend;
+    const int  start            = reverse ? static_cast<int>(outfits.size()) - 1 : 0;
+    const int  end              = reverse ? 0 : static_cast<int>(outfits.size()) - 1;
     const int  step             = reverse ? -1 : 1;
     bool       wantDeleteOutfit = false;
-    while (clipper.Step())
+    for (int index{start}; index != end; index += step)
     {
-        auto       start     = clipper.DisplayStart;
-        auto       end       = clipper.DisplayEnd;
-        const auto itemCount = end - start;
-        if (reverse)
-        {
-            start = static_cast<int>(outfits.size()) - 1 - start;
-            end   = start - itemCount;
-        }
-        for (auto index = start; index != end; index += step)
-        {
-            const auto  uIndex = static_cast<ImGuiID>(index);
-            const auto &outfit = outfits[uIndex];
-            if (!pass_filter(outfit)) continue;
+        const auto  uIndex = static_cast<ImGuiID>(index);
+        const auto &outfit = outfits[uIndex];
+        if (!pass_filter(outfit)) continue;
 
-            ImGui::PushID(index);
-            ImGui::TableNextRow();
-            if (ImGui::TableNextColumn()) // number column
+        ImGui::PushID(index);
+        if (ImGui::TableNextColumn()) // number column
+        {
+            bool clicked = false;
+            if (outfit.IsFavorite())
             {
-                bool clicked = false;
-                if (outfit.IsFavorite())
-                {
-                    clicked = ImGuiUtil::IconButton(ICON_HEART);
-                    ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.UnmarkFavorite"));
-                }
-                else
-                {
-                    clicked = ImGuiUtil::IconButton(ICON_HEART_OFF);
-                    ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.MarkFavorite"));
-                }
-                if (clicked)
-                {
-                    spawn([&] { return outfitService.SetOutfitIsFavorite(outfit.GetId(), outfit.GetName(), !outfit.IsFavorite()); });
-                }
-
-                ImGui::SameLine();
-                ImGui::Text("%u", index + 1);
+                clicked = ImGuiUtil::IconButton(ICON_HEART);
+                ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.UnmarkFavorite"));
+            }
+            else
+            {
+                clicked = ImGuiUtil::IconButton(ICON_HEART_OFF);
+                ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.MarkFavorite"));
+            }
+            if (clicked)
+            {
+                spawn([&] { return outfitService.SetOutfitIsFavorite(outfit.GetId(), outfit.GetName(), !outfit.IsFavorite()); });
             }
 
-            if (ImGui::TableNextColumn()) // outfit name column
+            ImGui::SameLine();
+            ImGui::Text("%u", index + 1);
+        }
+
+        if (ImGui::TableNextColumn()) // outfit name column
+        {
+            if (const auto thisInputId = ImGui::GetID(OUTFIT_NAME_INPUT_LABEL); active_input_id_ == thisInputId)
             {
-                if (const auto thisInputId = ImGui::GetID(OUTFIT_NAME_INPUT_LABEL); active_input_id_ == thisInputId)
-                {
-                    ImGui::SetNextItemWidth(-FLT_MIN);
-                    ImGui::SetKeyboardFocusHere();
-                    ImGui::InputTextWithHint(OUTFIT_NAME_INPUT_LABEL, "rename outfit", outfit_name_buffer_.data(), outfit_name_buffer_.size());
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                ImGui::SetKeyboardFocusHere();
+                ImGui::InputTextWithHint(OUTFIT_NAME_INPUT_LABEL, "rename outfit", outfit_name_buffer_.data(), outfit_name_buffer_.size());
 
-                    if (ImGui::IsItemDeactivated())
-                    {
-                        std::string_view newNameSv(outfit_name_buffer_.data());
-                        if (!newNameSv.empty() && newNameSv != outfit.GetName())
-                        {
-                            logger::info("Rename outfit {} to {}", outfit.GetName(), outfit_name_buffer_.data());
-                            spawn([&] { return outfitService.RenameOutfit(outfit.GetId(), outfit.GetName(), std::string(newNameSv)); });
-                        }
-                        outfit_name_buffer_[0] = '\0';
-                        active_input_id_       = 0;
-                    }
-                }
-                else
+                if (ImGui::IsItemDeactivated())
                 {
-                    bool wantRename = false;
-                    ImGui::SetNextItemSelectionUserData(index);
-                    if (constexpr auto flags = ImGuiEx::SelectableFlags().AllowDoubleClick().AllowOverlap().SpanAllColumns();
-                        ImGui::Selectable(outfit.GetName().c_str(), multi_selection_.Contains(uIndex), flags))
+                    std::string_view newNameSv(outfit_name_buffer_.data());
+                    if (!newNameSv.empty() && newNameSv != outfit.GetName())
                     {
-                        editing_id_ = outfit.GetId();
-                        spawn([&] { return outfitService.GetOutfitArmors(outfit.GetId(), outfit.GetName()); });
-                        if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-                        {
-                            wantRename = true;
-                        }
+                        logger::info("Rename outfit {} to {}", outfit.GetName(), outfit_name_buffer_.data());
+                        spawn([&] { return outfitService.RenameOutfit(outfit.GetId(), outfit.GetName(), std::string(newNameSv)); });
                     }
-
-                    if (ImGui::BeginPopupContextItem())
-                    {
-                        ImGui::Separator();
-                        if (ImGui::MenuItem(Translate1("Panels.Outfit.MarkFavorite")))
-                        {
-                            OnAcceptSetFavoriteOutfits(true, outfits, outfitService);
-                        }
-                        if (ImGui::MenuItem(Translate1("Panels.Outfit.UnmarkFavorite")))
-                        {
-                            OnAcceptSetFavoriteOutfits(false, outfits, outfitService);
-                        }
-                        ImGui::Separator();
-                        if (multi_selection_.Size == 1 && ImGui::MenuItem(Translate1("Panels.Outfit.Rename")))
-                        {
-                            wantRename = true;
-                        }
-                        if (ImGui::MenuItem(Translate1("Delete")))
-                        {
-                            wantDeleteOutfit = true;
-                        }
-                        ImGui::EndPopup();
-                    }
-                    if (wantRename)
-                    {
-                        OnRename(thisInputId, outfit.GetName());
-                    }
+                    outfit_name_buffer_[0] = '\0';
+                    active_input_id_       = 0;
                 }
             }
-            ImGui::PopID();
+            else
+            {
+                bool wantRename = false;
+                ImGui::SetNextItemSelectionUserData(index);
+                if (constexpr auto flags = ImGuiEx::SelectableFlags().AllowDoubleClick().AllowOverlap().SpanAllColumns();
+                    ImGui::Selectable(outfit.GetName().c_str(), multi_selection_.Contains(uIndex), flags))
+                {
+                    editing_id_ = outfit.GetId();
+                    spawn([&] { return outfitService.GetOutfitArmors(outfit.GetId(), outfit.GetName()); });
+                    if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    {
+                        wantRename = true;
+                    }
+                }
+
+                if (ImGui::BeginPopupContextItem())
+                {
+                    ImGui::Separator();
+                    if (ImGui::MenuItem(Translate1("Panels.Outfit.MarkFavorite")))
+                    {
+                        OnAcceptSetFavoriteOutfits(true, outfits, outfitService);
+                    }
+                    if (ImGui::MenuItem(Translate1("Panels.Outfit.UnmarkFavorite")))
+                    {
+                        OnAcceptSetFavoriteOutfits(false, outfits, outfitService);
+                    }
+                    ImGui::Separator();
+                    if (multi_selection_.Size == 1 && ImGui::MenuItem(Translate1("Panels.Outfit.Rename")))
+                    {
+                        wantRename = true;
+                    }
+                    if (ImGui::MenuItem(Translate1("Delete")))
+                    {
+                        wantDeleteOutfit = true;
+                    }
+                    ImGui::EndPopup();
+                }
+                if (wantRename)
+                {
+                    OnRename(thisInputId, outfit.GetName());
+                }
+            }
         }
+        ImGui::PopID();
     }
     multi_selection_.ApplyRequests(ImGui::EndMultiSelect());
     if (multi_selection_.Size == 0)
