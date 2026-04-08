@@ -18,25 +18,24 @@
 
 namespace SosGui
 {
-auto OutfitService::CreateOutfit(std::string outfitName) const -> Task
+auto OutfitService::CreateOutfit(const std::string &outfitName) const -> Task
 {
-    if (const Variable isAlreadyExist = co_await SosNativeCaller::IsOutfitExisting(std::string(outfitName));
-        isAlreadyExist.IsBool() && isAlreadyExist.GetBool())
+    if (const Variable isAlreadyExist = co_await SosNativeCaller::IsOutfitExisting(outfitName); isAlreadyExist.IsBool() && isAlreadyExist.GetBool())
     {
         co_return;
     }
-    co_await SosNativeCaller::CreateOutfit(std::string(outfitName));
-    if (const Variable existVar = co_await SosNativeCaller::IsOutfitExisting(std::string(outfitName)); !existVar.IsBool() || !existVar.GetBool())
+    co_await SosNativeCaller::CreateOutfit(outfitName);
+    if (const Variable existVar = co_await SosNativeCaller::IsOutfitExisting(outfitName); !existVar.IsBool() || !existVar.GetBool())
     {
         ErrorNotifier::GetInstance().Error("Can't get outfit list");
     }
     else
     {
-        outfit_container_.Add(std::move(outfitName));
+        outfit_container_.add(outfitName);
     }
 }
 
-auto OutfitService::CreateOutfitFromWorn(std::string outfitName) const -> Task
+auto OutfitService::CreateOutfitFromWorn(const std::string &outfitName) const -> Task
 {
     std::string errorMessage("Can't create outfit from worn: ");
     if (auto *player = RE::PlayerCharacter::GetSingleton(); player != nullptr)
@@ -50,11 +49,10 @@ auto OutfitService::CreateOutfitFromWorn(std::string outfitName) const -> Task
                 const RE::BSScript::Variable var = *iter;
                 armors.emplace_back(var.Unpack<RE::TESObjectARMO *>());
             }
-            co_await SosNativeCaller::OverwriteOutfit(std::string(outfitName), armors);
-            if (const Variable existVar = co_await SosNativeCaller::IsOutfitExisting(std::string(outfitName));
-                existVar.IsBool() && existVar.GetBool())
+            co_await SosNativeCaller::OverwriteOutfit(outfitName, armors);
+            if (const Variable existVar = co_await SosNativeCaller::IsOutfitExisting(outfitName); existVar.IsBool() && existVar.GetBool())
             {
-                outfit_container_.Add(std::move(outfitName));
+                outfit_container_.add(outfitName);
                 co_return;
             }
             errorMessage.append("create outfit fail.");
@@ -86,8 +84,9 @@ auto OutfitService::GetOutfitList() const -> Task
     for (const auto *iter = array->begin(); iter != array->end(); ++iter)
     {
         const RE::BSScript::Variable var = *iter;
-        outfit_container_.Add(var.Unpack<std::string>());
+        outfit_container_.add(var.Unpack<std::string>());
     }
+    outfit_container_.sort();
 }
 
 auto OutfitService::GetAllFavoriteOutfits() const -> Task
@@ -114,21 +113,21 @@ auto OutfitService::GetAllFavoriteOutfits() const -> Task
     }
 }
 
-auto OutfitService::SetOutfitIsFavorite(const OutfitId id, std::string outfitName, const bool isFavorite) const -> Task
+auto OutfitService::SetOutfitIsFavorite(const OutfitId id, const std::string &outfitName, const bool isFavorite) const -> Task
 {
     if (auto it = outfit_container_.find(id); it != outfit_container_.end())
     {
         it->SetFavorite(isFavorite);
-        co_await SosNativeCaller::SetOutfitFavoriteStatus(std::string(outfitName), isFavorite);
+        co_await SosNativeCaller::SetOutfitFavoriteStatus(outfitName, isFavorite);
     }
 }
 
-auto OutfitService::SetActorOutfit(RE::Actor *actor, const OutfitId id, std::string outfitName) const -> Task
+auto OutfitService::SetActorOutfit(RE::Actor *actor, const OutfitId id, const std::string &outfitName) const -> Task
 {
     if (outfit_container_.exists(id))
     {
         m_uiData.actor_outfit_container.set(actor, id);
-        co_await SosNativeCaller::ActiveOutfit(actor, std::string(outfitName));
+        co_await SosNativeCaller::ActiveOutfit(actor, outfitName);
     }
 }
 
@@ -146,9 +145,9 @@ auto OutfitService::GetActorOutfit(RE::Actor *actor) const -> Task
     }
 }
 
-auto OutfitService::RenameOutfit(const OutfitId id, std::string outfitName, std::string newName) const -> Task
+auto OutfitService::RenameOutfit(const OutfitId id, const std::string &outfitName, const std::string &newName) const -> Task
 {
-    if (const auto successVar = co_await SosNativeCaller::RenameOutfit(std::move(outfitName), std::string(newName));
+    if (const auto successVar = co_await SosNativeCaller::RenameOutfit(outfitName, newName);
         !successVar.IsBool() || !successVar.GetBool())
     {
         ErrorNotifier::GetInstance().Error("Can't rename outfit");
@@ -157,17 +156,17 @@ auto OutfitService::RenameOutfit(const OutfitId id, std::string outfitName, std:
 
     if (auto it = outfit_container_.find(id); it != outfit_container_.end())
     {
-        it->SetName(std::move(newName));
+        it->SetName(newName);
     }
 }
 
-auto OutfitService::DeleteOutfit(const OutfitId id, std::string outfitName) const -> Task
+auto OutfitService::DeleteOutfit(const OutfitId id, const std::string &outfitName) const -> Task
 {
-    co_await SosNativeCaller::DeleteOutfit(std::move(outfitName));
+    co_await SosNativeCaller::DeleteOutfit(outfitName);
     outfit_container_.erase(id);
 }
 
-auto OutfitService::AddArmor(const OutfitId id, std::string outfitName, const Armor *armor) const -> Task
+auto OutfitService::AddArmor(const OutfitId id, const std::string &outfitName, const Armor *armor) const -> Task
 {
     if (armor == nullptr)
     {
@@ -176,21 +175,21 @@ auto OutfitService::AddArmor(const OutfitId id, std::string outfitName, const Ar
     if (auto it = outfit_container_.find(id); it != outfit_container_.end())
     {
         it->AddArmor(armor);
-        co_await SosNativeCaller::AddArmorToOutfit(std::move(outfitName), armor);
+        co_await SosNativeCaller::AddArmorToOutfit(outfitName, armor);
     }
 }
 
-auto OutfitService::DeleteConflictArmors(std::string outfitName, const Armor *armor) -> Task
+auto OutfitService::DeleteConflictArmors(const std::string &outfitName, const Armor *armor) -> Task
 {
     if (armor == nullptr)
     {
         co_return;
     }
-    co_await SosNativeCaller::RemoveConflictingArmorsFrom(armor, std::move(outfitName));
+    co_await SosNativeCaller::RemoveConflictingArmorsFrom(armor, outfitName);
     // We don't need update UI data because we default directly override armor in slot
 }
 
-auto OutfitService::RemoveArmor(const OutfitId id, std::string outfitName, const Armor *armor) const -> Task
+auto OutfitService::RemoveArmor(const OutfitId id, const std::string &outfitName, const Armor *armor) const -> Task
 {
     if (armor == nullptr)
     {
@@ -199,18 +198,18 @@ auto OutfitService::RemoveArmor(const OutfitId id, std::string outfitName, const
     if (auto it = outfit_container_.find(id); it != outfit_container_.end())
     {
         it->RemoveArmor(armor);
-        co_await SosNativeCaller::RemoveArmorFromOutfit(std::move(outfitName), armor);
+        co_await SosNativeCaller::RemoveArmorFromOutfit(outfitName, armor);
     }
 }
 
-auto OutfitService::GetOutfitArmors(const OutfitId id, std::string outfitName) const -> Task
+auto OutfitService::GetOutfitArmors(const OutfitId id, const std::string &outfitName) const -> Task
 {
     auto it = outfit_container_.find(id);
     if (it == outfit_container_.end())
     {
         co_return;
     }
-    co_await SosNativeCaller::PrepOutfitBodySlotListing(std::move(outfitName));
+    co_await SosNativeCaller::PrepOutfitBodySlotListing(outfitName);
     const Variable armorsVar = co_await SosNativeCaller::GetOutfitBodySlotListingArmorForms();
     if (!armorsVar.IsObjectArray())
     {

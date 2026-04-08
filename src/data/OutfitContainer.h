@@ -31,39 +31,37 @@ public:
         });
     }
 
-    constexpr void Add(std::string outfitName)
+    [[nodiscard]] constexpr auto find(OutfitId id) const -> const_iterator
     {
-        outfits_.emplace_back(g_NextOutfitId, std::move(outfitName));
-        ++g_NextOutfitId;
+        return std::ranges::find_if(outfits_, [id](const auto &outfit) -> bool { return outfit.GetId() == id; });
     }
 
-    constexpr auto find(OutfitId id) const -> const_iterator
-    {
-        return std::ranges::find_if(outfits_, [id](const auto &outfit) -> bool {
-            return outfit.GetId() == id;
-        });
-    }
-
-    constexpr auto find(const std::string &name) const -> const_iterator
+    [[nodiscard]] constexpr auto find(const std::string &name) const -> const_iterator
     {
         return std::lower_bound(outfits_.begin(), outfits_.end(), name, [](const SosUiOutfit &outfit, const std::string &a_name) -> bool {
             return util::StrLess(outfit.GetName(), a_name);
         });
     }
 
-    constexpr auto find(OutfitId id) -> iterator
+    [[nodiscard]] constexpr auto find(OutfitId id) -> iterator
     {
-        return std::ranges::find_if(outfits_, [id](const auto &outfit) -> bool {
-            return outfit.GetId() == id;
-        });
+        return std::ranges::find_if(outfits_, [id](const auto &outfit) -> bool { return outfit.GetId() == id; });
     }
 
-    constexpr auto find(const std::string &name) -> iterator
+    [[nodiscard]] constexpr auto find(const std::string &name) -> iterator
     {
         return std::lower_bound(outfits_.begin(), outfits_.end(), name, [](const SosUiOutfit &outfit, const std::string &a_name) -> bool {
             return util::StrLess(outfit.GetName(), a_name);
         });
     }
+
+    [[nodiscard]] constexpr auto exists(OutfitId id) const -> bool { return find(id) != outfits_.end(); }
+
+    [[nodiscard]] constexpr auto end() const -> const_iterator { return outfits_.end(); }
+
+    [[nodiscard]] constexpr auto get_all() -> std::vector<SosUiOutfit> & { return outfits_; }
+
+    [[nodiscard]] constexpr auto get_all() const -> const std::vector<SosUiOutfit> & { return outfits_; }
 
     constexpr auto erase(OutfitId id) -> bool
     {
@@ -85,13 +83,20 @@ public:
         return false;
     }
 
-    [[nodiscard]] constexpr auto exists(OutfitId id) const -> bool { return find(id) != outfits_.end(); }
+    constexpr void add(std::string outfitName)
+    {
+        if (const auto it = find(outfitName); it == end() || it->GetName() != outfitName)
+        {
+            outfits_.emplace(it, g_NextOutfitId, std::move(outfitName));
+            ++g_NextOutfitId;
+        }
+    }
 
-    [[nodiscard]] constexpr auto end() const -> const_iterator { return outfits_.end(); }
-
-    [[nodiscard]] constexpr auto get_all() -> std::vector<SosUiOutfit> & { return outfits_; }
-
-    [[nodiscard]] constexpr auto get_all() const -> const std::vector<SosUiOutfit> & { return outfits_; }
+    constexpr void emplace_back(std::string outfitName)
+    {
+        outfits_.emplace_back(g_NextOutfitId, std::move(outfitName));
+        ++g_NextOutfitId;
+    }
 };
 
 } // namespace SosGui

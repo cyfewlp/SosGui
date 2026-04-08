@@ -17,21 +17,21 @@ auto SosNativeCaller::GetOutfitNameMaxLength() -> Awaitable
     return StaticCall(SosFunction::GetOutfitNameMaxLength);
 }
 
-auto SosNativeCaller::BodySlotPolicyNamesForOutfit(std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::BodySlotPolicyNamesForOutfit(std::string outfitName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName));
     return StaticCall(SosFunction::BodySlotPolicyNamesForOutfit, args);
 }
 
-auto SosNativeCaller::SetBodySlotPoliciesForOutfit(std::string &&outfitName, uint32_t slotPos, std::string &&policyCode) -> Awaitable
+auto SosNativeCaller::SetBodySlotPoliciesForOutfit(std::string outfitName, uint32_t slotPos, std::string policyCode) -> Awaitable
 {
     auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::move(slotPos), std::move(policyCode));
     return StaticCall(SosFunction::SetBodySlotPoliciesForOutfit, args);
 }
 
-auto SosNativeCaller::ActiveOutfit(RE::Actor *actor, std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::ActiveOutfit(RE::Actor *actor, std::string outfitName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::move(actor), std::forward<std::string>(outfitName));
+    auto *args = RE::MakeFunctionArguments(std::move(actor), std::move(outfitName));
     return StaticCall(SosFunction::SetSelectedOutfit, args);
 }
 
@@ -41,42 +41,39 @@ auto SosNativeCaller::GetSelectedOutfit(RE::Actor *actor) -> Awaitable
     return StaticCall(SosFunction::GetSelectedOutfit, args);
 }
 
-auto SosNativeCaller::RenameOutfit(std::string &&outfitName, std::string &&newName) -> Awaitable
+auto SosNativeCaller::RenameOutfit(std::string outfitName, std::string newName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(
-        std::forward<std::string>(outfitName), //
-        std::forward<std::string>(newName)
-    );
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::move(newName));
     return StaticCall(SosFunction::RenameOutfit, args);
 }
 
-auto SosNativeCaller::DeleteOutfit(std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::DeleteOutfit(std::string outfitName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName));
     return StaticCall(SosFunction::DeleteOutfit, args);
 }
 
-auto SosNativeCaller::AddArmorToOutfit(std::string &&outfitName, const Armor *armor) -> Awaitable
+auto SosNativeCaller::AddArmorToOutfit(std::string outfitName, const Armor *armor) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName), std::move(armor));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::move(armor));
     return StaticCall(SosFunction::AddArmorToOutfit, args);
 }
 
-auto SosNativeCaller::RemoveArmorFromOutfit(std::string &&outfitName, const Armor *armor) -> Awaitable
+auto SosNativeCaller::RemoveArmorFromOutfit(std::string outfitName, const Armor *armor) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName), std::move(armor));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::move(armor));
     return StaticCall(SosFunction::RemoveArmorFromOutfit, args);
 }
 
-auto SosNativeCaller::RemoveConflictingArmorsFrom(const Armor *armor, std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::RemoveConflictingArmorsFrom(const Armor *armor, std::string outfitName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::move(armor), std::forward<std::string>(outfitName));
+    auto *args = RE::MakeFunctionArguments(std::move(armor), std::move(outfitName));
     return StaticCall(SosFunction::RemoveConflictingArmorsFrom, args);
 }
 
-auto SosNativeCaller::IsOutfitExisting(std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::IsOutfitExisting(std::string outfitName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName));
     return StaticCall(SosFunction::OutfitExists, args);
 }
 
@@ -108,27 +105,27 @@ auto SosNativeCaller::GetOutfitList(bool favoritesOnly) -> Awaitable
     return StaticCall(SosFunction::ListOutfits, args);
 }
 
-auto SosNativeCaller::GetOutfitFavoriteStatus(std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::GetOutfitFavoriteStatus(std::string outfitName) -> Awaitable
 {
     auto *args = RE::MakeFunctionArguments(std::move(outfitName));
     return StaticCall(SosFunction::GetOutfitFavoriteStatus, args);
 }
 
-auto SosNativeCaller::SetOutfitFavoriteStatus(std::string &&outfitName, bool favoritesOnly) -> Awaitable
+auto SosNativeCaller::SetOutfitFavoriteStatus(std::string outfitName, bool favoritesOnly) -> Awaitable
 {
     auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::move(favoritesOnly));
     return StaticCall(SosFunction::SetOutfitFavoriteStatus, args);
 }
 
-auto SosNativeCaller::OverwriteOutfit(std::string &&outfitName, std::vector<RE::TESObjectARMO *> &armors) -> Awaitable
+auto SosNativeCaller::OverwriteOutfit(std::string outfitName, std::vector<RE::TESObjectARMO *> &armors) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName), std::move(armors));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::move(armors));
     return StaticCall(SosFunction::OverwriteOutfit, args);
 }
 
-auto SosNativeCaller::PrepOutfitBodySlotListing(std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::PrepOutfitBodySlotListing(std::string outfitName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName));
     return StaticCall(SosFunction::PrepOutfitBodySlotListing, args);
 }
 
@@ -149,13 +146,13 @@ auto SosNativeCaller::SetActorAutoSwitchEnabled(const RE::Actor *actor, bool &en
     return StaticCall(SosFunction::SetLocationBasedAutoSwitchEnabled, args);
 }
 
-auto SosNativeCaller::SetStateOutfit(const RE::Actor *actor, uint32_t &&location, std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::SetStateOutfit(const RE::Actor *actor, uint32_t location, std::string outfitName) -> Awaitable
 {
     auto *args = RE::MakeFunctionArguments(std::move(actor), std::move(location), std::move(outfitName));
     return StaticCall(SosFunction::SetStateOutfit, args);
 }
 
-auto SosNativeCaller::GetStateOutfit(RE::Actor *actor, uint32_t &&location) -> Awaitable
+auto SosNativeCaller::GetStateOutfit(RE::Actor *actor, uint32_t location) -> Awaitable
 {
     auto *args = RE::MakeFunctionArguments(std::move(actor), std::move(location));
     return StaticCall(SosFunction::GetStateOutfit, args);
@@ -173,9 +170,9 @@ auto SosNativeCaller::GetWornItems(RE::Actor *actor) -> Awaitable
     return StaticCall(SosFunction::GetWornItems, args);
 }
 
-auto SosNativeCaller::CreateOutfit(std::string &&outfitName) -> Awaitable
+auto SosNativeCaller::CreateOutfit(std::string outfitName) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::forward<std::string>(outfitName));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName));
     return StaticCall(SosFunction::CreateOutfit, args);
 }
 

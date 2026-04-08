@@ -314,7 +314,7 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name, OutfitService &out
         if (ImGui::Button(Translate1("Panels.Outfit.Create")))
         {
             editing_ = UNTITLED_OUTFIT;
-            spawn([&] { return outfitService.CreateOutfit(std::string(outfit_name_buffer_.data())); });
+            spawn([&] { return outfitService.CreateOutfit(outfit_name_buffer_.data()); });
             ImGui::CloseCurrentPopup();
         }
 
@@ -322,7 +322,7 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name, OutfitService &out
         if (ImGui::Button(Translate1("Panels.Outfit.CreateFromWorn")))
         {
             editing_ = UNTITLED_OUTFIT;
-            spawn([&] { return outfitService.CreateOutfitFromWorn(std::string(outfit_name_buffer_.data())); });
+            spawn([&] { return outfitService.CreateOutfitFromWorn(outfit_name_buffer_.data()); });
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndDisabled();
