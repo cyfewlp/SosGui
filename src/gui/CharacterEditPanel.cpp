@@ -12,6 +12,7 @@
 #include "imguiex/imguiex_enum_wrap.h"
 #include "service/SosDataCoordinator.h"
 #include "task.h"
+#include "tracy/Tracy.hpp"
 #include "util/utils.h"
 
 namespace SosGui
@@ -58,6 +59,7 @@ void CharacterEditPanel::Focus()
 
 void CharacterEditPanel::Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
+    ZoneScopedN(__FUNCTION__);
     if (!IsShowing())
     {
         return;

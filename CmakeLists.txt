@@ -68,13 +68,14 @@ add_commonlibsse_plugin(${PROJECT_NAME} SOURCES
     ${JAMIE_MODS_COMMON_DIR}/i18n/translator_manager.cpp
     ${IMGUIEX_DIR}/imguiex/ErrorNotifier.cpp
     ${IMGUIEX_DIR}/imguiex/imgui_manager.cpp
+    ${EXTERN_DIR}/tracy/public/TracyClient.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     MINIMUM_SKSE_VERSION "1.5.97"
     AUTHOR "Jamie"
 )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
-target_precompile_headers(${PROJECT_NAME} PRIVATE src/PCH.h) # <--- PCH.h is required!
-target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_USER_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/imconfig.h")
+target_precompile_headers(${PROJECT_NAME} PRIVATE src/PCH.h)
+target_compile_definitions(${PROJECT_NAME} PRIVATE TRACY_ENABLE IMGUI_USER_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/imconfig.h")
 
 # include directories
 target_include_directories(
@@ -86,6 +87,7 @@ target_include_directories(
     ${IMGUIEX_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${DETOURS_INCLUDE_DIRS}
+    ${EXTERN_DIR}/tracy/public
 )
 
 # linkage

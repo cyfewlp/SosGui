@@ -7,6 +7,7 @@
 #include "i18n/translator_manager.h"
 #include "imgui.h"
 #include "imguiex/imguiex_enum_wrap.h"
+#include "tracy/Tracy.hpp"
 #include "util/ImGuiUtil.h"
 #include "util/utils.h"
 
@@ -74,6 +75,7 @@ void OutfitListTable::OnRefresh()
 
 void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
+    ZoneScopedN(__FUNCTION__);
     if (ImGui::BeginChild(Translate1("Panels.Outfit.Title"), {}, ImGuiEx::ChildFlags().AutoResizeX()))
     {
         DrawToolWidgets(outfitService);
@@ -153,6 +155,7 @@ void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
 
 void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
+    ZoneScopedN(__FUNCTION__);
     constexpr const char *OUTFIT_NAME_INPUT_LABEL            = "##editableOutfitNameId";
     constexpr const char *CONFIRM_DELETE_OUTFITS_POPUP_TITLE = "Delete";
 

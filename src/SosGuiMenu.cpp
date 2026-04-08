@@ -7,6 +7,7 @@
 #include "SosGui.h"
 #include "imgui.h"
 #include "log.h"
+#include "tracy/Tracy.hpp"
 
 #include <path_utils.h>
 #include <unordered_map>
@@ -93,7 +94,9 @@ void SosGuiMenu::RegisterMenu()
 
 void SosGuiMenu::PostDisplay()
 {
+    ZoneScopedN(__FUNCTION__);
     m_sosGui->OnPostDisplay();
+    FrameMark;
 }
 
 void SosGuiMenu::OnShow()

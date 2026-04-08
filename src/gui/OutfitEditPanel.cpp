@@ -13,6 +13,7 @@
 #include "imgui.h"
 #include "imguiex/ImGuiEx.h"
 #include "imguiex/imguiex_enum_wrap.h"
+#include "tracy/Tracy.hpp"
 #include "util/ImGuiUtil.h"
 #include "util/utils.h"
 
@@ -137,6 +138,7 @@ void OutfitEditPanel::PushError(const Error error)
 
 void OutfitEditPanel::Draw()
 {
+    ZoneScopedN(__FUNCTION__);
     if (!IsShowing())
     {
         return;
@@ -175,6 +177,7 @@ void OutfitEditPanel::Draw()
 
 void OutfitEditPanel::DrawOutfitPanel(EditingOutfit &editingOutfit)
 {
+    ZoneScopedN(__FUNCTION__);
     if (ImGui::BeginTabBar("OutfitArmors"))
     {
         if (ImGui::BeginTabItem(std::format("{}###Outfit", editingOutfit.GetName()).c_str()))
@@ -343,6 +346,7 @@ void OutfitEditPanel::SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32
 
 void OutfitEditPanel::DrawArmorSourcesTabBar()
 {
+    ZoneScopedN(__FUNCTION__);
     ImGui::Separator();
     if (ImGui::BeginTabBar("ArmorSourceTabBar", ImGuiEx::TabBarFlags().DrawSelectedOverline().Reorderable()))
     {
