@@ -48,11 +48,17 @@ public:
         return std::ranges::find_if(outfits_, [id](const auto &outfit) -> bool { return outfit.GetId() == id; });
     }
 
-    [[nodiscard]] constexpr auto find(const std::string &name) -> iterator
+    [[nodiscard]] constexpr auto lower_bound(const std::string &name) -> iterator
     {
         return std::lower_bound(outfits_.begin(), outfits_.end(), name, [](const SosUiOutfit &outfit, const std::string &a_name) -> bool {
             return util::StrLess(outfit.GetName(), a_name);
         });
+    }
+
+    [[nodiscard]] constexpr auto find(const std::string &name) -> iterator
+    {
+        const auto it = lower_bound(name);
+        return it != end() && it->GetName() != name ? outfits_.end() : it;
     }
 
     [[nodiscard]] constexpr auto exists(OutfitId id) const -> bool { return find(id) != outfits_.end(); }
@@ -83,9 +89,9 @@ public:
         return false;
     }
 
-    constexpr void add(std::string outfitName)
+    constexpr void try_emplace(std::string outfitName)
     {
-        if (const auto it = find(outfitName); it == end() || it->GetName() != outfitName)
+        if (const auto it = lower_bound(outfitName); it == end() || it->GetName() != outfitName)
         {
             outfits_.emplace(it, g_NextOutfitId, std::move(outfitName));
             ++g_NextOutfitId;

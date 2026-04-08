@@ -50,19 +50,29 @@ struct ActorOutfitContainer
 
     Container container;
 
-    [[nodiscard]] constexpr auto find(const RE::Actor *actor) -> iterator
+    [[nodiscard]] constexpr auto lower_bound(const RE::Actor *actor) -> iterator
     {
         if (actor == nullptr) return container.end();
 
-        const auto it = std::ranges::lower_bound(container, actor->formID, std::less<>(), [](const Entry &entry) { return entry.actor->formID; });
+        return std::ranges::lower_bound(container, actor->formID, std::less<>(), [](const Entry &entry) { return entry.actor->formID; });
+    }
+
+    [[nodiscard]] constexpr auto lower_bound(const RE::Actor *actor) const -> const_iterator
+    {
+        if (actor == nullptr) return container.end();
+
+        return std::ranges::lower_bound(container, actor->formID, std::less<>(), [](const Entry &entry) { return entry.actor->formID; });
+    }
+
+    [[nodiscard]] constexpr auto find(const RE::Actor *actor) -> iterator
+    {
+        const auto it = lower_bound(actor);
         return it != container.end() && it->actor->formID == actor->formID ? it : container.end();
     }
 
     [[nodiscard]] constexpr auto find(const RE::Actor *actor) const -> const_iterator
     {
-        if (actor == nullptr) return container.end();
-
-        const auto it = std::ranges::lower_bound(container, actor->formID, std::less<>(), [](const Entry &entry) { return entry.actor->formID; });
+        const auto it = lower_bound(actor);
         return it != container.end() && it->actor->formID == actor->formID ? it : container.end();
     }
 
@@ -103,33 +113,41 @@ struct ActorOutfitContainer
         return false;
     }
 
+    [[nodiscard]] auto try_emplace(RE::Actor *actor) -> iterator
+    {
+        auto it = lower_bound(actor);
+        if (it == end() || it->actor->formID != actor->formID)
+        {
+            it = container.emplace(it, actor);
+        }
+        return it;
+    }
+
     constexpr void sort()
     {
         std::ranges::sort(container, [](const Entry &lhs, const Entry &rhs) { return lhs.actor->formID < rhs.actor->formID; });
     }
 
-    constexpr void enable_auto_switch(RE::Actor *actor, bool enable)
+    constexpr void enable_auto_switch(RE::Actor *actor, bool enable) { try_emplace(actor)->auto_switch_enabled = enable; }
+
+    constexpr void set(RE::Actor *actor, OutfitId outfitId) { try_emplace(actor)->outfit_id = outfitId; }
+
+    constexpr void set_auto_switch_outfit(RE::Actor *actor, AutoSwitch policy, OutfitId outfit_id)
     {
-        auto it = find(actor);
-        if (it != container.end())
+        auto       it = try_emplace(actor);
+        const auto auto_switch_outfit_it =
+            std::ranges::find_if(it->auto_switch_outfits, [policy](const AutoSwitchOutfit &entry) { return entry.policy == policy; });
+        if (auto_switch_outfit_it != it->auto_switch_outfits.end())
         {
-            it->auto_switch_enabled = enable;
+            auto_switch_outfit_it->outfit_id = outfit_id;
         }
         else
         {
-            container.emplace(it, actor, INVALID_OUTFIT_ID, enable);
+            it->auto_switch_outfits.emplace_back(policy, outfit_id);
         }
     }
 
-    constexpr void add_actor(RE::Actor *actor)
-    {
-        if (auto it = find(actor); it == end())
-        {
-            container.emplace(it, actor);
-        }
-    }
-
-    constexpr void remove_actor(RE::Actor *actor)
+    constexpr void remove(RE::Actor *actor)
     {
         if (auto it = find(actor); it != end())
         {
@@ -137,44 +155,6 @@ struct ActorOutfitContainer
         }
     }
 
-    constexpr void set(RE::Actor *actor, OutfitId outfitId)
-    {
-        auto it = find(actor);
-        if (it != container.end())
-        {
-            it->outfit_id = outfitId;
-        }
-        else
-        {
-            container.emplace(it, actor, outfitId);
-        }
-    }
-
     constexpr void clear() { container.clear(); }
-
-    /**
-     * @brief Sets the auto switch outfit for the given actor and policy.
-     * NOTE: if the actor does not exist, this function will not create a new entry for the actor.
-     * But if the auto-switch outfit not exist, it will be created.
-     * @return the iterator to the actor entry, or end() if the actor was not found.
-     */
-    constexpr auto set_auto_switch_outfit(const RE::Actor *actor, AutoSwitch policy, OutfitId outfit_id) -> const_iterator
-    {
-        auto it = find(actor);
-        if (it != end())
-        {
-            const auto it1 =
-                std::ranges::find_if(it->auto_switch_outfits, [policy](const AutoSwitchOutfit &entry) { return entry.policy == policy; });
-            if (it1 != it->auto_switch_outfits.end())
-            {
-                it1->outfit_id = outfit_id;
-            }
-            else
-            {
-                it->auto_switch_outfits.emplace_back(policy, outfit_id);
-            }
-        }
-        return it;
-    }
 };
 } // namespace SosGui

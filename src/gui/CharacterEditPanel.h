@@ -30,7 +30,7 @@ private:
     void draw_auto_switch(RE::Actor *currentActor, SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
 
     ImGuiUtil::DebounceInput debounce_input_;
-    const RE::Actor         *outfit_popup_target_actor_{nullptr};
+    RE::Actor               *outfit_popup_target_actor_{nullptr};
     AutoSwitch               selected_policy_ = AutoSwitch::None;
 };
 

@@ -31,7 +31,7 @@ auto OutfitService::CreateOutfit(const std::string &outfitName) const -> Task
     }
     else
     {
-        outfit_container_.add(outfitName);
+        outfit_container_.try_emplace(outfitName);
     }
 }
 
@@ -52,7 +52,7 @@ auto OutfitService::CreateOutfitFromWorn(const std::string &outfitName) const ->
             co_await SosNativeCaller::OverwriteOutfit(outfitName, armors);
             if (const Variable existVar = co_await SosNativeCaller::IsOutfitExisting(outfitName); existVar.IsBool() && existVar.GetBool())
             {
-                outfit_container_.add(outfitName);
+                outfit_container_.try_emplace(outfitName);
                 co_return;
             }
             errorMessage.append("create outfit fail.");
@@ -84,7 +84,7 @@ auto OutfitService::GetOutfitList() const -> Task
     for (const auto *iter = array->begin(); iter != array->end(); ++iter)
     {
         const RE::BSScript::Variable var = *iter;
-        outfit_container_.add(var.Unpack<std::string>());
+        outfit_container_.try_emplace(var.Unpack<std::string>());
     }
     outfit_container_.sort();
 }
@@ -147,8 +147,7 @@ auto OutfitService::GetActorOutfit(RE::Actor *actor) const -> Task
 
 auto OutfitService::RenameOutfit(const OutfitId id, const std::string &outfitName, const std::string &newName) const -> Task
 {
-    if (const auto successVar = co_await SosNativeCaller::RenameOutfit(outfitName, newName);
-        !successVar.IsBool() || !successVar.GetBool())
+    if (const auto successVar = co_await SosNativeCaller::RenameOutfit(outfitName, newName); !successVar.IsBool() || !successVar.GetBool())
     {
         ErrorNotifier::GetInstance().Error("Can't rename outfit");
         co_return;
@@ -307,7 +306,7 @@ auto OutfitService::GetActorAllStateOutfit(RE::Actor *actor) const -> Task
     }
 }
 
-auto OutfitService::SetActorStateOutfit(const RE::Actor *actor, AutoSwitch policy, const OutfitId outfitId) const -> Task
+auto OutfitService::SetActorStateOutfit(RE::Actor *actor, AutoSwitch policy, const OutfitId outfitId) const -> Task
 {
     auto &actorOutfitContainer = m_uiData.actor_outfit_container;
     if (actor == nullptr || !actorOutfitContainer.exists(actor) || policy >= AutoSwitch::Count)

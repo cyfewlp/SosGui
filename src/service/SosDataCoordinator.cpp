@@ -46,13 +46,13 @@ auto SosDataCoordinator::RequestActorList() const -> Task
 auto SosDataCoordinator::RequestAddActor(RE::Actor *actor) const -> Task
 {
     co_await SosNativeCaller::AddActor(actor);
-    ui_data_.actor_outfit_container.add_actor(actor);
+    (void)ui_data_.actor_outfit_container.try_emplace(actor);
 }
 
 auto SosDataCoordinator::RequestRemoveActor(RE::Actor *actor) const -> Task
 {
     co_await SosNativeCaller::RemoveActor(actor);
-    ui_data_.actor_outfit_container.remove_actor(actor);
+    ui_data_.actor_outfit_container.remove(actor);
 }
 
 auto SosDataCoordinator::RequestNearActorList() const -> Task
