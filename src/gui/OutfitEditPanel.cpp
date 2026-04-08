@@ -153,7 +153,7 @@ void OutfitEditPanel::Draw()
             armor_view_.reset_view(armor_source_, armor_source_refr_);
         }
 
-        outfit_list_table_.Draw(m_uiData.GetOutfitContainer().get_all(), m_outfitService);
+        outfit_list_table_.Draw(m_uiData.outfit_container.get_all(), m_outfitService);
 
         ImGui::SameLine();
         draw_filterers();
@@ -693,8 +693,8 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
         return;
     }
 
-    const auto outfitIt = m_uiData.GetOutfitContainer().find(id);
-    if (outfitIt == m_uiData.GetOutfitContainer().end())
+    const auto outfitIt = m_uiData.outfit_container.find(id);
+    if (outfitIt == m_uiData.outfit_container.end())
     {
         PushError(Error::add_armor_to_unknown_outfit_id);
         armor_view_.multi_selection_.Clear();
@@ -741,7 +741,7 @@ void OutfitEditPanel::AddSelectArmors(const OutfitId id)
 
 void OutfitEditPanel::DeleteArmor(const OutfitId id, const Armor *armor)
 {
-    if (const auto it = m_uiData.GetOutfitContainer().find(id); it != m_uiData.GetOutfitContainer().end())
+    if (const auto it = m_uiData.outfit_container.find(id); it != m_uiData.outfit_container.end())
     {
         spawn([&] { return m_outfitService.RemoveArmor(it->GetId(), it->GetName(), armor); });
     }

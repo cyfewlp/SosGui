@@ -34,7 +34,7 @@ auto util::GetFormModFileName(const RE::TESForm *form) -> std::string_view
     return "";
 }
 
-void util::RefreshActorArmor(RE::Actor *const selectedActor)
+void util::RefreshActorArmor(RE::Actor *selectedActor)
 {
     if (selectedActor != nullptr && selectedActor->GetActorRuntimeData().currentProcess != nullptr)
     {

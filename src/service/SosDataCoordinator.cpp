@@ -23,14 +23,14 @@ auto SosDataCoordinator::RequestActorList() const -> Task
         co_return;
     }
 
-    const auto array      = actorListVar.GetArray();
-    auto      &actorsList = m_uiData.GetActors();
-    actorsList.clear();
+    const auto array = actorListVar.GetArray();
+    auto & actors = ui_data_.actor_outfit_container.container;
+    actors.clear();
     for (const auto *iter = array->begin(); iter != array->end(); ++iter)
     {
         const RE::BSScript::Variable var   = *iter;
         auto                        *actor = var.Unpack<RE::Actor *>();
-        actorsList.emplace_back(var.Unpack<RE::Actor *>());
+        actors.emplace_back(actor);
 
         const RE::BSScript::Variable isEnabledVar = co_await SosNativeCaller::IsActorAutoSwitchEnabled(actor);
         if (isEnabledVar.IsBool() && isEnabledVar.GetBool())
@@ -40,18 +40,19 @@ auto SosDataCoordinator::RequestActorList() const -> Task
         co_await m_outfitService.GetActorOutfit(actor);
         co_await RequestUpdateActorAutoSwitchState(actor);
     }
+    ui_data_.actor_outfit_container.sort();
 }
 
 auto SosDataCoordinator::RequestAddActor(RE::Actor *actor) const -> Task
 {
     co_await SosNativeCaller::AddActor(actor);
-    m_uiData.AddActor(actor);
+    ui_data_.actor_outfit_container.add_actor(actor);
 }
 
 auto SosDataCoordinator::RequestRemoveActor(RE::Actor *actor) const -> Task
 {
     co_await SosNativeCaller::RemoveActor(actor);
-    m_uiData.RemoveActor(actor);
+    ui_data_.actor_outfit_container.remove_actor(actor);
 }
 
 auto SosDataCoordinator::RequestNearActorList() const -> Task
@@ -63,14 +64,13 @@ auto SosDataCoordinator::RequestNearActorList() const -> Task
         co_return;
     }
 
-    const auto               array = actorsVar.GetArray();
-    std::vector<RE::Actor *> actorsList;
+    const auto array = actorsVar.GetArray();
+    ui_data_.near_actors.clear();
     for (const auto *iter = array->begin(); iter != array->end(); ++iter)
     {
         const RE::BSScript::Variable var = *iter;
-        actorsList.emplace_back(var.Unpack<RE::Actor *>());
+        ui_data_.near_actors.emplace_back(var.Unpack<RE::Actor *>());
     }
-    m_uiData.SetNearActors(actorsList);
 }
 
 auto SosDataCoordinator::RequestUpdateActorAutoSwitchState(RE::Actor *actor) const -> Task
@@ -82,13 +82,13 @@ auto SosDataCoordinator::RequestUpdateActorAutoSwitchState(RE::Actor *actor) con
         co_return;
     }
     const auto isEnabled = isEnabledVar.GetBool();
-    m_uiData.SetAutoSwitchEnabled(actor->GetFormID(), isEnabled);
+    ui_data_.actor_outfit_container.enable_auto_switch(actor, isEnabled);
 }
 
-auto SosDataCoordinator::RequestSetActorAutoSwitchState(const RE::Actor *actor, bool enabled) const -> Task
+auto SosDataCoordinator::RequestSetActorAutoSwitchState(RE::Actor *actor, bool enabled) const -> Task
 {
     co_await SosNativeCaller::SetActorAutoSwitchEnabled(actor, enabled);
-    m_uiData.SetAutoSwitchEnabled(actor->GetFormID(), enabled);
+    ui_data_.actor_outfit_container.enable_auto_switch(actor, enabled);
 }
 
 auto SosDataCoordinator::RequestImportSettings() const -> Task
@@ -108,16 +108,16 @@ auto SosDataCoordinator::RequestExportSettings() const -> Task
     }
 }
 
-auto SosDataCoordinator::RequestEnable(bool isEnabled) const -> Task
+auto SosDataCoordinator::RequestEnable(bool enable) const -> Task
 {
-    co_await SosNativeCaller::Enable(isEnabled);
-    if (RE::BSScript::Variable isEnabledVar = co_await SosNativeCaller::IsEnabled(); isEnabledVar.IsBool() && isEnabledVar.GetBool() != isEnabled)
+    co_await SosNativeCaller::Enable(enable);
+    if (const RE::BSScript::Variable isEnabledVar = co_await SosNativeCaller::IsEnabled(); isEnabledVar.IsBool() && isEnabledVar.GetBool() != enable)
     {
         ErrorNotifier::GetInstance().Error("Can't set SkyrimOutfitSystem enabled state");
     }
     else
     {
-        m_uiData.SetEnabled(isEnabled);
+        ui_data_.enabled = enable;
     }
 }
 
@@ -129,7 +129,7 @@ auto SosDataCoordinator::QueryIsEnable() const -> Task
         ErrorNotifier::GetInstance().Error("Can't set SkyrimOutfitSystem enabled state");
         co_return;
     }
-    m_uiData.SetEnabled(isEnabledVar.GetBool());
+    ui_data_.enabled = isEnabledVar.GetBool();
 }
 
 auto SosDataCoordinator::Refresh() const -> Task
@@ -143,8 +143,8 @@ auto SosDataCoordinator::Refresh() const -> Task
     co_await m_outfitService.GetActorOutfit(RE::PlayerCharacter::GetSingleton());
     co_await RequestNearActorList();
     co_await m_outfitService.GetAllFavoriteOutfits();
-    m_uiData.SetQuickSlotEnabled(HasQuickSlotSpell());
-    auto end = std::chrono::high_resolution_clock::now();
+    ui_data_.quick_slot_enabled = HasQuickSlotSpell();
+    auto end                    = std::chrono::high_resolution_clock::now();
 
     auto nano = std::chrono::nanoseconds(end - start);
 

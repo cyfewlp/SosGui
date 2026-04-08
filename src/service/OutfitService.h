@@ -19,7 +19,7 @@ class OutfitService
     OutfitContainer &outfit_container_;
 
 public:
-    OutfitService(SosUiData &uiData) : m_uiData(uiData), outfit_container_(m_uiData.GetOutfitContainer()) {}
+    OutfitService(SosUiData &uiData) : m_uiData(uiData), outfit_container_(m_uiData.outfit_container) {}
 
     auto CreateOutfit(std::string outfitName) const -> Task;
 

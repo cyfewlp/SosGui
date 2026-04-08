@@ -139,29 +139,23 @@ void SosGuiWindow::MainMenuBar()
     {
         return;
     }
-    ImGui::PushStyleVarX(ImGuiStyleVar_ItemSpacing, 15);
-    const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_FramePadding>({3.0F, 3.0F});
     if (ImGui::BeginMenu(Translate1("ToolBar.File")))
     {
+        bool enabled = m_uiData.enabled;
+        if (ImGui::Checkbox(Translate1("Enabled"), &enabled))
         {
-            bool fEnabled = m_uiData.IsEnabled();
-            if (ImGui::Checkbox(Translate1("Enabled"), &fEnabled))
-            {
-                spawn([&] { return m_dataCoordinator.RequestEnable(fEnabled); });
-            }
+            spawn([&] { return m_dataCoordinator.RequestEnable(enabled); });
         }
 
+        enabled = m_uiData.quick_slot_enabled;
+        if (ImGui::Checkbox(Translate1("ToolBar.QuickSlots"), &enabled))
         {
-            bool quickSlotEnabled = m_uiData.IsQuickSlotEnabled();
-            if (ImGui::Checkbox(Translate1("ToolBar.QuickSlots"), &quickSlotEnabled))
+            if (EnableQuickSlot(enabled))
             {
-                if (EnableQuickSlot(quickSlotEnabled))
-                {
-                    m_uiData.SetQuickSlotEnabled(quickSlotEnabled);
-                }
+                m_uiData.quick_slot_enabled = enabled;
             }
-            ImGui::SetItemTooltip("%s", Translate1("ToolBar.QuickSlotsToolTip"));
         }
+        ImGui::SetItemTooltip("%s", Translate1("ToolBar.QuickSlotsToolTip"));
 
         if (ImGui::MenuItem(Translate1("ToolBar.Import")))
         {
@@ -200,7 +194,6 @@ void SosGuiWindow::MainMenuBar()
     Popup::DrawSettingsPopup(Translate("ToolBar.Settings"));
     Popup::DrawAboutPopup("A Extra GUI for SkyrimOutfitSystemRE");
 
-    ImGui::PopStyleVar();
     ImGui::EndMainMenuBar();
 }
 
@@ -208,12 +201,6 @@ void SosGuiWindow::OnImportSettings()
 {
     m_characterEditPanel.OnRefresh();
     m_outfitEditPanel.OnRefresh();
-}
-
-EagerTask waitImport(const SosDataCoordinator &dataCoordinator)
-{
-    logger::debug("wait import");
-    co_await dataCoordinator.RequestImportSettings();
 }
 
 auto SosGuiWindow::EnableQuickSlot(const bool enable) -> bool

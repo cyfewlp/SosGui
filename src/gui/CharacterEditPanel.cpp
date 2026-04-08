@@ -37,9 +37,9 @@ constexpr auto POLICIES_DRAW_LIST = {
 
 auto GetActorOutfitName(SosUiData &uiData, RE::Actor *actor) -> std::string
 {
-    const auto &actorOutfits = uiData.GetActorOutfitContainer();
-    const auto &outfits      = uiData.GetOutfitContainer();
-    if (const auto it = actorOutfits.find(actor->formID); it != actorOutfits.end())
+    const auto &actorOutfits = uiData.actor_outfit_container;
+    const auto &outfits      = uiData.outfit_container;
+    if (const auto it = actorOutfits.find(actor); it != actorOutfits.end())
     {
         if (const auto outfitIt = outfits.find(it->outfit_id); outfitIt != outfits.end())
         {
@@ -88,7 +88,7 @@ void CharacterEditPanel::DrawCharactersPanel(SosUiData &uiData, const SosDataCoo
     ImGuiUtil::Text(Translate("Add"));
     ImGui::SameLine();
 
-    if (RE::Actor *selectedActor = nullptr; widgets::DrawNearActorsCombo(uiData.GetNearActors(), &selectedActor, RE::PlayerCharacter::GetSingleton()))
+    if (RE::Actor *selectedActor = nullptr; widgets::DrawNearActorsCombo(uiData.near_actors, &selectedActor, RE::PlayerCharacter::GetSingleton()))
     {
         spawn([&] { return dataCoordinator.RequestAddActor(selectedActor); });
     }
@@ -97,11 +97,10 @@ void CharacterEditPanel::DrawCharactersPanel(SosUiData &uiData, const SosDataCoo
 
 void CharacterEditPanel::DrawCharactersInfo(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
-    const auto &actors = uiData.GetActors();
-
-    for (int index{0}; const auto &actor : actors)
+    for (int index{0}; const auto &actor_outfit_entry : uiData.actor_outfit_container.container)
     {
         ImGui::PushID(index++);
+        auto *actor = actor_outfit_entry.actor;
         if (ImGui::CollapsingHeader(actor->GetName()))
         {
             DrawOutfitsCombo(uiData, outfitService, actor);
@@ -124,7 +123,7 @@ void CharacterEditPanel::DrawOutfitsCombo(SosUiData &uiData, const OutfitService
     const auto activeOutfit = GetActorOutfitName(uiData, actor);
     if (ImGui::BeginCombo(Translate1("Panels.Characters.ActiveOutfit"), activeOutfit.c_str()))
     {
-        const auto      &outfits = uiData.GetOutfitContainer().get_all();
+        const auto      &outfits = uiData.outfit_container.get_all();
         ImGuiListClipper clipper;
         clipper.Begin(static_cast<int>(outfits.size()));
         while (clipper.Step())
@@ -149,12 +148,12 @@ void CharacterEditPanel::DrawOutfitsCombo(SosUiData &uiData, const OutfitService
 
 std::string_view CharacterEditPanel::get_outfit_display_name(const RE::Actor *currentActor, AutoSwitch policy, SosUiData &uiData)
 {
-    const auto      &actor_outfit_container = uiData.GetActorOutfitContainer();
-    std::string_view name                   = Translate("Panels.Characters.AutoSwitch.Empty");
+    std::string_view name = Translate("Panels.Characters.AutoSwitch.Empty");
 
-    if (const auto auto_switch_outfit_opt = actor_outfit_container.find_auto_switch_outfit(currentActor->formID, policy); auto_switch_outfit_opt)
+    if (const auto auto_switch_outfit_opt = uiData.actor_outfit_container.find_auto_switch_outfit(currentActor, policy);
+        auto_switch_outfit_opt)
     {
-        const auto &outfitList = uiData.GetOutfitContainer();
+        const auto &outfitList = uiData.outfit_container;
         if (const auto outfitIt = outfitList.find(auto_switch_outfit_opt.value()->outfit_id); outfitIt != outfitList.end())
         {
             name = outfitIt->GetName();
@@ -164,10 +163,10 @@ std::string_view CharacterEditPanel::get_outfit_display_name(const RE::Actor *cu
 }
 
 void CharacterEditPanel::draw_auto_switch(
-    const RE::Actor *currentActor, SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService
+    RE::Actor *currentActor, SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService
 )
 {
-    bool enabled = uiData.IsAutoSwitchEnabled(currentActor->GetFormID());
+    bool enabled = uiData.actor_outfit_container.is_auto_switch_enabled(currentActor);
     if (ImGui::Checkbox(Translate1("Panels.Characters.AutoSwitch.Enable"), &enabled))
     {
         spawn([&] { return dataCoordinator.RequestSetActorAutoSwitchState(currentActor, enabled); });
@@ -224,7 +223,7 @@ void CharacterEditPanel::draw_auto_switch(
         debounce_input_.Draw("##filter", "filter outfit");
 
         ImGuiListClipper clipper;
-        const auto      &outfits = uiData.GetOutfitContainer().get_all();
+        const auto      &outfits = uiData.outfit_container.get_all();
         clipper.Begin(static_cast<int>(outfits.size()));
         while (clipper.Step())
         {

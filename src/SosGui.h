@@ -56,16 +56,6 @@ private:
     auto Draw() -> void;
     auto DrawSidebar() -> float;
     void MainMenuBar();
-
-    auto GetSelectedActor(int index) -> RE::Actor *
-    {
-        if (const auto &actors = m_uiData.GetActors(); static_cast<size_t>(index) < actors.size())
-        {
-            return m_uiData.GetActors().at(index);
-        }
-        return nullptr;
-    }
-
     void OnImportSettings();
 
     static auto EnableQuickSlot(bool enable) -> bool;

@@ -26,92 +26,16 @@
 
 namespace SosGui
 {
-class SosUiData : public Cleanable
+struct SosUiData
 {
-public:
     using Armor         = RE::TESObjectARMO;
     using BodySlot      = int32_t;
     using BodySlotArmor = std::pair<BodySlot, Armor *>;
 
-    static constexpr uint8_t DEFAULT_PAGE_SIZE = 20;
-    static inline OutfitId   g_NextOutfitId    = 1;
-
-private:
-    std::vector<RE::Actor *> m_actors;
-    std::vector<RE::Actor *> m_NearActors;
-    bool                     m_enabled           = false;
-    bool                     m_fQuickSlotEnabled = false;
-    ActorOutfitContainer     actor_outfit_container_;
-    OutfitContainer          outfit_container_{};
-
-    std::unordered_map<RE::FormID, bool> m_autoSwitchEnabled;
-    std::queue<std::coroutine_handle<>>  m_resumeQueue;
-    std::mutex                           m_mutex;
-
-public:
-    void Cleanup() override
-    {
-        m_actors.clear();
-        m_NearActors.clear();
-        m_enabled           = false;
-        m_fQuickSlotEnabled = false;
-        actor_outfit_container_.container.clear();
-        outfit_container_.get_all().clear();
-        m_autoSwitchEnabled.clear();
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Actors
-    ////////////////////////////////////////////////////////////////////////////
-
-    [[nodiscard]] auto GetActors() const -> const std::vector<RE::Actor *> & { return m_actors; }
-
-    [[nodiscard]] auto GetActors() -> std::vector<RE::Actor *> & { return m_actors; }
-
-    void SetActors(const std::vector<RE::Actor *> &actors)
-    {
-        m_actors.clear();
-        for (const auto &actor : actors)
-        {
-            m_actors.push_back(actor);
-        }
-    }
-
-    void AddActor(RE::Actor *actor)
-    {
-        if (actor != nullptr && std::ranges::find(m_actors, actor) == m_actors.end())
-        {
-            m_actors.push_back(actor);
-        }
-    }
-
-    void RemoveActor(RE::Actor *actor) { std::erase(m_actors, actor); }
-
-    [[nodiscard]] constexpr auto IsQuickSlotEnabled() const -> bool { return m_fQuickSlotEnabled; }
-
-    void SetQuickSlotEnabled(const bool fQuickSlotEnabled) { m_fQuickSlotEnabled = fQuickSlotEnabled; }
-
-    [[nodiscard]] auto GetNearActors() const -> const std::vector<RE::Actor *> & { return m_NearActors; }
-
-    void SetNearActors(std::vector<RE::Actor *> &nearActors)
-    {
-        m_NearActors.clear();
-        m_NearActors = std::move(nearActors);
-    }
-
-    [[nodiscard]] auto IsEnabled() const -> bool { return m_enabled; }
-
-    void SetEnabled(const bool enabled) { m_enabled = enabled; }
-
-    [[nodiscard]] auto IsAutoSwitchEnabled(const RE::FormID actorId) const -> bool
-    {
-        return m_autoSwitchEnabled.contains(actorId) ? m_autoSwitchEnabled.at(actorId) : false;
-    }
-
-    void SetAutoSwitchEnabled(const RE::FormID actorId, const bool autoSwitchEnabled) { m_autoSwitchEnabled[actorId] = autoSwitchEnabled; }
-
-    [[nodiscard]] auto GetOutfitContainer() -> OutfitContainer & { return outfit_container_; }
-
-    [[nodiscard]] auto GetActorOutfitContainer() -> ActorOutfitContainer & { return actor_outfit_container_; }
+    std::vector<RE::Actor *> near_actors;
+    bool                     enabled           = false;
+    bool                     quick_slot_enabled = false;
+    ActorOutfitContainer     actor_outfit_container;
+    OutfitContainer          outfit_container{};
 };
 } // namespace SosGui
