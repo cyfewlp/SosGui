@@ -83,26 +83,6 @@ struct ModFilterer
     }
 };
 
-class ArmorMultiSelection : public MultiSelection
-{
-    REX::EnumSet<Slot> slot_mask_ = Slot::kNone;
-
-public:
-    auto update_selected(const Armor *armor, const ImGuiID index) -> bool
-    {
-        const bool has = Contains(index);
-        slot_mask_.set(has, armor->GetSlotMask().get());
-        return has;
-    }
-
-    [[nodiscard]] constexpr auto is_select_slot(const Slot slot) const -> bool { return slot_mask_.all(slot); }
-
-    void Clear()
-    {
-        MultiSelection::Clear();
-        slot_mask_ = Slot::kNone;
-    }
-};
 } // namespace armor_view
 
 /**
@@ -126,15 +106,15 @@ public:
     using SlotCounter    = std::array<uint16_t, SLOT_COUNT>;
     using const_iterator = std::vector<ArmorEntry>::const_iterator;
 
-    std::vector<ArmorEntry>         view_data_{};
-    SlotCounter                     slot_counter_;
-    armor_view::ArmorNameFilter     armor_name_filter_;
-    armor_view::ModFilterer         mod_filterer_;
-    armor_view::SlotFilterer        slot_filterer_;
-    armor_view::ArmorMultiSelection multi_selection_;
-    size_t                          armor_count;  ///< Available armors count
-    bool                            contain_non_playable_armor_ = true;
-    bool                            contain_template_armor_     = false;
+    std::vector<ArmorEntry>     view_data_{};
+    SlotCounter                 slot_counter_;
+    armor_view::ArmorNameFilter armor_name_filter_;
+    armor_view::ModFilterer     mod_filterer_;
+    armor_view::SlotFilterer    slot_filterer_;
+    MultiSelection              multi_selection_;
+    size_t                      armor_count; ///< Available armors count
+    bool                        contain_non_playable_armor_ = true;
+    bool                        contain_template_armor_     = false;
 
     enum class error : uint8_t
     {

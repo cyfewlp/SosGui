@@ -54,7 +54,6 @@ private:
     void UpdateWindowTitle(const EditingOutfit &editingOutfit);
 
     void DrawOutfitArmors(EditingOutfit &editingOutfit);
-    void HighlightConflictSlot(Slot slot) const;
     void SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
 
     using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
@@ -83,7 +82,8 @@ private:
     SosUiData                       &m_uiData;
     OutfitService                   &m_outfitService;
     OutfitListTable                  outfit_list_table_{};
-    int                              waiting_add_armor_count_ = 0;
+    REX::EnumSet<Slot>               selected_armors_slot_mask_ = Slot::kNone;
+    int                              waiting_add_armor_count_   = 0;
     OutfitId                         last_editing_outfit_id_;
     ConflictSolution                 conflict_solution_      = ConflictSolution::none;
     bool                             show_all_outfit_slots_  = false;

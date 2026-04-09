@@ -237,6 +237,8 @@ void OutfitEditPanel::UpdateWindowTitle(const EditingOutfit &editingOutfit)
 void OutfitEditPanel::DrawOutfitArmors(EditingOutfit &editingOutfit)
 {
     constexpr const char *SLOT_POLICY_HELP_POPUP_TITLE = "What is Slot Policy?";
+    constexpr auto        ERROR_COLOR                  = IM_COL32(255, 180, 171, 255); ///< m3 default dark mode error color
+    constexpr auto        ERROR_TEXT_COLOR             = IM_COL32(105, 0, 5, 255);     ///< m3 default dark mode error text color
 
     if (editingOutfit.IsUntitled())
     {
@@ -278,6 +280,13 @@ void OutfitEditPanel::DrawOutfitArmors(EditingOutfit &editingOutfit)
             ImGui::PushID(static_cast<int>(slotIdx));
 
             ImGui::TableNextRow();
+            const auto has_conflict = selected_armors_slot_mask_.any(util::ToSlot(slotIdx));
+            if (has_conflict)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ERROR_TEXT_COLOR);
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ERROR_COLOR);
+            }
+
             ImGui::TableNextColumn(); // number column
             ImGui::Text("%d", slotIdx + 1);
 
@@ -288,10 +297,6 @@ void OutfitEditPanel::DrawOutfitArmors(EditingOutfit &editingOutfit)
                 {
                     selectedIdx = isSelected ? RE::BIPED_OBJECT::kEditorTotal : slotIdx;
                 }
-            }
-            if (armor != nullptr)
-            {
-                HighlightConflictSlot(util::ToSlot(slotIdx));
             }
 
             ImGui::TableNextColumn(); // armor name column
@@ -309,18 +314,14 @@ void OutfitEditPanel::DrawOutfitArmors(EditingOutfit &editingOutfit)
                 }
                 ImGui::EndDisabled();
             }
+
+            if (has_conflict)
+            {
+                ImGui::PopStyleColor();
+            }
             ImGui::PopID();
         }
         ImGui::EndTable();
-    }
-}
-
-void OutfitEditPanel::HighlightConflictSlot(const Slot slot) const
-{
-    if (armor_view_.multi_selection_.is_select_slot(slot))
-    {
-        auto *drawList = ImGui::GetWindowDrawList();
-        drawList->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor(255, 0, 0, 255), 0, ImDrawFlags_None, 2.0F);
     }
 }
 
@@ -492,16 +493,21 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
         }
     }
 
-    bool wantAddArmor   = false;
-    auto drawArmorEntry = [&](const Armor *armor, const ImGuiID index) {
+    bool wantAddArmor          = false;
+    selected_armors_slot_mask_ = Slot::kNone;
+    auto drawArmorEntry        = [&](const Armor *armor, const ImGuiID index) {
         ImGui::PushID(static_cast<int>(index));
         ImGui::TableNextRow();
         if (ImGui::TableNextColumn()) // number column
         {
             auto      &multiSelection = armor_view_.multi_selection_;
-            const bool isSelected     = multiSelection.update_selected(armor, index);
+            const bool isSelected     = multiSelection.Contains(index);
             ImGui::SetNextItemSelectionUserData(index);
             ImGui::Selectable(std::format("{}", index + 1).c_str(), isSelected, ImGuiEx::SelectableFlags().AllowOverlap().SpanAllColumns());
+            if (multiSelection.Contains(index))
+            {
+                selected_armors_slot_mask_.set(armor->GetSlotMask().get());
+            }
 
             if (ImGui::BeginPopupContextItem("Context"))
             {
