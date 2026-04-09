@@ -50,7 +50,7 @@ private:
 
     static void PushError(Error error);
 
-    void draw_filterers();
+    void draw_filterers(const EditingOutfit &editingOutfit);
     void UpdateWindowTitle(const EditingOutfit &editingOutfit);
 
     void DrawOutfitArmors(EditingOutfit &editingOutfit);
@@ -85,12 +85,17 @@ private:
     REX::EnumSet<Slot>               selected_armors_slot_mask_ = Slot::kNone;
     int                              waiting_add_armor_count_   = 0;
     OutfitId                         last_editing_outfit_id_;
-    ConflictSolution                 conflict_solution_      = ConflictSolution::none;
-    bool                             show_all_outfit_slots_  = false;
-    bool                             should_refresh_view_    = true;
-    bool                             armor_name_sort_ascend_ = true;
-    ArmorSource                      armor_source_           = ArmorSource::None;
-    RE::TESObjectREFR               *armor_source_refr_      = nullptr;
+    ConflictSolution                 conflict_solution_       = ConflictSolution::none;
+    bool                             show_all_outfit_slots_   = false;
+    bool                             should_refresh_view_     = true;
+    bool                             armor_name_sort_ascend_  = true;
+    ArmorSource                      armor_source_            = ArmorSource::None;
+    bool                             show_no_conflict_armors_ = false;
+    // be used to check is armor-view need to be reset.
+    Slot                             last_outfit_slot_mask_   = Slot::kNone;
+    // be used to restore armor-view slots filter when cancel checking 'show_no_conflict_armors'
+    Slot                             last_selected_slot_mask_ = Slot::kNone;
+    RE::TESObjectREFR               *armor_source_refr_       = nullptr;
     std::vector<RE::TESObjectREFR *> near_objects_;
 };
 } // namespace SosGui

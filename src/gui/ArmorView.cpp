@@ -48,8 +48,9 @@ auto armor_view::ArmorNameFilter::Draw() -> bool
 
 auto armor_view::SlotFilterer::pass_filter(const Armor *armor) const -> bool
 {
-    ZoneScopedN(__FUNCTION__);
-    return enable_all_slot_ || util::IsArmorHasAnySlotOf(armor, get_selected_slots());
+    return is_all_slots_enabled()                                                                            //
+           || (flags == Flags::Pass_Has_Any_Slots && util::IsArmorHasAnySlotOf(armor, get_selected_slots())) //
+           || (flags == Flags::Skip_Has_Any_Slots && util::IsArmorNotHasSlotOf(armor, get_selected_slots()));
 }
 
 auto armor_view::ModFilterer::PassFilter(const Armor *armor) const -> bool
@@ -309,13 +310,14 @@ auto ArmorView::filter(const Armor *armor) const -> bool
     return true;
 }
 
-void ArmorView::set_enable_all_slots_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref)
+// FIXME: may change api to receive Flags, now slots-filter will be disable when flag is 'Skip_has_Any_Slots'
+void ArmorView::set_pass_always_slot_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref)
 {
     const auto oldIsAllSlotsEnabled = slot_filterer_.is_all_slots_enabled();
-    slot_filterer_.enable_all_slots(enable_all);
+    slot_filterer_.flags            = enable_all ? armor_view::SlotFilterer::Flags::Pass_Always : armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
     if (oldIsAllSlotsEnabled == slot_filterer_.is_all_slots_enabled()) return;
 
-    if (slot_filterer_.is_enable_all_slots())
+    if (slot_filterer_.is_pass_always())
     {
         reset_view_data(source, source_ref);
     }
@@ -338,10 +340,10 @@ void ArmorView::set_slot_filter(SlotType slotPos, bool select, ArmorSource sourc
     slot_filterer_.select_slot(slotPos, select);
 
     // cancel enable all slots when select/unselect any slot
-    const auto oldIsEnableAllSlots = slot_filterer_.is_enable_all_slots();
+    const auto oldIsEnableAllSlots = slot_filterer_.is_pass_always();
     if (oldIsEnableAllSlots)
     {
-        slot_filterer_.enable_all_slots(false);
+        slot_filterer_.flags = armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
     }
 
     if (slot_filterer_.is_all_slots_disabled())

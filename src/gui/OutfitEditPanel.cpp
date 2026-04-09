@@ -154,11 +154,11 @@ void OutfitEditPanel::Draw()
         }
 
         outfit_list_table_.Draw(m_uiData.outfit_container.get_all(), m_outfitService);
+        auto &editingOutfit = outfit_list_table_.GetEditingOutfit();
 
         ImGui::SameLine();
-        draw_filterers();
+        draw_filterers(editingOutfit);
 
-        auto &editingOutfit = outfit_list_table_.GetEditingOutfit();
         UpdateWindowTitle(editingOutfit);
 
         ImGui::SameLine();
@@ -189,7 +189,7 @@ void OutfitEditPanel::DrawOutfitPanel(EditingOutfit &editingOutfit)
     }
 }
 
-void OutfitEditPanel::draw_filterers()
+void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
 {
     if (!ImGui::BeginChild("##sidebar", {200, 0}, ImGuiEx::ChildFlags().Borders().ResizeX()))
     {
@@ -209,13 +209,42 @@ void OutfitEditPanel::draw_filterers()
     ImGui::EndChild();
 
     ImGuiUtil::Text(Translate1("Panels.Outfit.BodySlots"));
+    ImGui::BeginDisabled(show_no_conflict_armors_); // disable modify slot filter if `ShowNoConflictArmors` checked
     if (ImGui::BeginChild("#SlotFilterChild", {0, childHeight}, ImGuiEx::ChildFlags().Borders().ResizeY()))
     {
         DrawArmorViewSlotFilterer();
     }
     ImGui::EndChild();
-    bool needUpdateView = ImGui::Checkbox("Contain non playable", &armor_view_.contain_non_playable_armor_);
-    needUpdateView      = ImGui::Checkbox("Contain template armors", &armor_view_.contain_template_armor_) || needUpdateView;
+    ImGui::EndDisabled();
+    bool needUpdateView = ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainNoPlayable"), &armor_view_.contain_non_playable_armor_);
+    needUpdateView      = ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainTemplate"), &armor_view_.contain_template_armor_) || needUpdateView;
+
+    const auto slot_mask     = editingOutfit.get_slot_mask();
+    auto      &slot_filterer = armor_view_.slot_filterer_;
+    if (ImGui::Checkbox(Translate1("Panels.OutfitEdit.ShowNoConflictArmors"), &show_no_conflict_armors_))
+    {
+        if (show_no_conflict_armors_)
+        {
+            last_selected_slot_mask_ = slot_filterer.get_selected_slots();
+            slot_filterer.flags      = armor_view::SlotFilterer::Flags::Skip_Has_Any_Slots;
+            slot_filterer.set_select_slots(slot_mask);
+        }
+        else
+        {
+            slot_filterer.flags = armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
+            slot_filterer.set_select_slots(last_selected_slot_mask_);
+        }
+
+        needUpdateView = true;
+    }
+
+    if (show_no_conflict_armors_ && last_outfit_slot_mask_ != slot_mask)
+    {
+        armor_view_.slot_filterer_.set_select_slots(slot_mask);
+        needUpdateView = true;
+    }
+    last_outfit_slot_mask_ = slot_mask;
+
     if (needUpdateView)
     {
         armor_view_.reset_view_data(armor_source_, armor_source_refr_);
@@ -370,7 +399,7 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
                     if (ImGui::Selectable(object->GetName(), armor_source_refr_->GetFormID() == object->GetFormID()))
                     {
                         armor_source_refr_ = object;
-                        armor_view_.reset_view(armor_source_, armor_source_refr_);
+                        armor_view_.reset_view_data(armor_source_, armor_source_refr_);
                     }
                     ImGui::PopID();
                 }
@@ -397,7 +426,7 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
                     if (ImGui::Selectable(object->GetName(), armor_source_refr_->GetFormID() == object->GetFormID()))
                     {
                         armor_source_refr_ = object;
-                        armor_view_.reset_view(armor_source_, armor_source_refr_);
+                        armor_view_.reset_view_data(armor_source_, armor_source_refr_);
                     }
                     ImGui::PopID();
                 }
@@ -419,13 +448,12 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
 
             if (ImGui::InputText("##FormIdInput", formIdBuf.data(), formIdBuf.size(), ImGuiEx::InputTextFlags().CharsUppercase().CharsHexadecimal()))
             {
-                armor_view_.clear_view_data();
                 char          *pEnd{};
                 const uint32_t formId = strtoul(formIdBuf.data(), &pEnd, 16);
                 if (pEnd != formIdBuf.data())
                 {
                     armor_source_refr_ = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId);
-                    armor_view_.reset_view(armor_source_, armor_source_refr_);
+                    armor_view_.reset_view_data(armor_source_, armor_source_refr_);
                 }
             }
             ImGui::EndTabItem();
@@ -443,6 +471,7 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
 
         if (oldArmorSource != armor_source_)
         {
+            show_no_conflict_armors_ = false;
             armor_view_.reset_view(armor_source_, armor_source_refr_);
         }
 
@@ -669,13 +698,13 @@ void OutfitEditPanel::DrawArmorViewModNameFilterer()
 
 void OutfitEditPanel::DrawArmorViewSlotFilterer()
 {
-    const std::string name = std::format("All({}/{})##AllSlot", armor_view_.view_data_.size(), armor_view_.armor_count);
+    const std::string name = std::format("{}({}/{})##AllSlot", Translate("Panels.OutfitEdit.PassAllSlots"), armor_view_.view_data_.size(), armor_view_.armor_count);
 
     const auto &slotFilterer = armor_view_.slot_filterer_;
-    bool        checkedAll   = slotFilterer.is_enable_all_slots();
+    bool        checkedAll   = slotFilterer.is_pass_always();
     if (ImGui::Checkbox(name.c_str(), &checkedAll))
     {
-        armor_view_.set_enable_all_slots_filter(checkedAll, armor_source_, armor_source_refr_);
+        armor_view_.set_pass_always_slot_filter(checkedAll, armor_source_, armor_source_refr_);
     }
 
     for (SlotType idx = 0; idx < RE::BIPED_OBJECT::kEditorTotal; ++idx)

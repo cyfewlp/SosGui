@@ -27,21 +27,34 @@ struct ArmorNameFilter final : ImGuiUtil::DebounceInput
     bool Draw();
 };
 
-class SlotFilterer
+struct SlotFilterer
 {
-    std::bitset<SLOT_COUNT> selected_slots_{};
-    bool                    enable_all_slot_ = true; ///< default shows all armor slot
+    enum class Flags : std::uint8_t
+    {
+        Pass_Always,        ///< Pass filter always, ignore selected slots
+        Pass_Has_Any_Slots, ///< Pass filter if armor has any of selected slots
+        Skip_Has_Any_Slots, ///< Skip filter if armor has any of selected slots
+    };
 
-public:
+    std::bitset<SLOT_COUNT> selected_slots_{};
+    Flags                   flags = Flags::Pass_Always;
+
     [[nodiscard]] auto pass_filter(const Armor *armor) const -> bool;
 
     [[nodiscard]] auto get_selected_slots() const -> Slot { return static_cast<Slot>(selected_slots_.to_ulong()); }
 
-    [[nodiscard]] auto is_enable_all_slots() const -> bool { return enable_all_slot_; }
+    [[nodiscard]] auto is_pass_always() const -> bool { return flags == Flags::Pass_Always; }
 
-    [[nodiscard]] auto is_all_slots_enabled() const -> bool { return enable_all_slot_ || selected_slots_.all(); }
+    [[nodiscard]] auto is_all_slots_enabled() const -> bool
+    {
+        return flags == Flags::Pass_Always || (flags == Flags::Pass_Has_Any_Slots && selected_slots_.all()) ||
+               (flags == Flags::Skip_Has_Any_Slots && selected_slots_.none());
+    }
 
-    [[nodiscard]] auto is_all_slots_disabled() const -> bool { return !enable_all_slot_ && selected_slots_.none(); }
+    [[nodiscard]] auto is_all_slots_disabled() const -> bool
+    {
+        return (flags == Flags::Pass_Has_Any_Slots && selected_slots_.none()) || (flags == Flags::Skip_Has_Any_Slots && selected_slots_.all());
+    }
 
     [[nodiscard]] auto is_slot_selected(SlotType slotPos) const -> bool { return selected_slots_.test(slotPos); }
 
@@ -49,12 +62,10 @@ public:
 
     void set_select_slots(Slot slots) { selected_slots_ = static_cast<uint32_t>(slots); }
 
-    void enable_all_slots(bool check = true) { enable_all_slot_ = check; }
-
     void clear()
     {
         selected_slots_.reset();
-        enable_all_slot_ = true;
+        flags = Flags::Pass_Always;
     }
 };
 
@@ -136,7 +147,7 @@ public:
     void               reset_view_data(ArmorSource source, RE::TESObjectREFR *source_ref);
     void               reset_view(ArmorSource source, RE::TESObjectREFR *source_ref);
     bool               filter(const Armor *armor) const;
-    void               set_enable_all_slots_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref);
+    void               set_pass_always_slot_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref);
     void               set_slot_filter(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref);
 
     [[nodiscard]] auto get_armor_count(SlotType slotPos) const -> std::uint16_t { return slot_counter_.at(slotPos); }

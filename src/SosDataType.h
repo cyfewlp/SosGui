@@ -224,5 +224,5 @@ constexpr uint8_t          MAX_ERROR_SHOW_COUNT  = 5;
 
 using Slot     = RE::BIPED_MODEL::BipedObjectSlot;
 using Armor    = RE::TESObjectARMO;
-using SlotType = std::underlying_type<RE::BIPED_OBJECT>::type;
+using SlotType = std::underlying_type_t<RE::BIPED_OBJECT>;
 } // namespace SosGui

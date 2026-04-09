@@ -16,6 +16,7 @@ namespace SosGui
 {
 
 static constexpr OutfitId UNTITLED_OUTFIT_ID = INVALID_OUTFIT_ID;
+struct EditingOutfit;
 
 class SosUiOutfit
 {
@@ -30,6 +31,7 @@ private:
     REX::EnumSet<Slot, uint32_t>          m_slotMask   = Slot::kNone;
     OutfitId                              m_id         = UNTITLED_OUTFIT_ID;
     bool                                  m_isFavorite = false;
+    friend struct EditingOutfit;
 
 public:
     explicit constexpr SosUiOutfit() { m_armors.fill(nullptr); }
@@ -104,6 +106,8 @@ struct EditingOutfit
     }
 
     [[nodiscard]] auto IsEmpty() const -> bool { return source_outfit == nullptr || source_outfit->IsEmpty(); }
+
+    [[nodiscard]] auto get_slot_mask() const -> Slot { return source_outfit == nullptr ? Slot::kNone : source_outfit->m_slotMask.get(); }
 
     [[nodiscard]] auto GetArmorAt(const uint32_t slotIdx) const -> const RE::TESObjectARMO *
     {
