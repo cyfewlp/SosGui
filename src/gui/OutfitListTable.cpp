@@ -78,7 +78,7 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
     ZoneScopedN(__FUNCTION__);
     if (ImGui::BeginChild(Translate1("Panels.Outfit.Title"), {}, ImGuiEx::ChildFlags().AutoResizeX()))
     {
-        DrawToolWidgets(outfitService);
+        DrawToolWidgets(outfits, outfitService);
         const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_CellPadding>(ImVec2(10, 5));
         const auto flags =
             ImGuiEx::TableFlags().Borders().Resizable().Hideable().Reorderable().Sortable().SizingStretchProp().ScrollY().ContextMenuInBody();
@@ -120,7 +120,7 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
     }
 }
 
-void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
+void OutfitListTable::DrawToolWidgets(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
     constexpr const char *CREATE_OUTFIT_POPUP_TITLE = "Create Outfit";
     if (ImGuiUtil::IconButton(ICON_FILE_PLUS_CORNER))
@@ -128,8 +128,8 @@ void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
         ImGui::OpenPopup(CREATE_OUTFIT_POPUP_TITLE);
     }
     ImGui::SameLine();
-    ImGuiUtil::Text("Create");
-    DrawCreateOutfitPopup(CREATE_OUTFIT_POPUP_TITLE, outfitService);
+    ImGuiUtil::Text(Translate("Panels.Outfit.Create"));
+    DrawCreateOutfitPopup(outfits, CREATE_OUTFIT_POPUP_TITLE, outfitService);
 
     ImGui::SameLine();
     if (ImGuiUtil::IconButton(ICON_REFRESH_CW))
@@ -290,7 +290,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
     }
 }
 
-void OutfitListTable::DrawCreateOutfitPopup(const char *name, OutfitService &outfitService)
+void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outfits, const char *name, OutfitService &outfitService)
 {
     bool open = true;
     if (ImGui::BeginPopupModal(name, &open))
@@ -301,16 +301,24 @@ void OutfitListTable::DrawCreateOutfitPopup(const char *name, OutfitService &out
         }
 
         ImGui::PushItemWidth(-FLT_MIN);
-        ImGui::InputTextWithHint(
-            "##CreateNewOutfit",
-            Translate1("Panels.Outfit.CreateHint"),
-            outfit_name_buffer_.data(),
-            outfit_name_buffer_.size(),
-            ImGuiEx::InputTextFlags().AutoSelectAll()
-        );
+        if (ImGui::InputTextWithHint(
+                "##CreateNewOutfit",
+                Translate1("Panels.Outfit.CreateHint"),
+                outfit_name_buffer_.data(),
+                outfit_name_buffer_.size(),
+                ImGuiEx::InputTextFlags().AutoSelectAll()
+            ))
+        {
+            const auto it = std::ranges::lower_bound(outfits, std::string_view(outfit_name_buffer_.data()), util::StrLess, &SosUiOutfit::GetName);
+            show_conflict_name_error_ = it != outfits.end() && it->GetName() == outfit_name_buffer_.data();
+        }
         ImGui::PopItemWidth();
+        if (show_conflict_name_error_)
+        {
+            ImGui::TextColored(ImVec4(1.0F, 0.0F, 0.0F, 1.0F), "'%s' %s", outfit_name_buffer_.data(), Translate1("Panels.Outfit.NameConflict"));
+        }
 
-        ImGui::BeginDisabled(outfit_name_buffer_[0] == '\0');
+        ImGui::BeginDisabled(show_conflict_name_error_ || outfit_name_buffer_[0] == '\0');
         if (ImGui::Button(Translate1("Panels.Outfit.Create")))
         {
             editing_ = UNTITLED_OUTFIT;

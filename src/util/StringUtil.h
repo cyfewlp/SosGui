@@ -48,6 +48,8 @@ struct StringCompactor
 
     auto operator()(const std::string &lhs, const std::string &rhs) const -> bool { return UnicodeStringCompare(lhs.c_str(), rhs.c_str()); }
 
+    auto operator()(const std::string_view &lhs, const std::string_view &rhs) const -> bool { return UnicodeStringCompare(lhs.data(), rhs.data()); }
+
     auto operator()(const std::wstring_view &lhs, const std::wstring_view &rhs) const -> bool { return UnicodeStringCompare(lhs.data(), rhs.data()); }
 };
 

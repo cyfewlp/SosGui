@@ -75,7 +75,10 @@ add_commonlibsse_plugin(${PROJECT_NAME} SOURCES
 )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/PCH.h)
-target_compile_definitions(${PROJECT_NAME} PRIVATE TRACY_ENABLE IMGUI_USER_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/imconfig.h")
+target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_USER_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/imconfig.h")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TRACY_ENABLE)
+endif ()
 
 # include directories
 target_include_directories(
@@ -99,7 +102,12 @@ target_link_libraries(
     ${DETOURS_LIBRARY}
     Freetype::Freetype
 )
-target_compile_options(${PROJECT_NAME} PRIVATE -Wpedantic -Wshadow -Wconversion -Wno-unused-command-line-argument)
+target_compile_options(${PROJECT_NAME} PRIVATE
+    -Wpedantic -Wshadow -Wconversion -Wno-unused-command-line-argument
+    -clang:-ftemplate-backtrace-limit=0
+    -clang:-fno-elide-type
+    -clang:-fdiagnostics-show-template-tree
+)
 
 include(${JAMIE_MODS_DIR}/cmake/build-lucide-icon.cmake)
 
@@ -168,3 +176,5 @@ if (DEFINED OUTPUT_FOLDER)
         )
     endif ()
 endif ()
+
+add_subdirectory(private)

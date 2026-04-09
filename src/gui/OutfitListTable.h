@@ -26,9 +26,10 @@ class OutfitListTable final
     EditingOutfit              editing_    = UNTITLED_OUTFIT;
     ImGuiSelectionBasicStorage multi_selection_;
     OutfitNameBuffer           outfit_name_buffer_{};
-    ImGuiID                    active_input_id_  = 0;
-    bool                       show_favorites_   = false;
-    bool                       name_sort_ascend_ = true;
+    ImGuiID                    active_input_id_          = 0;
+    bool                       show_conflict_name_error_ = false;
+    bool                       show_favorites_           = false;
+    bool                       name_sort_ascend_         = true;
 
 public:
     void OnRefresh();
@@ -39,9 +40,9 @@ public:
 
 private:
     // refresh, filterer, favorite checkbox...
-    void DrawToolWidgets(OutfitService &outfitService);
+    void DrawToolWidgets(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
     void DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
-    void DrawCreateOutfitPopup(const char *name, OutfitService &outfitService);
+    void DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outfits, const char *name, OutfitService &outfitService);
 
     auto pass_filter(const SosUiOutfit &outfit) -> bool;
 
