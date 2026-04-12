@@ -196,7 +196,10 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
         ImGui::EndChild();
         return;
     }
-    ImGui::Checkbox(Translate1("Panels.OutfitEdit.PreviewArmor"), &preview_armor_);
+    if (ImGui::Checkbox(Translate1("Panels.OutfitEdit.PreviewArmor"), &preview_armor_) && !preview_armor_)
+    {
+        RE::Inventory3DManager::GetSingleton()->UnloadInventoryItem();
+    }
 
     ImGui::SeparatorText(Translate1("Panels.Outfit.ModList"));
     constexpr int maxChildItemCount = 10;
@@ -517,6 +520,7 @@ void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
         inventory_manager->LoadInventoryItem(previewing_armor_, nullptr);
     }
 
+    inventory_manager->Render();
     if (auto &runtime_data = inventory_manager->GetRuntimeData(); !runtime_data.loadedModels.empty())
     {
         RE::LoadedInventoryModel &loaded_model = runtime_data.loadedModels.back();
@@ -581,6 +585,9 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
             if (multiSelection.Contains(index))
             {
                 selected_armors_slot_mask_.set(armor->GetSlotMask().get());
+            }
+            if (ImGui::IsItemHovered())
+            {
                 to_preview_armor = armor;
             }
 

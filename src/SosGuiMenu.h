@@ -35,13 +35,6 @@ private:
 
     void OnShow();
     void OnHide();
-
-    static void ProcessScaleformEvent(const RE::BSUIScaleformData *data);
-    static void OnMouseEvent(RE::GFxEvent *event, bool down);
-    static void OnMouseWheelEvent(RE::GFxEvent *event);
-    static void OnKeyEvent(RE::GFxEvent *event, bool down);
-    static void OnCharEvent(RE::GFxEvent *event);
-
-    static auto GFxKeyToImGuiKey(RE::GFxKey::Code keyCode) -> ImGuiKey;
+    void onUserEvents(const RE::BSFixedString &event_name);
 };
 } // namespace SosGui

@@ -36,45 +36,6 @@ namespace SosGui
 {
 namespace
 {
-
-std::unordered_map<RE::GFxKey::Code, ImGuiKey> GFxCodeToImGuiKeyTable = {
-    {RE::GFxKey::kAlt,          ImGuiMod_Alt           },
-    {RE::GFxKey::kControl,      ImGuiMod_Ctrl          },
-    {RE::GFxKey::kShift,        ImGuiMod_Shift         },
-    {RE::GFxKey::kCapsLock,     ImGuiKey_CapsLock      },
-    // {RE::GFxKey::kTab,          ImGuiKey_Tab
-    {RE::GFxKey::kHome,         ImGuiKey_Home          },
-    {RE::GFxKey::kEnd,          ImGuiKey_End           },
-    {RE::GFxKey::kPageUp,       ImGuiKey_PageUp        },
-    {RE::GFxKey::kPageDown,     ImGuiKey_PageDown      },
-    {RE::GFxKey::kComma,        ImGuiKey_Comma         },
-    {RE::GFxKey::kPeriod,       ImGuiKey_Period        },
-    {RE::GFxKey::kSlash,        ImGuiKey_Slash         },
-    {RE::GFxKey::kBackslash,    ImGuiKey_Backslash     },
-    {RE::GFxKey::kQuote,        ImGuiKey_Apostrophe    },
-    {RE::GFxKey::kBracketLeft,  ImGuiKey_LeftBracket   },
-    {RE::GFxKey::kBracketRight, ImGuiKey_RightBracket  },
-    {RE::GFxKey::kReturn,       ImGuiKey_Enter         },
-    {RE::GFxKey::kEqual,        ImGuiKey_Equal         },
-    {RE::GFxKey::kMinus,        ImGuiKey_Minus         },
-    {RE::GFxKey::kEscape,       ImGuiKey_Escape        },
-    {RE::GFxKey::kLeft,         ImGuiKey_LeftArrow     },
-    {RE::GFxKey::kUp,           ImGuiKey_UpArrow       },
-    {RE::GFxKey::kRight,        ImGuiKey_RightArrow    },
-    {RE::GFxKey::kDown,         ImGuiKey_DownArrow     },
-    {RE::GFxKey::kSpace,        ImGuiKey_Space         },
-    {RE::GFxKey::kBackspace,    ImGuiKey_Backspace     },
-    {RE::GFxKey::kDelete,       ImGuiKey_Delete        },
-    {RE::GFxKey::kInsert,       ImGuiKey_Insert        },
-    {RE::GFxKey::kKP_Multiply,  ImGuiKey_KeypadMultiply},
-    {RE::GFxKey::kKP_Add,       ImGuiKey_KeypadAdd     },
-    {RE::GFxKey::kKP_Enter,     ImGuiKey_KeypadEnter   },
-    {RE::GFxKey::kKP_Subtract,  ImGuiKey_KeypadSubtract},
-    {RE::GFxKey::kKP_Decimal,   ImGuiKey_KeypadDecimal },
-    {RE::GFxKey::kKP_Divide,    ImGuiKey_KeypadDivide  },
-    {RE::GFxKey::kVoidSymbol,   ImGuiKey_None          }
-};
-
 ImGuiMouseSource ImGui_ImplWin32_GetMouseSourceFromMessageExtraInfo()
 {
     LPARAM extra_info = ::GetMessageExtraInfo();
@@ -92,6 +53,68 @@ auto Creator() -> RE::IMenu *
     menu->menuFlags.set(Flags::kCustomRendering, Flags::kTopmostRenderedMenu);
     return menu;
 }
+
+auto GFxKeyToImGuiKey(const RE::GFxKey::Code keyCode) -> ImGuiKey;
+
+void OnMouseEvent(RE::GFxEvent *event, const bool down)
+{
+    const auto &mouseSource = ImGui_ImplWin32_GetMouseSourceFromMessageExtraInfo();
+    const auto *mouseEvent  = reinterpret_cast<RE::GFxMouseEvent *>(event);
+    auto       &io          = ImGui::GetIO();
+    io.AddMouseSourceEvent(mouseSource);
+    io.AddMouseButtonEvent(static_cast<int>(mouseEvent->button), down);
+}
+
+void OnMouseWheelEvent(RE::GFxEvent *event)
+{
+    const auto *mouseEvent = reinterpret_cast<RE::GFxMouseEvent *>(event);
+    ImGui::GetIO().AddMouseWheelEvent(0, mouseEvent->scrollDelta);
+}
+
+void OnKeyEvent(const RE::GFxKey::Code keycode, const bool down)
+{
+    auto imguiKey = GFxKeyToImGuiKey(keycode);
+    ImGui::GetIO().AddKeyEvent(imguiKey, down);
+}
+
+void OnKeyEvent(RE::GFxEvent *event, const bool down)
+{
+    const auto keyEvent = reinterpret_cast<RE::GFxKeyEvent *>(event);
+    OnKeyEvent(keyEvent->keyCode, down);
+}
+
+void OnCharEvent(RE::GFxEvent *event)
+{
+    const auto charEvent = reinterpret_cast<RE::GFxCharEvent *>(event);
+    ImGui::GetIO().AddInputCharacter(charEvent->wcharCode);
+}
+
+void ProcessScaleformEvent(const RE::BSUIScaleformData *data)
+{
+    switch (const auto &fxEvent = data->scaleformEvent; fxEvent->type.get())
+    {
+        case RE::GFxEvent::EventType::kMouseDown:
+            OnMouseEvent(fxEvent, true);
+            break;
+        case RE::GFxEvent::EventType::kMouseUp:
+            OnMouseEvent(fxEvent, false);
+            break;
+        case RE::GFxEvent::EventType::kMouseWheel:
+            OnMouseWheelEvent(fxEvent);
+            break;
+        case RE::GFxEvent::EventType::kKeyDown:
+            OnKeyEvent(fxEvent, true);
+            break;
+        case RE::GFxEvent::EventType::kKeyUp:
+            OnKeyEvent(fxEvent, false);
+            break;
+        case RE::GFxEvent::EventType::kCharEvent:
+            OnCharEvent(fxEvent);
+            break;
+        default:
+            break;
+    }
+}
 } // namespace
 
 void SosGuiMenu::RegisterMenu()
@@ -106,7 +129,6 @@ void SosGuiMenu::PostDisplay()
 {
     ZoneScopedN(__FUNCTION__);
     m_sosGui->OnPostDisplay();
-    RE::Inventory3DManager::GetSingleton()->Render();
     FrameMark;
 }
 
@@ -132,11 +154,7 @@ RE::UI_MESSAGE_RESULTS SosGuiMenu::ProcessMessage(RE::UIMessage &a_message)
         }
         case RE::UI_MESSAGE_TYPE::kUserEvent: {
             const auto &data = reinterpret_cast<RE::BSUIMessageData *>(a_message.data);
-            if (data->fixedStr == "Cancel")
-            {
-                auto *messageQueue = RE::UIMessageQueue::GetSingleton();
-                messageQueue->AddMessage(MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
-            }
+            onUserEvents(data->fixedStr);
             break;
         }
         case RE::UI_MESSAGE_TYPE::kScaleformEvent: // never send because we use ImGui
@@ -182,62 +200,96 @@ void SosGuiMenu::OnHide()
     io.ClearInputKeys();
 }
 
-void SosGuiMenu::ProcessScaleformEvent(const RE::BSUIScaleformData *data)
+void SosGuiMenu::onUserEvents(const RE::BSFixedString &event_name)
 {
-    switch (const auto &fxEvent = data->scaleformEvent; fxEvent->type.get())
+    const auto &user_events = RE::UserEvents::GetSingleton();
+    ImGuiKey    imgui_key   = ImGuiKey_None;
+    if (event_name == user_events->cancel)
     {
-        case RE::GFxEvent::EventType::kMouseDown:
-            OnMouseEvent(fxEvent, true);
-            break;
-        case RE::GFxEvent::EventType::kMouseUp:
-            OnMouseEvent(fxEvent, false);
-            break;
-        case RE::GFxEvent::EventType::kMouseWheel:
-            OnMouseWheelEvent(fxEvent);
-            break;
-        case RE::GFxEvent::EventType::kKeyDown:
-            OnKeyEvent(fxEvent, true);
-            break;
-        case RE::GFxEvent::EventType::kKeyUp:
-            OnKeyEvent(fxEvent, false);
-            break;
-        case RE::GFxEvent::EventType::kCharEvent:
-            OnCharEvent(fxEvent);
-            break;
-        default:
-            break;
+        auto *messageQueue = RE::UIMessageQueue::GetSingleton();
+        messageQueue->AddMessage(MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+    }
+    else if (event_name == user_events->up)
+    {
+        imgui_key = ImGuiKey_UpArrow;
+    }
+    else if (event_name == user_events->down)
+    {
+        imgui_key = ImGuiKey_DownArrow;
+    }
+    else if (event_name == user_events->left)
+    {
+        imgui_key = ImGuiKey_LeftArrow;
+    }
+    else if (event_name == user_events->right)
+    {
+        imgui_key = ImGuiKey_RightArrow;
+    }
+    if (imgui_key != ImGuiKey_None)
+    {
+        ImGui::GetIO().AddKeyEvent(imgui_key, true);
+        ImGui::GetIO().AddKeyEvent(imgui_key, false);
     }
 }
 
-void SosGuiMenu::OnMouseEvent(RE::GFxEvent *event, const bool down)
+namespace
 {
-    const auto &mouseSource = ImGui_ImplWin32_GetMouseSourceFromMessageExtraInfo();
-    const auto *mouseEvent  = reinterpret_cast<RE::GFxMouseEvent *>(event);
-    auto       &io          = ImGui::GetIO();
-    io.AddMouseSourceEvent(mouseSource);
-    io.AddMouseButtonEvent(static_cast<int>(mouseEvent->button), down);
-}
 
-void SosGuiMenu::OnMouseWheelEvent(RE::GFxEvent *event)
+struct KeyMapEntry
 {
-    const auto *mouseEvent = reinterpret_cast<RE::GFxMouseEvent *>(event);
-    ImGui::GetIO().AddMouseWheelEvent(0, mouseEvent->scrollDelta);
-}
+    RE::GFxKey::Code gfx_key;
+    ImGuiKey         imgui_key;
+};
 
-void SosGuiMenu::OnKeyEvent(RE::GFxEvent *event, const bool down)
-{
-    const auto keyEvent = reinterpret_cast<RE::GFxKeyEvent *>(event);
-    auto       imguiKey = GFxKeyToImGuiKey(keyEvent->keyCode);
-    ImGui::GetIO().AddKeyEvent(imguiKey, down);
-}
+static std::vector<KeyMapEntry> key_map = {
+    {RE::GFxKey::kBackspace,    ImGuiKey_Backspace     },
+    {RE::GFxKey::kTab,          ImGuiKey_Tab           },
+    // {RE::GFxKey::kClear, ImGuiKey_Clear},
+    {RE::GFxKey::kReturn,       ImGuiKey_Enter         },
+    {RE::GFxKey::kShift,        ImGuiMod_Shift         },
+    {RE::GFxKey::kControl,      ImGuiMod_Ctrl          },
+    {RE::GFxKey::kAlt,          ImGuiMod_Alt           },
+    {RE::GFxKey::kPause,        ImGuiKey_Pause         },
+    {RE::GFxKey::kCapsLock,     ImGuiKey_CapsLock      },
+    {RE::GFxKey::kEscape,       ImGuiKey_Escape        },
+    {RE::GFxKey::kSpace,        ImGuiKey_Space         },
+    {RE::GFxKey::kPageUp,       ImGuiKey_PageUp        },
+    {RE::GFxKey::kPageDown,     ImGuiKey_PageDown      },
+    {RE::GFxKey::kEnd,          ImGuiKey_End           },
+    {RE::GFxKey::kHome,         ImGuiKey_Home          },
+    {RE::GFxKey::kLeft,         ImGuiKey_LeftArrow     },
+    {RE::GFxKey::kUp,           ImGuiKey_UpArrow       },
+    {RE::GFxKey::kRight,        ImGuiKey_RightArrow    },
+    {RE::GFxKey::kDown,         ImGuiKey_DownArrow     },
+    {RE::GFxKey::kInsert,       ImGuiKey_Insert        },
+    {RE::GFxKey::kDelete,       ImGuiKey_Delete        },
+    // {RE::GFxKey::kHelp, ImGuiKey_Hel}p
+    {RE::GFxKey::kKP_Multiply,  ImGuiKey_KeypadMultiply},
+    {RE::GFxKey::kKP_Add,       ImGuiKey_KeypadAdd     },
+    {RE::GFxKey::kKP_Enter,     ImGuiKey_KeypadEnter   },
+    {RE::GFxKey::kKP_Subtract,  ImGuiKey_KeypadSubtract},
+    {RE::GFxKey::kKP_Decimal,   ImGuiKey_KeypadDecimal },
+    {RE::GFxKey::kKP_Divide,    ImGuiKey_KeypadDivide  },
+    {RE::GFxKey::kNumLock,      ImGuiKey_NumLock       },
+    {RE::GFxKey::kScrollLock,   ImGuiKey_ScrollLock    },
+    {RE::GFxKey::kSemicolon,    ImGuiKey_Semicolon     },
+    {RE::GFxKey::kEqual,        ImGuiKey_Equal         },
+    {RE::GFxKey::kComma,        ImGuiKey_Comma         },
+    {RE::GFxKey::kMinus,        ImGuiKey_Minus         },
+    {RE::GFxKey::kPeriod,       ImGuiKey_Period        },
+    {RE::GFxKey::kSlash,        ImGuiKey_Slash         },
+    // {RE::GFxKey::kBar, ImGuiKey_Bar                     },
+    {RE::GFxKey::kBracketLeft,  ImGuiKey_LeftBracket   },
+    {RE::GFxKey::kBackslash,    ImGuiKey_Backslash     },
+    {RE::GFxKey::kBracketRight, ImGuiKey_RightBracket  },
+    // RE::GFxKey::kQuote, ImGuiKey_
+    // RE::GFxKey::kOEM_AX, ImGuiKey_OEM_AX
+    // RE::GFxKey::kOEM_102, ImGuiKey_OEM_102
+    // RE::GFxKey::kICO_HELP, ImGuiKey_ICO_HELP
+    // RE::GFxKey::kICO_00, ImGuiKey_ICO_00
+};
 
-void SosGuiMenu::OnCharEvent(RE::GFxEvent *event)
-{
-    const auto charEvent = reinterpret_cast<RE::GFxCharEvent *>(event);
-    ImGui::GetIO().AddInputCharacter(charEvent->wcharCode);
-}
-
-auto SosGuiMenu::GFxKeyToImGuiKey(const RE::GFxKey::Code keyCode) -> ImGuiKey
+auto GFxKeyToImGuiKey(const RE::GFxKey::Code keyCode) -> ImGuiKey
 {
     ImGuiKey imguiKey = ImGuiKey_None;
 
@@ -259,15 +311,13 @@ auto SosGuiMenu::GFxKeyToImGuiKey(const RE::GFxKey::Code keyCode) -> ImGuiKey
     }
     else
     {
-        for (const auto &[gfxCode, imGuiKey] : GFxCodeToImGuiKeyTable)
+        const auto it = std::ranges::lower_bound(key_map, keyCode, std::less<>(), &KeyMapEntry::gfx_key);
+        if (it != key_map.end() && it->gfx_key == keyCode)
         {
-            if (keyCode == gfxCode)
-            {
-                imguiKey = imGuiKey;
-                break;
-            }
+            imguiKey = it->imgui_key;
         }
     }
     return imguiKey;
 }
+} // namespace
 } // namespace SosGui
