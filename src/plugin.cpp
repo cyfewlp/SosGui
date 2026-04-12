@@ -21,11 +21,12 @@ void InitializeLogging(SpdLogSettings settings)
     {
         SKSE::stl::report_and_fail("Unable to lookup SKSE logs directory.");
     }
-    *path /= SKSE::PluginDeclaration::GetSingleton()->GetName();
+    const auto & plugin_declaration = SKSE::PluginDeclaration::GetSingleton();
+    *path /= plugin_declaration->GetName();
     *path += L".log";
 
     auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
-    auto log  = std::make_shared<spdlog::logger>(std::string("global log"), std::move(sink));
+    auto log  = std::make_shared<spdlog::logger>(std::string(plugin_declaration->GetName()), std::move(sink));
     log->set_level(settings.level);
     log->flush_on(settings.flushLevel);
 
@@ -41,7 +42,7 @@ bool PluginLoad(const SKSE::LoadInterface *skse)
 
         InitializeLogging({spdlog::level::debug, spdlog::level::trace});
 
-        Init(skse);
+        Init(skse, false);
 
         const auto version = plugin->GetVersion();
         logger::info("{} {} is loading...", plugin->GetName(), version.string());

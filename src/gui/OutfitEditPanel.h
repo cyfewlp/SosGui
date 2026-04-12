@@ -59,6 +59,7 @@ private:
     using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
     void DrawArmorSourcesTabBar();
     void DrawArmorView(const EditingOutfit &editingOutfit);
+    void draw_preview_armor_window(const Armor *to_preview_armor);
     void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData);
     void DrawArmorViewTableContent(const std::vector<ArmorEntry> &viewData, const DrawArmorEntry &drawArmorEntry);
     void DrawArmorViewModNameFilterer();
@@ -91,6 +92,8 @@ private:
     bool                             armor_name_sort_ascend_  = true;
     ArmorSource                      armor_source_            = ArmorSource::None;
     bool                             show_no_conflict_armors_ = false;
+    bool                             preview_armor_           = true;
+    Armor                           *previewing_armor_        = nullptr;
     // be used to check is armor-view need to be reset.
     Slot                             last_outfit_slot_mask_   = Slot::kNone;
     // be used to restore armor-view slots filter when cancel checking 'show_no_conflict_armors'

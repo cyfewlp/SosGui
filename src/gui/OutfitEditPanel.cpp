@@ -196,8 +196,9 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
         ImGui::EndChild();
         return;
     }
+    ImGui::Checkbox(Translate1("Panels.OutfitEdit.PreviewArmor"), &preview_armor_);
 
-    ImGui::TextUnformatted(Translate1("Panels.Outfit.ModList"));
+    ImGui::SeparatorText(Translate1("Panels.Outfit.ModList"));
     constexpr int maxChildItemCount = 10;
     const auto    itemHeight        = ImGui::GetTextLineHeight();
     float         childHeight       = (itemHeight + ImGui::GetStyle().ItemInnerSpacing.y) * maxChildItemCount;
@@ -501,6 +502,49 @@ void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
     }
 }
 
+void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
+{
+    auto *inventory_manager = RE::Inventory3DManager::GetSingleton();
+    if (inventory_manager == nullptr || !preview_armor_)
+    {
+        return;
+    }
+    ZoneScopedN(__FUNCTION__);
+    if (to_preview_armor != nullptr && to_preview_armor != previewing_armor_)
+    {
+        ZoneScopedN("LoadInventoryItem");
+        previewing_armor_ = const_cast<Armor *>(to_preview_armor);
+        inventory_manager->LoadInventoryItem(previewing_armor_, nullptr);
+    }
+
+    if (auto &runtime_data = inventory_manager->GetRuntimeData(); !runtime_data.loadedModels.empty())
+    {
+        RE::LoadedInventoryModel &loaded_model = runtime_data.loadedModels.back();
+        if (auto &loaded_sp_model = loaded_model.spModel; loaded_sp_model != nullptr)
+        {
+            auto        &translate     = loaded_sp_model->local.translate;
+            const auto  &view_frustum  = RE::UI3DSceneManager::GetSingleton()->viewFrustum;
+            const float  world_minx    = -view_frustum.fLeft * translate.y;
+            const float  world_minz    = -view_frustum.fBottom * translate.y;
+            const float  world_width   = -view_frustum.fRight * translate.y - world_minx;
+            const float  world_height  = -view_frustum.fTop * translate.y - world_minz;
+            const auto  &viewport_size = ImGui::GetMainViewport()->Size;
+            const ImVec2 viewport_ratio(world_width / viewport_size.x, world_height / viewport_size.y);
+
+            const auto   model_radius        = loaded_sp_model->worldBound.radius;
+            const auto   scaled_model_radius = model_radius / viewport_ratio.x;
+            const ImVec2 window_size{scaled_model_radius * 2.0F, scaled_model_radius * 2.0F};
+            ImGui::SetNextWindowSize(window_size);
+            if (ImGui::Begin("preview_armor", nullptr, ImGuiEx::WindowFlags().NoResize().NoDecoration().NoBackground()))
+            {
+                translate.x = -(viewport_ratio.x * ImGui::GetWindowPos().x + model_radius + world_minx);
+                translate.z = -(viewport_ratio.y * ImGui::GetWindowPos().y + model_radius + world_minz);
+            }
+            ImGui::End();
+        }
+    }
+}
+
 void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData)
 {
     ImGui::TableSetupScrollFreeze(1, 1);
@@ -522,9 +566,10 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
         }
     }
 
-    bool wantAddArmor          = false;
-    selected_armors_slot_mask_ = Slot::kNone;
-    auto drawArmorEntry        = [&](const Armor *armor, const ImGuiID index) {
+    bool wantAddArmor             = false;
+    selected_armors_slot_mask_    = Slot::kNone;
+    const Armor *to_preview_armor = nullptr;
+    auto         drawArmorEntry   = [&](const Armor *armor, const ImGuiID index) {
         ImGui::PushID(static_cast<int>(index));
         ImGui::TableNextRow();
         if (ImGui::TableNextColumn()) // number column
@@ -536,6 +581,7 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
             if (multiSelection.Contains(index))
             {
                 selected_armors_slot_mask_.set(armor->GetSlotMask().get());
+                to_preview_armor = armor;
             }
 
             if (ImGui::BeginPopupContextItem("Context"))
@@ -586,6 +632,8 @@ void OutfitEditPanel::DrawArmorViewContent(const EditingOutfit &editingOutfit, c
     };
 
     DrawArmorViewTableContent(viewData, drawArmorEntry);
+
+    draw_preview_armor_window(to_preview_armor);
 
     constexpr const char *Add_Armors_Progress_Popup_Title = "Add Armors";
     if (wantAddArmor)
@@ -698,7 +746,8 @@ void OutfitEditPanel::DrawArmorViewModNameFilterer()
 
 void OutfitEditPanel::DrawArmorViewSlotFilterer()
 {
-    const std::string name = std::format("{}({}/{})##AllSlot", Translate("Panels.OutfitEdit.PassAllSlots"), armor_view_.view_data_.size(), armor_view_.armor_count);
+    const std::string name =
+        std::format("{}({}/{})##AllSlot", Translate("Panels.OutfitEdit.PassAllSlots"), armor_view_.view_data_.size(), armor_view_.armor_count);
 
     const auto &slotFilterer = armor_view_.slot_filterer_;
     bool        checkedAll   = slotFilterer.is_pass_always();

@@ -25,16 +25,16 @@ public:
     static void ShutDown() { SosGuiWindow::ShutDown(); }
 
     void PostDisplay() override;
-    void OnShow();
-    void OnHide();
-    auto ProcessMessage(RE::UIMessage &a_message) -> RE::UI_MESSAGE_RESULTS override;
 
     void ToggleShow();
 
     constexpr auto IsShowing() const -> bool { return m_fShow; }
 
 private:
-    static auto Creator() -> IMenu *;
+    auto ProcessMessage(RE::UIMessage &a_message) -> RE::UI_MESSAGE_RESULTS override;
+
+    void OnShow();
+    void OnHide();
 
     static void ProcessScaleformEvent(const RE::BSUIScaleformData *data);
     static void OnMouseEvent(RE::GFxEvent *event, bool down);

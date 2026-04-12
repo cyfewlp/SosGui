@@ -82,6 +82,16 @@ ImGuiMouseSource ImGui_ImplWin32_GetMouseSourceFromMessageExtraInfo()
     if ((extra_info & 0xFFFFFF80) == 0xFF515780) return ImGuiMouseSource_TouchScreen;
     return ImGuiMouseSource_Mouse;
 }
+
+auto Creator() -> RE::IMenu *
+{
+    using Flags = RE::UI_MENU_FLAGS;
+    auto *menu  = new SosGuiMenu();
+    menu->menuFlags.set(Flags::kPausesGame, Flags::kDisablePauseMenu);
+    menu->menuFlags.set(Flags::kInventoryItemMenu, Flags::kUpdateUsesCursor, Flags::kUsesCursor);
+    menu->menuFlags.set(Flags::kCustomRendering, Flags::kTopmostRenderedMenu);
+    return menu;
+}
 } // namespace
 
 void SosGuiMenu::RegisterMenu()
@@ -96,41 +106,32 @@ void SosGuiMenu::PostDisplay()
 {
     ZoneScopedN(__FUNCTION__);
     m_sosGui->OnPostDisplay();
+    RE::Inventory3DManager::GetSingleton()->Render();
     FrameMark;
 }
 
-void SosGuiMenu::OnShow()
+void SosGuiMenu::ToggleShow()
 {
-    m_fShow = true;
-    logger::debug("SosGuiMenu::kShow");
-
-    i18n::SetTranslator(&translator_);
-    i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
-    m_sosGui = std::make_unique<SosGuiWindow>();
-    m_sosGui->Refresh();
-    m_sosGui->Show();
-}
-
-void SosGuiMenu::OnHide()
-{
-    m_fShow = false;
-    m_sosGui.reset();
-    i18n::SetTranslator(nullptr);
-
-    logger::debug("SosGuiMenu::kHide");
-    auto &io = ImGui::GetIO();
-    io.ClearInputKeys();
+    m_fShow            = !m_fShow;
+    auto  type         = m_fShow ? RE::UI_MESSAGE_TYPE::kShow : RE::UI_MESSAGE_TYPE::kHide;
+    auto *messageQueue = RE::UIMessageQueue::GetSingleton();
+    messageQueue->AddMessage(MENU_NAME, type, nullptr);
 }
 
 RE::UI_MESSAGE_RESULTS SosGuiMenu::ProcessMessage(RE::UIMessage &a_message)
 {
     switch (a_message.type.get())
     {
-        case RE::UI_MESSAGE_TYPE::kUpdate:
+        case RE::UI_MESSAGE_TYPE::kShow: {
+            OnShow();
             break;
+        }
+        case RE::UI_MESSAGE_TYPE::kHide: {
+            OnHide();
+            break;
+        }
         case RE::UI_MESSAGE_TYPE::kUserEvent: {
             const auto &data = reinterpret_cast<RE::BSUIMessageData *>(a_message.data);
-            // logger::debug("SosGuiMenu::kUserEvent {}", data->fixedStr.c_str());
             if (data->fixedStr == "Cancel")
             {
                 auto *messageQueue = RE::UIMessageQueue::GetSingleton();
@@ -138,12 +139,6 @@ RE::UI_MESSAGE_RESULTS SosGuiMenu::ProcessMessage(RE::UIMessage &a_message)
             }
             break;
         }
-        case RE::UI_MESSAGE_TYPE::kShow:
-            OnShow();
-            break;
-        case RE::UI_MESSAGE_TYPE::kHide:
-            OnHide();
-            break;
         case RE::UI_MESSAGE_TYPE::kScaleformEvent: // never send because we use ImGui
         {
             auto *scaleformData = reinterpret_cast<RE::BSUIScaleformData *>(a_message.data);
@@ -158,26 +153,33 @@ RE::UI_MESSAGE_RESULTS SosGuiMenu::ProcessMessage(RE::UIMessage &a_message)
     return IMenu::ProcessMessage(a_message);
 }
 
-void SosGuiMenu::ToggleShow()
+void SosGuiMenu::OnShow()
 {
-    m_fShow            = !m_fShow;
-    auto  type         = m_fShow ? RE::UI_MESSAGE_TYPE::kShow : RE::UI_MESSAGE_TYPE::kHide;
-    auto *messageQueue = RE::UIMessageQueue::GetSingleton();
-    messageQueue->AddMessage(MENU_NAME, type, nullptr);
+    m_fShow = true;
+    logger::debug("SosGuiMenu::kShow");
+    RE::Inventory3DManager::GetSingleton()->Begin3D(RE::INTERFACE_LIGHT_SCHEME::kInventory);
+
+    i18n::SetTranslator(&translator_);
+    i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
+    m_sosGui = std::make_unique<SosGuiWindow>();
+    m_sosGui->Refresh();
+    m_sosGui->Show();
 }
 
-auto SosGuiMenu::Creator() -> IMenu *
+void SosGuiMenu::OnHide()
 {
-    using Flags = RE::UI_MENU_FLAGS;
-    auto *menu  = new SosGuiMenu();
-    menu->menuFlags.set(Flags::kPausesGame);
-    menu->menuFlags.set(Flags::kUpdateUsesCursor, Flags::kUsesCursor);
-    menu->menuFlags.set(Flags::kCustomRendering);
-    menu->menuFlags.set(Flags::kTopmostRenderedMenu);
-    menu->menuFlags.set(Flags::kUsesMenuContext);
+    m_fShow = false;
+    m_sosGui.reset();
+    i18n::SetTranslator(nullptr);
+    if (auto *inventory_manager = RE::Inventory3DManager::GetSingleton(); inventory_manager != nullptr)
+    {
+        inventory_manager->UnloadInventoryItem();
+        inventory_manager->End3D();
+    }
 
-    menu->inputContext.set(Context::kConsole);
-    return menu;
+    logger::debug("SosGuiMenu::kHide");
+    auto &io = ImGui::GetIO();
+    io.ClearInputKeys();
 }
 
 void SosGuiMenu::ProcessScaleformEvent(const RE::BSUIScaleformData *data)
