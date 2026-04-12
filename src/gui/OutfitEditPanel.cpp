@@ -541,8 +541,10 @@ void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
             ImGui::SetNextWindowSize(window_size);
             if (ImGui::Begin("preview_armor", nullptr, ImGuiEx::WindowFlags().NoResize().NoDecoration().NoBackground()))
             {
-                translate.x = -(viewport_ratio.x * ImGui::GetWindowPos().x + model_radius + world_minx);
-                translate.z = -(viewport_ratio.y * ImGui::GetWindowPos().y + model_radius + world_minz);
+                const auto new_x = -(viewport_ratio.x * ImGui::GetWindowPos().x + model_radius + world_minx);
+                const auto new_z = -(viewport_ratio.y * ImGui::GetWindowPos().y + model_radius + world_minz);
+                translate.x      = (translate.x - loaded_sp_model->worldBound.center.x) + new_x;
+                translate.z      = (translate.z - loaded_sp_model->worldBound.center.z) + new_z;
             }
             ImGui::End();
         }
