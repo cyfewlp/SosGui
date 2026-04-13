@@ -93,6 +93,9 @@ private:
     ArmorSource                      armor_source_            = ArmorSource::None;
     bool                             show_no_conflict_armors_ = false;
     bool                             preview_armor_           = true;
+    bool                             first_preview_window_    = true;
+    float                            preview_window_posx_     = 300.F;
+    float                            preview_window_posy_     = 300.F;
     Armor                           *previewing_armor_        = nullptr;
     // be used to check is armor-view need to be reset.
     Slot                             last_outfit_slot_mask_   = Slot::kNone;

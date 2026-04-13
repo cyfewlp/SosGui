@@ -507,6 +507,8 @@ void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
 
 void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
 {
+    constexpr ImVec2 center_pivot{0.5F, 0.5F};
+
     auto *inventory_manager = RE::Inventory3DManager::GetSingleton();
     if (inventory_manager == nullptr || !preview_armor_)
     {
@@ -538,13 +540,25 @@ void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
             const auto   model_radius        = loaded_sp_model->worldBound.radius;
             const auto   scaled_model_radius = model_radius / viewport_ratio.x;
             const ImVec2 window_size{scaled_model_radius * 2.0F, scaled_model_radius * 2.0F};
+
+            if (first_preview_window_)
+            {
+                first_preview_window_ = false;
+            }
+            else
+            {
+                ImGui::SetNextWindowPos({preview_window_posx_, preview_window_posy_}, 0, center_pivot);
+            }
             ImGui::SetNextWindowSize(window_size);
             if (ImGui::Begin("preview_armor", nullptr, ImGuiEx::WindowFlags().NoResize().NoDecoration().NoBackground()))
             {
-                const auto new_x = -(viewport_ratio.x * ImGui::GetWindowPos().x + model_radius + world_minx);
-                const auto new_z = -(viewport_ratio.y * ImGui::GetWindowPos().y + model_radius + world_minz);
-                translate.x      = (translate.x - loaded_sp_model->worldBound.center.x) + new_x;
-                translate.z      = (translate.z - loaded_sp_model->worldBound.center.z) + new_z;
+                const auto &window_pos = ImGui::GetWindowPos();
+                preview_window_posx_   = window_pos.x + window_size.x * 0.5F;
+                preview_window_posy_   = window_pos.y + window_size.y * 0.5F;
+                const auto new_x       = -(viewport_ratio.x * window_pos.x + model_radius + world_minx);
+                const auto new_z       = -(viewport_ratio.y * window_pos.y + model_radius + world_minz);
+                translate.x            = (translate.x - loaded_sp_model->worldBound.center.x) + new_x;
+                translate.z            = (translate.z - loaded_sp_model->worldBound.center.z) + new_z;
             }
             ImGui::End();
         }
