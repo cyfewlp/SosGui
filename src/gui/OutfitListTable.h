@@ -21,6 +21,36 @@ class OutfitListTable final
     using DrawOutfitEntry  = std::function<void(const SosUiOutfit &, ImGuiID)>;
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
+public:
+    void OnRefresh();
+
+    void Draw(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
+
+    auto GetEditingOutfit() -> EditingOutfit & { return editing_; }
+
+private:
+    enum class MenuAction : std::uint8_t;
+
+    // refresh, filterer, favorite checkbox...
+    void DrawToolWidgets(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
+    void DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
+    void draw_outfit_row(const uint32_t index, const SosUiOutfit &outfit, MenuAction &menu_action, OutfitService &outfit_service);
+    void DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outfits, const char *name, OutfitService &outfitService);
+
+    auto pass_filter(const SosUiOutfit &outfit) -> bool;
+
+    // check MultiSelection and set all selected outfit to favorite
+    void OnAcceptSetFavoriteOutfits(bool toFavorite, const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
+    void DeleteAllSelectOutfits(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
+
+    enum class MenuAction : std::uint8_t
+    {
+        none,
+        delete_all,
+        mark_favorite,
+        mark_unfavorite,
+    };
+
     ImGuiTextFilter            name_filterer_;
     OutfitId                   editing_id_ = INVALID_OUTFIT_ID;
     EditingOutfit              editing_    = UNTITLED_OUTFIT;
@@ -30,24 +60,5 @@ class OutfitListTable final
     bool                       show_conflict_name_error_ = false;
     bool                       show_favorites_           = false;
     bool                       name_sort_ascend_         = true;
-
-public:
-    void OnRefresh();
-
-    void Draw(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
-
-    auto GetEditingOutfit() -> EditingOutfit & { return editing_; }
-
-private:
-    // refresh, filterer, favorite checkbox...
-    void DrawToolWidgets(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
-    void DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
-    void DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outfits, const char *name, OutfitService &outfitService);
-
-    auto pass_filter(const SosUiOutfit &outfit) -> bool;
-
-    // check MultiSelection and set all selected outfit to favorite
-    void OnAcceptSetFavoriteOutfits(bool toFavorite, const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
-    void DeleteAllSelectOutfits(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
 };
 } // namespace SosGui

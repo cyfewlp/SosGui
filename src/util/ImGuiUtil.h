@@ -112,7 +112,7 @@ struct DebounceInput
 {
     std::chrono::time_point<std::chrono::system_clock> prevEditTime;
     ImGuiTextFilter                                    filter;
-    std::chrono::milliseconds                          duration = 300ms;
+    std::chrono::milliseconds                          duration = 200ms;
     bool                                               dirty    = true;
 
     explicit DebounceInput() : prevEditTime(std::chrono::system_clock::now()) {}
