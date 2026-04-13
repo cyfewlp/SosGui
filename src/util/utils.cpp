@@ -34,15 +34,4 @@ auto util::GetFormModFileName(const RE::TESForm *form) -> std::string_view
     return "";
 }
 
-void util::RefreshActorArmor(RE::Actor *selectedActor)
-{
-    if (selectedActor != nullptr && selectedActor->GetActorRuntimeData().currentProcess != nullptr)
-    {
-        if (auto *currentProcess = selectedActor->GetActorRuntimeData().currentProcess; currentProcess != nullptr)
-        {
-            currentProcess->Set3DUpdateFlag(RE::RESET_3D_FLAGS::kModel);
-            selectedActor->Update3DModel();
-        }
-    }
-}
 } // namespace SosGui

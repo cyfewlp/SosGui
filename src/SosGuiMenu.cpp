@@ -8,6 +8,7 @@
 #include "imgui.h"
 #include "log.h"
 #include "tracy/Tracy.hpp"
+#include "util/utils.h"
 
 #include <path_utils.h>
 #include <unordered_map>
@@ -194,6 +195,7 @@ void SosGuiMenu::OnHide()
         inventory_manager->UnloadInventoryItem();
         inventory_manager->End3D();
     }
+    util::RefreshActorArmor(RE::PlayerCharacter::GetSingleton());
 
     logger::debug("SosGuiMenu::kHide");
     auto &io = ImGui::GetIO();

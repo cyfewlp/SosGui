@@ -37,7 +37,13 @@ auto IsArmorCanDisplay(const RE::TESObjectARMO *armor) -> bool;
 
 auto GetFormModFileName(const RE::TESForm *form) -> std::string_view;
 
-void RefreshActorArmor(RE::Actor *selectedActor);
+constexpr void RefreshActorArmor(RE::Actor *selectedActor)
+{
+    if (selectedActor != nullptr)
+    {
+        selectedActor->Update3DModel();
+    }
+}
 
 constexpr auto ToSlot(uint32_t slotPos) -> RE::BipedObjectSlot
 {
