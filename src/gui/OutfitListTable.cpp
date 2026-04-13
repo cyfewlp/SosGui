@@ -1,5 +1,6 @@
 #include "gui/OutfitListTable.h"
 
+#include "SosGui.h"
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
 #include "gui/UiSettings.h"
@@ -23,6 +24,8 @@ namespace SosGui
 
 namespace
 {
+constexpr const char *CONFIRM_DELETE_OUTFITS_POPUP_TITLE = "Delete";
+constexpr const char *CREATE_OUTFIT_POPUP_TITLE          = "Create Outfit";
 
 auto DrawConfirmDeleteOutfitsPopup(const char *name, ImGuiSelectionBasicStorage &selection, const std::vector<SosUiOutfit> &outfits) -> bool
 {
@@ -73,6 +76,14 @@ void OutfitListTable::OnRefresh()
     outfit_name_buffer_[0] = '\0';
 }
 
+void OutfitListTable::on_main_menu_action(MainMenuAction main_menu_action)
+{
+    if (main_menu_action == MainMenuAction::create_outfit)
+    {
+        popup_status_ = PopupStatus::open_create;
+    }
+}
+
 void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
     ZoneScopedN(__FUNCTION__);
@@ -82,7 +93,7 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
             Translate1("Panels.Outfit.Title"), {min_table_size.x, 0.F}, ImGuiEx::ChildFlags().ResizeX(), ImGuiEx::WindowFlags().NoScrollbar()
         ))
     {
-        DrawToolWidgets(outfits, outfitService);
+        DrawToolWidgets(outfitService);
         const auto flags =
             ImGuiEx::TableFlags().Borders().Hideable().Reorderable().Sortable().NoBordersInBody().SizingFixedFit().ScrollY().ContextMenuInBody();
         const auto &avail = ImGui::GetContentRegionAvail();
@@ -122,18 +133,35 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
             editing_id_ = editing_.GetId();
         }
     }
+
+    switch (popup_status_)
+    {
+        case PopupStatus::open_delete:
+            ImGui::OpenPopup(CONFIRM_DELETE_OUTFITS_POPUP_TITLE);
+            break;
+        case PopupStatus::open_create:
+            ImGui::OpenPopup(CREATE_OUTFIT_POPUP_TITLE);
+            break;
+        default:
+            break;
+    }
+    popup_status_ = PopupStatus::none;
+    DrawCreateOutfitPopup(outfits, CREATE_OUTFIT_POPUP_TITLE, outfitService);
+    if (DrawConfirmDeleteOutfitsPopup(CONFIRM_DELETE_OUTFITS_POPUP_TITLE, multi_selection_, outfits))
+    {
+        DeleteAllSelectOutfits(outfits, outfitService);
+    }
 }
 
-void OutfitListTable::DrawToolWidgets(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
+void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
 {
-    constexpr const char *CREATE_OUTFIT_POPUP_TITLE = "Create Outfit";
+    ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_N, ImGuiInputFlags_Tooltip);
     if (ImGuiUtil::IconButton(ICON_FILE_PLUS_CORNER))
     {
-        ImGui::OpenPopup(CREATE_OUTFIT_POPUP_TITLE);
+        popup_status_ = PopupStatus::open_create;
     }
     ImGui::SameLine();
     ImGuiUtil::Text(Translate("Panels.Outfit.Create"));
-    DrawCreateOutfitPopup(outfits, CREATE_OUTFIT_POPUP_TITLE, outfitService);
 
     ImGui::SameLine();
     if (ImGuiUtil::IconButton(ICON_REFRESH_CW))
@@ -162,7 +190,6 @@ void OutfitListTable::DrawToolWidgets(const std::vector<SosUiOutfit> &outfits, O
 
 void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
-    constexpr const char *CONFIRM_DELETE_OUTFITS_POPUP_TITLE = "Delete";
     if (outfits.empty())
     {
         return;
@@ -238,7 +265,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
         case MenuAction::delete_all:
             if (multi_selection_.Size > 0)
             {
-                ImGui::OpenPopup(CONFIRM_DELETE_OUTFITS_POPUP_TITLE);
+                popup_status_ = PopupStatus::open_delete;
             }
             break;
         case MenuAction::mark_favorite:
@@ -249,12 +276,6 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
             break;
         default:
             break;
-    }
-
-    // draw popup out of loop to avoid call multiple draw command.
-    if (DrawConfirmDeleteOutfitsPopup(CONFIRM_DELETE_OUTFITS_POPUP_TITLE, multi_selection_, outfits))
-    {
-        DeleteAllSelectOutfits(outfits, outfitService);
     }
 }
 
@@ -360,7 +381,7 @@ void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outf
             ImGui::SetKeyboardFocusHere();
         }
 
-        ImGui::PushItemWidth(-FLT_MIN);
+        ImGui::SetNextItemWidth(-FLT_MIN);
         if (ImGui::InputTextWithHint(
                 "##CreateNewOutfit",
                 Translate1("Panels.Outfit.CreateHint"),
@@ -372,7 +393,6 @@ void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outf
             const auto it = std::ranges::lower_bound(outfits, std::string_view(outfit_name_buffer_.data()), util::StrLess, &SosUiOutfit::GetName);
             show_conflict_name_error_ = it != outfits.end() && it->GetName() == outfit_name_buffer_.data();
         }
-        ImGui::PopItemWidth();
         if (show_conflict_name_error_)
         {
             ImGui::TextColored(ImVec4(1.0F, 0.0F, 0.0F, 1.0F), "'%s' %s", outfit_name_buffer_.data(), Translate1("Panels.Outfit.NameConflict"));
@@ -425,8 +445,8 @@ void OutfitListTable::DeleteAllSelectOutfits(const std::vector<SosUiOutfit> &out
     if (multi_selection_.Size <= 0) return;
     editing_ = UNTITLED_OUTFIT;
 
-    void   *it = nullptr;
-    ImGuiID index;
+    void   *it    = nullptr;
+    ImGuiID index = 0;
 
     while (multi_selection_.GetNextSelectedItem(&it, &index))
     {

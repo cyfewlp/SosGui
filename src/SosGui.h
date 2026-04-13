@@ -18,6 +18,13 @@
 
 namespace SosGui
 {
+
+enum class MainMenuAction : std::uint8_t
+{
+    none,
+    create_outfit,
+};
+
 class SosGuiWindow
 {
     struct InitFail final : std::runtime_error
@@ -32,7 +39,7 @@ class SosGuiWindow
     OutfitService      m_outfitService;
     SosDataCoordinator m_dataCoordinator;
     CharacterEditPanel m_characterEditPanel;
-    OutfitEditPanel    m_outfitEditPanel;
+    OutfitEditPanel    outfit_edit_panel_;
     bool               m_isShowPanels = true;
 
 public:
@@ -46,7 +53,7 @@ public:
     void Show()
     {
         m_characterEditPanel.Show();
-        m_outfitEditPanel.Show();
+        outfit_edit_panel_.Show();
     }
 
     auto Refresh() const -> EagerTask;

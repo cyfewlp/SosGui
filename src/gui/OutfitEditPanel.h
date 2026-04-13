@@ -16,6 +16,9 @@
 
 namespace SosGui
 {
+
+enum class MainMenuAction : std::uint8_t;
+
 class OutfitEditPanel final : public BaseGui
 {
 public:
@@ -40,6 +43,10 @@ public:
 
     void Draw();
     void DrawOutfitPanel(EditingOutfit &editingOutfit);
+    void on_main_menu_action(MainMenuAction main_menu_action)
+    {
+        outfit_list_table_.on_main_menu_action(main_menu_action);
+    }
 
 private:
     enum class Error

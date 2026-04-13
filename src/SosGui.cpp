@@ -20,19 +20,19 @@
 
 namespace SosGui
 {
-SosGuiWindow::SosGuiWindow() : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), m_outfitEditPanel(m_uiData, m_outfitService)
+SosGuiWindow::SosGuiWindow() : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), outfit_edit_panel_(m_uiData, m_outfitService)
 {
 }
 
 SosGuiWindow::~SosGuiWindow()
 {
     m_characterEditPanel.Cleanup();
-    m_outfitEditPanel.Cleanup();
+    outfit_edit_panel_.Cleanup();
     m_isShowPanels = true;
     i18n::SetTranslator(nullptr);
 }
 
-auto SosGuiWindow::Init(const HWND hWnd, const RE::BSGraphics::RendererData &renderData) -> void
+auto SosGuiWindow::Init(HWND hWnd, const RE::BSGraphics::RendererData &renderData) -> void
 {
     auto *uiSetting = ::SosGui::Settings::UiSettings::GetInstance();
     Settings::Load(*uiSetting);
@@ -83,7 +83,7 @@ auto SosGuiWindow::Draw() -> void
     try
     {
         m_characterEditPanel.Draw(m_uiData, m_dataCoordinator, m_outfitService);
-        m_outfitEditPanel.Draw();
+        outfit_edit_panel_.Draw();
     }
     catch (const std::exception &e)
     {
@@ -125,7 +125,7 @@ auto SosGuiWindow::DrawSidebar() -> float
         };
 
         FocusWindowButton(ICON_USERS, Translate1("CharacterEditPanel"), m_characterEditPanel);
-        FocusWindowButton(ICON_FILE_PLUS_CORNER, Translate1("EditOutfit"), m_outfitEditPanel);
+        FocusWindowButton(ICON_FILE_PLUS_CORNER, Translate1("EditOutfit"), outfit_edit_panel_);
         ImGui::PopFont();
     }
     ImGui::End();
@@ -139,6 +139,7 @@ void SosGuiWindow::MainMenuBar()
     {
         return;
     }
+    MainMenuAction main_menu_action = MainMenuAction::none;
     if (ImGui::BeginMenu(Translate1("ToolBar.File")))
     {
         bool enabled = m_uiData.enabled;
@@ -157,6 +158,10 @@ void SosGuiWindow::MainMenuBar()
         }
         ImGui::SetItemTooltip("%s", Translate1("ToolBar.QuickSlotsToolTip"));
 
+        if (ImGui::MenuItem(Translate1("Panels.Outfit.Create"), "Ctrl+ N"))
+        {
+            main_menu_action = MainMenuAction::create_outfit;
+        }
         if (ImGui::MenuItem(Translate1("ToolBar.Import")))
         {
             OnImportSettings();
@@ -195,12 +200,14 @@ void SosGuiWindow::MainMenuBar()
     Popup::DrawAboutPopup("A Extra GUI for SkyrimOutfitSystemRE");
 
     ImGui::EndMainMenuBar();
+
+    outfit_edit_panel_.on_main_menu_action(main_menu_action);
 }
 
 void SosGuiWindow::OnImportSettings()
 {
     m_characterEditPanel.OnRefresh();
-    m_outfitEditPanel.OnRefresh();
+    outfit_edit_panel_.OnRefresh();
 }
 
 auto SosGuiWindow::EnableQuickSlot(const bool enable) -> bool
