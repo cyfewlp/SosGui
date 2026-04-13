@@ -21,33 +21,33 @@ class OutfitService
 public:
     OutfitService(SosUiData &uiData) : m_uiData(uiData), outfit_container_(m_uiData.outfit_container) {}
 
-    auto CreateOutfit(const std::string &outfitName) const -> Task;
+    auto CreateOutfit(std::string outfitName) const -> Task;
 
-    auto CreateOutfitFromWorn(const std::string &outfitName) const -> Task;
+    auto CreateOutfitFromWorn(std::string outfitName) const -> Task;
 
     auto GetOutfitList() const -> Task;
 
     auto GetAllFavoriteOutfits() const -> Task;
 
-    auto SetOutfitIsFavorite(OutfitId id, const std::string &outfitName, bool isFavorite) const -> Task;
+    auto SetOutfitIsFavorite(OutfitId id, std::string outfitName, bool isFavorite) const -> Task;
 
-    auto SetActorOutfit(RE::Actor *actor, OutfitId id, const std::string &outfitName) const -> Task;
+    auto SetActorOutfit(RE::Actor *actor, OutfitId id, std::string outfitName) const -> Task;
 
     auto GetActorOutfit(RE::Actor *actor) const -> Task;
 
-    auto RenameOutfit(OutfitId id, const std::string &outfitName, const std::string &newName) const -> Task;
+    auto RenameOutfit(OutfitId id, std::string outfitName, std::string newName) const -> Task;
 
-    auto DeleteOutfit(OutfitId id, const std::string &outfitName) const -> Task;
+    auto DeleteOutfit(OutfitId id, std::string outfitName) const -> Task;
 
-    auto AddArmor(OutfitId id, const std::string &outfitName, const Armor *armor) const -> Task;
+    auto AddArmor(OutfitId id, std::string outfitName, const Armor *armor) const -> Task;
 
-    static auto DeleteConflictArmors(const std::string &outfitName, const Armor *armor) -> Task;
+    static auto DeleteConflictArmors(std::string outfitName, const Armor *armor) -> Task;
 
-    auto RemoveArmor(OutfitId id, const std::string &outfitName, const Armor *armor) const -> Task;
+    auto RemoveArmor(OutfitId id, std::string outfitName, const Armor *armor) const -> Task;
 
-    auto GetOutfitArmors(OutfitId id, const std::string &outfitName) const -> Task;
+    auto GetOutfitArmors(OutfitId id, std::string outfitName) const -> Task;
 
-    auto SetSlotPolicy(EditingOutfit &editingOutfit, uint32_t slotPos, SlotPolicy policy) const -> Task;
+    auto SetSlotPolicy(OutfitId id, std::string name, uint32_t slotPos, SlotPolicy policy) const -> Task;
 
     auto GetSlotPolicy(EditingOutfit &editingOutfit) const -> Task;
 

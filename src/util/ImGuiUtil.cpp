@@ -3,13 +3,6 @@
 namespace SosGui
 {
 
-void ImGuiUtil::AddItemRectWithCol(const ImGuiCol colorIndex, const float thickness)
-{
-    auto      *drawList = ImGui::GetWindowDrawList();
-    const auto color    = ImGui::GetColorU32(colorIndex);
-    drawList->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), color, 0, ImDrawFlags_None, thickness);
-}
-
 namespace
 {
 /**
@@ -31,6 +24,13 @@ auto GetIconFont() -> ImFont *
 }
 
 } // namespace
+
+auto ImGuiUtil::Icon(std::string_view icon) -> void
+{
+    ImGui::PushFont(GetIconFont(), 0.0F);
+    ImGui::TextUnformatted(ImGuiEx::TextStart(icon), ImGuiEx::TextEnd(icon));
+    ImGui::PopFont();
+}
 
 auto ImGuiUtil::IconButton(std::string_view icon, const ImVec2 &size) -> bool
 {

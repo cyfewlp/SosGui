@@ -369,7 +369,10 @@ void OutfitEditPanel::SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32
             {
                 if (!editingOutfit.IsUntitled())
                 {
-                    spawn([&] { return m_outfitService.SetSlotPolicy(editingOutfit, slotIdx, policy); });
+                    editingOutfit.slot_policies[slotIdx] = policy;
+                    spawn([&] {
+                        return m_outfitService.SetSlotPolicy(editingOutfit.GetId(), std::string(editingOutfit.GetName()), slotIdx, policy);
+                    });
                 }
             }
             ImGui::SetItemTooltip("%s", Translate1(slot_policy_tooltip(policy)));

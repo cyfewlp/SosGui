@@ -158,6 +158,8 @@ void SosGuiWindow::MainMenuBar()
         }
         ImGui::SetItemTooltip("%s", Translate1("ToolBar.QuickSlotsToolTip"));
 
+        ImGuiUtil::Icon(ICON_FILE_PLUS_CORNER);
+        ImGui::SameLine();
         if (ImGui::MenuItem(Translate1("Panels.Outfit.Create"), "Ctrl+ N"))
         {
             main_menu_action = MainMenuAction::create_outfit;
@@ -184,7 +186,7 @@ void SosGuiWindow::MainMenuBar()
     }
     if (ImGui::MenuItem(Translate1("ToolBar.Settings")))
     {
-        ImGuiUtil::OpenPopup(Translate1("ToolBar.Settings"));
+        ImGui::OpenPopup(Translate1("ToolBar.Settings"));
     }
     if (ImGui::MenuItem(Translate1("ToolBar.Close")))
     {
@@ -193,7 +195,7 @@ void SosGuiWindow::MainMenuBar()
     }
     if (ImGui::MenuItem(Translate1("About")))
     {
-        ImGuiUtil::OpenPopup("A Extra GUI for SkyrimOutfitSystemRE");
+        ImGui::OpenPopup("A Extra GUI for SkyrimOutfitSystemRE");
     }
 
     Popup::DrawSettingsPopup(Translate("ToolBar.Settings"));
