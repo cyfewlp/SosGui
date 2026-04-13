@@ -78,7 +78,9 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
     ZoneScopedN(__FUNCTION__);
     constexpr ImVec2 min_table_size(200.0F, 200.0F);
 
-    if (ImGui::BeginChild(Translate1("Panels.Outfit.Title"), {min_table_size.x, 0.F}, ImGuiEx::ChildFlags().ResizeX(), ImGuiEx::WindowFlags().NoScrollbar()))
+    if (ImGui::BeginChild(
+            Translate1("Panels.Outfit.Title"), {min_table_size.x, 0.F}, ImGuiEx::ChildFlags().ResizeX(), ImGuiEx::WindowFlags().NoScrollbar()
+        ))
     {
         DrawToolWidgets(outfits, outfitService);
         const auto flags =
@@ -151,7 +153,10 @@ void OutfitListTable::DrawToolWidgets(const std::vector<SosUiOutfit> &outfits, O
 
     ImGui::SetNextItemShortcut(ImGuiMod_Ctrl | ImGuiKey_F, ImGuiInputFlags_Tooltip);
     ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
-    name_filterer_.Draw("##filterer", -FLT_MIN);
+    if (name_filterer_.Draw("##filterer", -FLT_MIN))
+    {
+        view_item_count_ = -1;
+    }
     ImGui::PopItemFlag();
 }
 
@@ -173,10 +178,12 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
     MenuAction menu_action = MenuAction::none;
 
     ImGuiListClipper clipper;
-    clipper.Begin(static_cast<int>(outfits.size()));
+
+    const bool item_count_known = view_item_count_ != -1;
+    clipper.Begin(item_count_known ? view_item_count_ : INT_MAX);
     const int step  = reverse ? -1 : 1;
     const int start = reverse ? static_cast<int>(outfits.size()) - 1 : 0;
-    const int end   = reverse ? -1 : clipper.ItemsCount;
+    const int end   = reverse ? -1 : static_cast<int>(outfits.size());
     int       index = start;
     while (clipper.Step())
     {
@@ -204,6 +211,22 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
             break;
         }
     }
+    if (!item_count_known)
+    {
+        while (index != end)
+        {
+            const auto  uIndex = static_cast<ImGuiID>(index);
+            const auto &outfit = outfits[uIndex];
+            if (pass_filter(outfit))
+            {
+                clipper.UserIndex++;
+            }
+            index += step;
+        }
+
+        view_item_count_ = clipper.UserIndex;
+        clipper.SeekCursorForItem(clipper.UserIndex);
+    }
     multi_selection_.ApplyRequests(ImGui::EndMultiSelect());
     if (multi_selection_.Size == 0)
     {
@@ -222,7 +245,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
             OnAcceptSetFavoriteOutfits(true, outfits, outfitService);
             break;
         case MenuAction::mark_unfavorite:
-            OnAcceptSetFavoriteOutfits(true, outfits, outfitService);
+            OnAcceptSetFavoriteOutfits(false, outfits, outfitService);
             break;
         default:
             break;
@@ -379,8 +402,8 @@ void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outf
 auto OutfitListTable::pass_filter(const SosUiOutfit &outfit) -> bool
 {
     const auto &name = outfit.GetName();
-    return name_filterer_.PassFilter(name.c_str(), name.c_str() + name.size()) && // filter by name
-           (!show_favorites_ || outfit.IsFavorite());                             // or only favorites if checked
+    return name_filterer_.PassFilter(name.c_str(), name.end()._Ptr) && // filter by name
+           (!show_favorites_ || outfit.IsFavorite());                  // or only favorites if checked
 }
 
 // ReSharper disable once CppDFAUnreachableFunctionCall

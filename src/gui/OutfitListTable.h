@@ -57,6 +57,8 @@ private:
     ImGuiSelectionBasicStorage multi_selection_;
     OutfitNameBuffer           outfit_name_buffer_{};
     ImGuiID                    active_input_id_          = 0;
+    // cached field, be ussed to ImGui list clipper, -1 means the list need to evaluate item count.
+    int                        view_item_count_          = -1;
     bool                       show_conflict_name_error_ = false;
     bool                       show_favorites_           = false;
     bool                       name_sort_ascend_         = true;
