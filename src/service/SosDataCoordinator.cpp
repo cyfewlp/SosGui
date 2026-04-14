@@ -136,17 +136,23 @@ auto SosDataCoordinator::Refresh() const -> Task
 {
     logger::debug("start refresh in thread: {}", std::this_thread::get_id());
     auto start = std::chrono::high_resolution_clock::now();
-    co_await m_outfitService.GetOutfitList();
-    co_await QueryIsEnable();
-    co_await RequestActorList();
+    std::vector<Task> tasks;
+    tasks.emplace_back(m_outfitService.GetOutfitList());
+    tasks.emplace_back(QueryIsEnable());
+    tasks.emplace_back(RequestActorList());
+    tasks.emplace_back(RequestNearActorList());
     co_await RequestUpdateActorAutoSwitchState(RE::PlayerCharacter::GetSingleton());
-    co_await m_outfitService.GetActorOutfit(RE::PlayerCharacter::GetSingleton());
-    co_await RequestNearActorList();
-    co_await m_outfitService.GetAllFavoriteOutfits();
+    tasks.emplace_back(m_outfitService.GetActorOutfit(RE::PlayerCharacter::GetSingleton()));
+    tasks.emplace_back(m_outfitService.GetAllFavoriteOutfits());
     ui_data_.quick_slot_enabled = HasQuickSlotSpell();
+    for (const auto & task : tasks)
+    {
+        co_await task;
+    }
+
     auto end                    = std::chrono::high_resolution_clock::now();
 
-    auto nano = std::chrono::nanoseconds(end - start);
+    const auto nano = std::chrono::nanoseconds(end - start);
 
     logger::info("refresh spent: {}ns", nano.count());
 }

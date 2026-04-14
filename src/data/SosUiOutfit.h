@@ -73,20 +73,21 @@ struct EditingOutfit
 
     const SosUiOutfit *source_outfit;
     SlotPolicyArray    slot_policies{};
-    bool               invalid = false; ///< set to true if id is untitled or outfit is deleted.
+    bool               invalid; ///< set to true if id is untitled or outfit is deleted.
 
-    explicit EditingOutfit() : source_outfit(nullptr) {}
+    explicit EditingOutfit() : source_outfit(nullptr), invalid(true) {}
 
-    explicit EditingOutfit(const SosUiOutfit &outfit) : source_outfit(&outfit) {}
+    explicit EditingOutfit(const SosUiOutfit &outfit) : source_outfit(&outfit), invalid(outfit.GetId() != INVALID_OUTFIT_ID) {}
 
     EditingOutfit(const EditingOutfit &other)                         = default;
-    EditingOutfit(EditingOutfit &&other) noexcept                     = default;
+    EditingOutfit(EditingOutfit &&other) noexcept                     = delete;
     auto operator=(const EditingOutfit &other) -> EditingOutfit &     = default;
-    auto operator=(EditingOutfit &&other) noexcept -> EditingOutfit & = default;
+    auto operator=(EditingOutfit &&other) noexcept -> EditingOutfit & = delete;
 
     auto operator=(const SosUiOutfit &outfit) -> EditingOutfit &
     {
         source_outfit = &outfit;
+        invalid       = outfit.GetId() == INVALID_OUTFIT_ID;
         slot_policies.fill(SlotPolicy::None);
         return *this;
     }

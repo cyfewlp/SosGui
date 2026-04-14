@@ -230,10 +230,6 @@ auto OutfitService::SetSlotPolicy(const OutfitId id, std::string name, const uin
 
 auto OutfitService::GetSlotPolicy(EditingOutfit &editingOutfit) const -> Task
 {
-    if (!outfit_container_.exists(editingOutfit.GetId()))
-    {
-        co_return;
-    }
     const Variable variable = co_await SosNativeCaller::BodySlotPolicyNamesForOutfit(std::string(editingOutfit.get_name()));
     if (!variable.IsLiteralArray())
     {

@@ -47,11 +47,14 @@ auto get_slot_name_key(const SlotType slotPos) -> std::string
 
 void DrawSlotPolicyHelpPopup(const char *name)
 {
-    if (ImGui::BeginPopupModal(name))
+    bool open = true;
+    if (ImGui::BeginPopupModal(name, &open))
     {
         ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicy.HelpText1"));
         ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicy.HelpText2"));
         ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicy.HelpText3"));
+
+        (void)Popup::DrawActionButtons();
         ImGui::EndPopup();
     }
 }
