@@ -23,17 +23,15 @@ constexpr auto IsArmorNotHasSlotOf(const RE::TESObjectARMO *armor, RE::BIPED_MOD
     return armor->bipedModelData.bipedObjectSlots.none(slot);
 }
 
-constexpr bool IsArmorNonPlayable(const RE::TESObjectARMO *armor)
+constexpr auto IsArmorNonPlayable(const RE::TESObjectARMO *armor) -> bool
 {
     return (armor->formFlags & RE::TESObjectARMO::RecordFlags::kNonPlayable) != 0;
 }
 
-constexpr bool IsArmorPlayable(const RE::TESObjectARMO *armor)
+constexpr auto IsArmorPlayable(const RE::TESObjectARMO *armor) -> bool
 {
     return !IsArmorNonPlayable(armor);
 }
-
-auto IsArmorCanDisplay(const RE::TESObjectARMO *armor) -> bool;
 
 auto GetFormModFileName(const RE::TESForm *form) -> std::string_view;
 

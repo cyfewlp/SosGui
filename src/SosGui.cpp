@@ -20,13 +20,9 @@
 
 namespace SosGui
 {
-SosGuiWindow::SosGuiWindow() : outfit_service_(ui_data_), m_dataCoordinator(ui_data_, outfit_service_), outfit_edit_panel_(outfit_service_)
-{
-}
 
 SosGuiWindow::~SosGuiWindow()
 {
-    m_isShowPanels = true;
     i18n::SetTranslator(nullptr);
 }
 
