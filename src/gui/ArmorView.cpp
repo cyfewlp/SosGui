@@ -53,23 +53,27 @@ auto armor_view::SlotFilterer::pass_filter(const Armor *armor) const -> bool
            || (flags == Flags::Skip_Has_Any_Slots && util::IsArmorNotHasSlotOf(armor, get_selected_slots()));
 }
 
-auto armor_view::ModFilterer::PassFilter(const Armor *armor) const -> bool
+auto armor_view::ModFilterer::pass_filter(const Armor *armor) const -> bool
 {
     ZoneScopedN(__FUNCTION__);
-    bool result = true;
-    if (mod_entry_map.empty()) return result;
-    for (const auto &[modName, modEntry] : mod_entry_map)
+    if (mod_list.empty()) return true;
+
+    const auto mod_name    = util::GetFormModFileName(armor);
+    bool       any_checked = false;
+    bool       pass        = false;
+    for (const auto &mod_entry : mod_list)
     {
-        if (modEntry.checked)
+        if (mod_entry.checked)
         {
-            result = false;
-            if (util::GetFormModFileName(armor) == modName)
+            any_checked = true;
+            if (mod_entry.name == mod_name)
             {
-                return true;
+                pass = true;
+                break;
             }
         }
     }
-    return result;
+    return !any_checked || pass;
 }
 
 void ArmorView::clear_all()
@@ -109,80 +113,6 @@ auto ArmorView::add_armor(const Armor *armor) -> std::expected<void, error>
     return {};
 }
 
-void ArmorView::add_armors_for_slots(ArmorSource source, RE::TESObjectREFR *source_ref, Slot slots)
-{
-    ZoneScopedN(__FUNCTION__);
-    const auto oldSlots = slot_filterer_.get_selected_slots();
-    slot_filterer_.set_select_slots(slots);
-    switch (source)
-    {
-        case ArmorSource::None:
-            break;
-        case ArmorSource::Armor: {
-            if (const auto *armor = source_ref != nullptr ? source_ref->As<Armor>() : nullptr; armor != nullptr)
-            {
-                try_add_armor(armor);
-            }
-            break;
-        }
-        case ArmorSource::Inventory: {
-            if (source_ref == nullptr) break;
-            for (const auto &object : source_ref->GetInventory() | std::views::keys)
-            {
-                try_add_armor(object->As<Armor>());
-            }
-            break;
-        }
-        case ArmorSource::Carried: {
-            if (source_ref == nullptr) break;
-            if (auto *changes = source_ref->GetInventoryChanges(); changes != nullptr)
-            {
-                ArmorItemVisitor visitor;
-                changes->VisitWornItems(visitor);
-                for (const auto &armor : visitor.armors)
-                {
-                    try_add_armor(armor);
-                }
-            }
-            break;
-        }
-        case ArmorSource::All: {
-            auto       *dataHandler = RE::TESDataHandler::GetSingleton();
-            const auto &armorArray  = dataHandler->GetFormArray<RE::TESObjectARMO>();
-            for (const auto &armor : armorArray)
-            {
-                try_add_armor(armor);
-            }
-            break;
-        }
-    }
-    slot_filterer_.set_select_slots(oldSlots);
-}
-
-auto ArmorView::remove_armor(const Armor *armor) -> bool
-{
-    if (auto found = find(armor); found != view_data_.end())
-    {
-        view_data_.erase(found);
-        for (SlotType slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
-        {
-            if (armor->HasPartOf(util::ToSlot(slotPos)))
-            {
-                slot_counter_[slotPos] -= 1;
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
-void ArmorView::prune_view_by_slot_filter()
-{
-    ZoneScopedN(__FUNCTION__);
-    multi_selection_.Clear();
-    std::erase_if(view_data_, [this](const ArmorEntry &entry) { return !slot_filterer_.pass_filter(entry); });
-}
-
 void ArmorView::reset_counter()
 {
     ZoneScopedN(__FUNCTION__);
@@ -190,22 +120,24 @@ void ArmorView::reset_counter()
     slot_counter_.fill(0);
     for (const auto &armor : view_data_)
     {
-        const std::string_view modName = util::GetFormModFileName(armor);
-        auto                   it      = mod_filterer_.try_emplace(modName, 0, false);
-        it.first->second.count += 1;
+        const std::string_view modName   = util::GetFormModFileName(armor);
+        auto                  &mod_entry = mod_filterer_.try_emplace(modName, 0, false); // FIXME-OPT
+        mod_entry.count += 1;
 
-        for (SlotType slotPos = 0; slotPos < RE::BIPED_OBJECT::kEditorTotal; slotPos++)
+        for (auto [index, slot_count] : slot_counter_ | std::views::enumerate)
         {
-            if (armor->HasPartOf(util::ToSlot(slotPos)))
+            if (armor->HasPartOf(static_cast<Slot>(1 << index)))
             {
-                slot_counter_[slotPos]++;
+                slot_count++;
             }
         }
     }
+    std::ranges::sort(mod_filterer_.mod_list, std::less<>(), &armor_view::ModFilterer::ModEntry::name);
 }
 
 void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_ref)
 {
+    ZoneScopedN(__FUNCTION__);
     clear_view_data();
     armor_count = 0;
     switch (source)
@@ -213,6 +145,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
         case ArmorSource::None:
             break;
         case ArmorSource::Armor: {
+            ZoneScopedN("reset view data emplace armor");
             if (const auto *armor = source_ref != nullptr ? source_ref->As<Armor>() : nullptr; filter(armor))
             {
                 armor_count = 1;
@@ -221,8 +154,10 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             break;
         }
         case ArmorSource::Inventory: {
+            ZoneScopedN("reset view data emplace inventory");
             if (source_ref == nullptr) break;
             const auto objects = source_ref->GetInventory() | std::views::keys;
+            view_data_.reserve(objects.size());
             for (const auto &object : objects)
             {
                 if (const auto *armor = object->As<Armor>(); armor != nullptr)
@@ -237,12 +172,14 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             break;
         }
         case ArmorSource::Carried: {
+            ZoneScopedN("reset view data emplace Carried");
             if (source_ref == nullptr) break;
             if (auto *changes = source_ref->GetInventoryChanges(); changes != nullptr)
             {
                 ArmorItemVisitor visitor;
                 changes->VisitWornItems(visitor);
                 armor_count = visitor.armors.size();
+                view_data_.reserve(armor_count);
                 for (const auto &armor : visitor.armors)
                 {
                     if (filter(armor))
@@ -254,6 +191,7 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             break;
         }
         case ArmorSource::All: {
+            ZoneScopedN("reset view data emplace all");
             auto       *dataHandler = RE::TESDataHandler::GetSingleton();
             const auto &armorArray  = dataHandler->GetFormArray<RE::TESObjectARMO>();
             armor_count             = armorArray.size();
@@ -267,8 +205,13 @@ void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_re
             break;
         }
     }
-    std::ranges::sort(view_data_, ArmorNameLessComparator());
-    armor_count = view_data_.size();
+    ZoneValue(view_data_.size());
+    {
+        ZoneScopedN("reset view data sort/shrink");
+        view_data_.shrink_to_fit();
+        std::ranges::sort(view_data_, ArmorNameLessComparator());
+        armor_count = view_data_.size();
+    }
 }
 
 void ArmorView::reset_view(ArmorSource source, RE::TESObjectREFR *source_ref)
@@ -286,12 +229,12 @@ void ArmorView::reset_view(ArmorSource source, RE::TESObjectREFR *source_ref)
 auto ArmorView::filter(const Armor *armor) const -> bool
 {
     ZoneScopedN(__FUNCTION__);
-    if (armor == nullptr || !is_armor_can_display(armor))
+    if (!is_armor_can_display(armor))
     {
         return false;
     }
 
-    if (!mod_filterer_.PassFilter(armor))
+    if (!mod_filterer_.pass_filter(armor))
     {
         return false;
     }
@@ -299,7 +242,7 @@ auto ArmorView::filter(const Armor *armor) const -> bool
     {
         return false;
     }
-    // filter by armor name
+
     if (contain_non_playable_armor_ || util::IsArmorPlayable(armor))
     {
         if (!armor_name_filter_.PassFilter(armor))
@@ -308,64 +251,6 @@ auto ArmorView::filter(const Armor *armor) const -> bool
         }
     }
     return true;
-}
-
-// FIXME: may change api to receive Flags, now slots-filter will be disable when flag is 'Skip_has_Any_Slots'
-void ArmorView::set_pass_always_slot_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref)
-{
-    const auto oldIsAllSlotsEnabled = slot_filterer_.is_all_slots_enabled();
-    slot_filterer_.flags            = enable_all ? armor_view::SlotFilterer::Flags::Pass_Always : armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
-    if (oldIsAllSlotsEnabled == slot_filterer_.is_all_slots_enabled()) return;
-
-    if (slot_filterer_.is_pass_always())
-    {
-        reset_view_data(source, source_ref);
-    }
-    else if (slot_filterer_.is_all_slots_disabled())
-    {
-        clear_view_data();
-    }
-    else
-    {
-        prune_view_by_slot_filter();
-    }
-}
-
-void ArmorView::set_slot_filter(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref)
-{
-    if (const auto old = slot_filterer_.is_slot_selected(slotPos); old == select)
-    {
-        return;
-    }
-    slot_filterer_.select_slot(slotPos, select);
-
-    // cancel enable all slots when select/unselect any slot
-    const auto oldIsEnableAllSlots = slot_filterer_.is_pass_always();
-    if (oldIsEnableAllSlots)
-    {
-        slot_filterer_.flags = armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
-    }
-
-    if (slot_filterer_.is_all_slots_disabled())
-    {
-        clear_view_data();
-    }
-    else if (!oldIsEnableAllSlots)
-    {
-        const Slot slot = util::ToSlot(slotPos);
-        if (select)
-        {
-            add_armors_for_slots(source, source_ref, slot);
-        }
-        else
-        {
-            prune_view_by_slot_filter();
-        }
-    }
-    else if (!slot_filterer_.is_all_slots_enabled())
-    {
-        reset_view_data(source, source_ref);
-    }
 }
 
 auto ArmorView::find(const Armor *armor) const -> const_iterator

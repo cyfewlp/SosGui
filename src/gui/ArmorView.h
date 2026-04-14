@@ -22,9 +22,9 @@ namespace armor_view
 
 struct ArmorNameFilter final : ImGuiUtil::DebounceInput
 {
-    bool PassFilter(const Armor *armor) const;
+    auto PassFilter(const Armor *armor) const -> bool;
 
-    bool Draw();
+    auto Draw() -> bool;
 };
 
 struct SlotFilterer
@@ -78,19 +78,24 @@ struct ModFilterer
         bool             checked = false;
     };
 
-    using ModEntryMap    = std::unordered_map<std::string_view, ModEntry>;
-    using iterator       = ModEntryMap::iterator;
-    using const_iterator = ModEntryMap::const_iterator;
+    using ModList        = std::vector<ModEntry>;
+    using iterator       = ModList::iterator;
+    using const_iterator = ModList::const_iterator;
 
-    ModEntryMap mod_entry_map;
+    ModList mod_list;
 
-    bool PassFilter(const Armor *armor) const;
+    auto pass_filter(const Armor *armor) const -> bool;
 
-    void clear() { mod_entry_map.clear(); }
+    void clear() { mod_list.clear(); }
 
-    constexpr auto try_emplace(std::string_view name, uint32_t count, bool checked)
+    constexpr auto try_emplace(std::string_view name, uint32_t count, bool checked) -> ModEntry &
     {
-        return mod_entry_map.try_emplace(name, ModEntry(name, count, checked));
+        auto it = std::ranges::find(mod_list, name, &ModEntry::name);
+        if (it == mod_list.end())
+        {
+            return mod_list.emplace_back(name, count, checked);
+        }
+        return *it;
     }
 };
 
@@ -140,17 +145,10 @@ public:
     void               clear_all();
     void               clear_view_data();
     [[nodiscard]] auto add_armor(const Armor *armor) -> std::expected<void, error>;
-    void               add_armors_for_slots(ArmorSource source, RE::TESObjectREFR *source_ref, Slot slots);
-    bool               remove_armor(const Armor *armor);
-    void               prune_view_by_slot_filter();
     void               reset_counter();
     void               reset_view_data(ArmorSource source, RE::TESObjectREFR *source_ref);
     void               reset_view(ArmorSource source, RE::TESObjectREFR *source_ref);
-    bool               filter(const Armor *armor) const;
-    void               set_pass_always_slot_filter(bool enable_all, ArmorSource source, RE::TESObjectREFR *source_ref);
-    void               set_slot_filter(SlotType slotPos, bool select, ArmorSource source, RE::TESObjectREFR *source_ref);
-
-    [[nodiscard]] auto get_armor_count(SlotType slotPos) const -> std::uint16_t { return slot_counter_.at(slotPos); }
+    auto               filter(const Armor *armor) const -> bool;
 
     static auto to_error_message(const error error) -> std::string
     {

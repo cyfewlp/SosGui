@@ -27,7 +27,7 @@ auto util::IsArmorCanDisplay(const RE::TESObjectARMO *armor) -> bool
 
 auto util::GetFormModFileName(const RE::TESForm *form) -> std::string_view
 {
-    if (const auto modFile = form->GetFile(); modFile != nullptr)
+    if (auto *modFile = form->GetFile(); modFile != nullptr)
     {
         return modFile->GetFilename();
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "log.h"
+#include "tracy/Tracy.hpp"
 
 #include <stringapiset.h>
 #include <windows.h>
@@ -10,6 +11,7 @@ namespace SosGui::util
 
 static auto UnicodeStringCompare(std::wstring_view wsView1, std::wstring_view wsView2) -> bool
 {
+    ZoneScopedN(__FUNCTION__);
     if (wsView1.empty() || wsView2.empty())
     {
         return false;

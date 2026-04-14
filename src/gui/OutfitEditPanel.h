@@ -42,11 +42,9 @@ public:
     void Focus() override;
 
     void Draw();
-    void DrawOutfitPanel(EditingOutfit &editingOutfit);
-    void on_main_menu_action(MainMenuAction main_menu_action)
-    {
-        outfit_list_table_.on_main_menu_action(main_menu_action);
-    }
+    void draw_outfit(EditingOutfit &editingOutfit);
+
+    void on_main_menu_action(MainMenuAction main_menu_action) { outfit_list_table_.on_main_menu_action(main_menu_action); }
 
 private:
     enum class Error
@@ -63,12 +61,13 @@ private:
     void DrawOutfitArmors(EditingOutfit &editingOutfit);
     void SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
 
-    using DrawArmorEntry = std::function<void(const Armor *armor, ImGuiID index)>;
     void DrawArmorSourcesTabBar();
     void DrawArmorView(const EditingOutfit &editingOutfit);
     void draw_preview_armor_window(const Armor *to_preview_armor);
-    void DrawArmorViewContent(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData);
-    void DrawArmorViewTableContent(const std::vector<ArmorEntry> &viewData, const DrawArmorEntry &drawArmorEntry);
+    void draw_armor_view(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData);
+    void draw_armor_view(const std::vector<ArmorEntry> &viewData, bool editing_invalid_outfit);
+    void draw_armor_row(ImGuiID index, const Armor *armor, bool editing_invalid_outfit, bool &want_add_armor);
+    void draw_add_armors_popup(OutfitId outfit_id);
     void DrawArmorViewModNameFilterer();
     void DrawArmorViewSlotFilterer();
 
@@ -101,6 +100,7 @@ private:
     bool                             show_no_conflict_armors_ = false;
     bool                             preview_armor_           = true;
     bool                             first_preview_window_    = true;
+    int                              view_item_count_         = -1;
     float                            preview_window_posx_     = 300.F;
     float                            preview_window_posy_     = 300.F;
     Armor                           *previewing_armor_        = nullptr;

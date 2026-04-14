@@ -123,6 +123,11 @@ Slot58 = "Unofficial (Typically Left Arm)"
 Slot59 = "Unofficial (Typically Right Arm)"
 Slot60 = "Unofficial (Typically Misc 2)"
 Slot61 = "FX"
+[Panels.OutfitEdit.ConflictSolution]
+Skip = "Skip"
+SkipAll = "Skip All"
+Overwrite = "Overwrite"
+OverwriteAll = "Overwrite All"
 
 [Panels.OutfitEdit.SlotPolicy]
 Name = "Slot Policies"

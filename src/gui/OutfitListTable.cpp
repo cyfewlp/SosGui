@@ -71,7 +71,8 @@ auto DrawConfirmDeleteOutfitsPopup(const char *name, ImGuiSelectionBasicStorage 
 
 void OutfitListTable::OnRefresh()
 {
-    editing_ = UNTITLED_OUTFIT;
+    view_item_count_ = -1;
+    editing_         = UNTITLED_OUTFIT;
     multi_selection_.Clear();
     outfit_name_buffer_[0] = '\0';
 }
