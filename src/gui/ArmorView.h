@@ -181,7 +181,7 @@ private:
     auto is_armor_can_display(const Armor *armor) const -> bool
     {
         bool result = false;
-        if (armor != nullptr && !std::string_view(armor->GetName()).empty())
+        if (armor != nullptr && armor->GetSlotMask().get() != Slot::kNone && !std::string_view(armor->GetName()).empty())
         {
             if (armor->templateArmor == nullptr || contain_template_armor_)
             {
