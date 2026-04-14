@@ -1,3 +1,5 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
+
 #include "gui/OutfitEditPanel.h"
 
 #include "SosDataType.h"
@@ -26,6 +28,7 @@
 #include <cassert>
 #include <expected>
 #include <format>
+#include <imgui_internal.h>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -511,6 +514,7 @@ void OutfitEditPanel::DrawArmorView(const EditingOutfit &editingOutfit)
 void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
 {
     constexpr ImVec2 center_pivot{0.5F, 0.5F};
+    constexpr auto   preview_window_name = "preview_armor";
 
     auto *inventory_manager = RE::Inventory3DManager::GetSingleton();
     if (inventory_manager == nullptr || !preview_armor_)
@@ -544,22 +548,21 @@ void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
             const auto   scaled_model_radius = model_radius / viewport_ratio.x;
             const ImVec2 window_size{scaled_model_radius * 2.0F, scaled_model_radius * 2.0F};
 
-            if (first_preview_window_)
+            // relayout if window size will change: keep window position locate by center.
+            if (const ImGuiWindow *preview_window = ImGui::FindWindowByName(preview_window_name); preview_window != nullptr)
             {
-                first_preview_window_ = false;
-            }
-            else
-            {
-                ImGui::SetNextWindowPos({preview_window_posx_, preview_window_posy_}, 0, center_pivot);
+                if (preview_window->Size != window_size)
+                {
+                    const auto &window_center = preview_window->Pos + preview_window->Size * center_pivot;
+                    ImGui::SetNextWindowPos(window_center, 0, center_pivot);
+                }
             }
             ImGui::SetNextWindowSize(window_size);
-            if (ImGui::Begin("preview_armor", nullptr, ImGuiEx::WindowFlags().NoResize().NoDecoration().NoBackground()))
+            if (ImGui::Begin(preview_window_name, nullptr, ImGuiEx::WindowFlags().NoResize().NoDecoration().NoBackground()))
             {
                 const auto &window_pos = ImGui::GetWindowPos();
-                preview_window_posx_   = window_pos.x + window_size.x * 0.5F;
-                preview_window_posy_   = window_pos.y + window_size.y * 0.5F;
-                const auto new_x       = -(viewport_ratio.x * window_pos.x + model_radius + world_minx);
-                const auto new_z       = -(viewport_ratio.y * window_pos.y + model_radius + world_minz);
+                const auto  new_x      = -(viewport_ratio.x * window_pos.x + model_radius + world_minx);
+                const auto  new_z      = -(viewport_ratio.y * window_pos.y + model_radius + world_minz);
                 translate.x            = (translate.x - loaded_sp_model->worldBound.center.x) + new_x;
                 translate.z            = (translate.z - loaded_sp_model->worldBound.center.z) + new_z;
             }
@@ -592,14 +595,14 @@ void OutfitEditPanel::draw_armor_view(const EditingOutfit &editingOutfit, const 
     selected_armors_slot_mask_    = Slot::kNone;
     const Armor *to_preview_armor = nullptr;
 
-    draw_armor_view(viewData, editingOutfit.IsUntitled());
+    draw_armor_view(viewData, editingOutfit.IsUntitled(), to_preview_armor);
 
     draw_preview_armor_window(to_preview_armor);
 
     draw_add_armors_popup(editingOutfit.GetId());
 }
 
-void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, const bool editing_invalid_outfit)
+void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, const bool editing_invalid_outfit, const Armor *&to_preview_armor)
 {
     auto &multi_selection = armor_view_.multi_selection_;
     auto *msIO            = multi_selection.Begin(
@@ -630,7 +633,7 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
             {
                 if (clipper.UserIndex >= clipper.DisplayStart)
                 {
-                    draw_armor_row(uIndex, armor, editing_invalid_outfit, want_add_armor);
+                    draw_armor_row(uIndex, armor, editing_invalid_outfit, want_add_armor, to_preview_armor);
                 }
                 clipper.UserIndex++;
             }
@@ -658,6 +661,21 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
         view_item_count_ = clipper.UserIndex;
         clipper.SeekCursorForItem(view_item_count_);
     }
+    if (ImGui::IsAnyItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+    {
+        ImGui::OpenPopup("Context");
+    }
+
+    if (ImGui::BeginPopup("Context"))
+    {
+        ImGui::BeginDisabled(editing_invalid_outfit || armor_view_.multi_selection_.Size <= 0);
+        if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.AddAll")))
+        {
+            want_add_armor = true;
+        }
+        ImGui::EndDisabled();
+        ImGui::EndPopup();
+    }
     if (want_add_armor)
     {
         waiting_add_armor_count_ = armor_view_.multi_selection_.Size;
@@ -666,29 +684,26 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
     }
 }
 
-void OutfitEditPanel::draw_armor_row(const ImGuiID index, const Armor *armor, const bool editing_invalid_outfit, bool &want_add_armor)
+void OutfitEditPanel::draw_armor_row(
+    const ImGuiID index, const Armor *armor, const bool editing_invalid_outfit, bool &want_add_armor, const Armor *&to_preview_armor
+)
 {
     ImGui::PushID(static_cast<int>(index));
     ImGui::TableNextRow();
     if (ImGui::TableNextColumn()) // number column
     {
-        auto      &multiSelection = armor_view_.multi_selection_;
-        const bool isSelected     = multiSelection.Contains(index);
+        auto &multiSelection = armor_view_.multi_selection_;
         ImGui::SetNextItemSelectionUserData(index);
-        ImGui::Selectable(std::format("{}", index + 1).c_str(), isSelected, ImGuiEx::SelectableFlags().AllowOverlap().SpanAllColumns());
+        ImGui::Selectable(
+            std::format("{}", index + 1).c_str(), multiSelection.Contains(index), ImGuiEx::SelectableFlags().AllowOverlap().SpanAllColumns()
+        );
         if (multiSelection.Contains(index))
         {
             selected_armors_slot_mask_.set(armor->GetSlotMask().get());
         }
-        if (ImGui::BeginPopupContextItem("Context"))
+        if (ImGui::IsItemHovered())
         {
-            ImGui::BeginDisabled(editing_invalid_outfit || multiSelection.Size <= 0);
-            if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.AddAll")))
-            {
-                want_add_armor = true;
-            }
-            ImGui::EndDisabled();
-            ImGui::EndPopup();
+            to_preview_armor = armor;
         }
     }
 

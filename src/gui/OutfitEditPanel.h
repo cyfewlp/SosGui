@@ -65,8 +65,8 @@ private:
     void DrawArmorView(const EditingOutfit &editingOutfit);
     void draw_preview_armor_window(const Armor *to_preview_armor);
     void draw_armor_view(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData);
-    void draw_armor_view(const std::vector<ArmorEntry> &viewData, bool editing_invalid_outfit);
-    void draw_armor_row(ImGuiID index, const Armor *armor, bool editing_invalid_outfit, bool &want_add_armor);
+    void draw_armor_view(const std::vector<ArmorEntry> &viewData, bool editing_invalid_outfit, const Armor *&to_preview_armor);
+    void draw_armor_row(ImGuiID index, const Armor *armor, bool editing_invalid_outfit, bool &want_add_armor, const Armor *&to_preview_armor);
     void draw_add_armors_popup(OutfitId outfit_id);
     void DrawArmorViewModNameFilterer();
     void DrawArmorViewSlotFilterer();
@@ -99,10 +99,7 @@ private:
     ArmorSource                      armor_source_            = ArmorSource::None;
     bool                             show_no_conflict_armors_ = false;
     bool                             preview_armor_           = true;
-    bool                             first_preview_window_    = true;
     int                              view_item_count_         = -1;
-    float                            preview_window_posx_     = 300.F;
-    float                            preview_window_posy_     = 300.F;
     Armor                           *previewing_armor_        = nullptr;
     // be used to check is armor-view need to be reset.
     Slot                             last_outfit_slot_mask_   = Slot::kNone;
