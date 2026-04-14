@@ -33,14 +33,14 @@ public:
 
     [[nodiscard]] constexpr auto find(OutfitId id) const -> const_iterator
     {
+        if (id == INVALID_OUTFIT_ID) return outfits_.end();
+
         return std::ranges::find_if(outfits_, [id](const auto &outfit) -> bool { return outfit.GetId() == id; });
     }
 
     [[nodiscard]] constexpr auto find(const std::string &name) const -> const_iterator
     {
-        return std::lower_bound(outfits_.begin(), outfits_.end(), name, [](const SosUiOutfit &outfit, const std::string &a_name) -> bool {
-            return util::StrLess(outfit.GetName(), a_name);
-        });
+        return std::ranges::lower_bound(outfits_, name, util::StrLess, &SosUiOutfit::GetName);
     }
 
     [[nodiscard]] constexpr auto find(OutfitId id) -> iterator
@@ -50,9 +50,7 @@ public:
 
     [[nodiscard]] constexpr auto lower_bound(const std::string &name) -> iterator
     {
-        return std::lower_bound(outfits_.begin(), outfits_.end(), name, [](const SosUiOutfit &outfit, const std::string &a_name) -> bool {
-            return util::StrLess(outfit.GetName(), a_name);
-        });
+        return std::ranges::lower_bound(outfits_, name, util::StrLess, &SosUiOutfit::GetName);
     }
 
     [[nodiscard]] constexpr auto find(const std::string &name) -> iterator

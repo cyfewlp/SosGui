@@ -72,7 +72,8 @@ struct EditingOutfit
     using SlotPolicyArray = std::array<SlotPolicy, RE::BIPED_OBJECT::kEditorTotal>;
 
     const SosUiOutfit *source_outfit;
-    SlotPolicyArray    slot_policies;
+    SlotPolicyArray    slot_policies{};
+    bool               invalid = false; ///< set to true if id is untitled or outfit is deleted.
 
     explicit EditingOutfit() : source_outfit(nullptr) {}
 
@@ -92,15 +93,21 @@ struct EditingOutfit
 
     [[nodiscard]] auto GetId() const -> OutfitId { return source_outfit == nullptr ? UNTITLED_OUTFIT_ID : source_outfit->GetId(); }
 
-    [[nodiscard]] auto IsUntitled() const -> bool { return GetId() == UNTITLED_OUTFIT_ID; }
+    [[nodiscard]] auto is_invalid() const -> bool { return invalid || GetId() == UNTITLED_OUTFIT_ID; }
 
-    [[nodiscard]] auto GetName() const -> std::string_view
+    [[nodiscard]] auto get_name() const -> std::string_view
     {
-        if (IsUntitled()) return Translate("Panels.Outfit.Untitled");
+        if (is_invalid()) return Translate("Panels.Outfit.Untitled");
         return source_outfit->GetName();
     }
 
-    [[nodiscard]] auto IsConflictWith(const RE::TESObjectARMO *armor) const -> bool
+    [[nodiscard]] auto get_name_str() const -> std::string
+    {
+        if (is_invalid()) return std::string(Translate("Panels.Outfit.Untitled"));
+        return source_outfit->GetName();
+    }
+
+    [[nodiscard]] auto is_conflict_with(const RE::TESObjectARMO *armor) const -> bool
     {
         return source_outfit != nullptr && source_outfit->IsConflictWith(armor);
     }

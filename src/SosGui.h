@@ -34,8 +34,8 @@ class SosGuiWindow
     using Slot  = RE::BIPED_MODEL::BipedObjectSlot;
     using Armor = RE::TESObjectARMO;
 
-    SosUiData          m_uiData;
-    OutfitService      m_outfitService;
+    SosUiData          ui_data_;
+    OutfitService      outfit_service_;
     SosDataCoordinator m_dataCoordinator;
     CharacterEditPanel character_edit_panel_;
     OutfitEditPanel    outfit_edit_panel_;

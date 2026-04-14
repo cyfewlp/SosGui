@@ -20,7 +20,7 @@
 
 namespace SosGui
 {
-SosGuiWindow::SosGuiWindow() : m_outfitService(m_uiData), m_dataCoordinator(m_uiData, m_outfitService), outfit_edit_panel_(m_uiData, m_outfitService)
+SosGuiWindow::SosGuiWindow() : outfit_service_(ui_data_), m_dataCoordinator(ui_data_, outfit_service_), outfit_edit_panel_(outfit_service_)
 {
 }
 
@@ -80,8 +80,8 @@ auto SosGuiWindow::Draw() -> void
     }
     try
     {
-        character_edit_panel_.Draw(m_uiData, m_dataCoordinator, m_outfitService);
-        outfit_edit_panel_.Draw();
+        character_edit_panel_.Draw(ui_data_, m_dataCoordinator, outfit_service_);
+        outfit_edit_panel_.draw(ui_data_.outfit_container);
     }
     catch (const std::exception &e)
     {
@@ -99,18 +99,18 @@ void SosGuiWindow::MainMenuBar()
     MainMenuAction main_menu_action = MainMenuAction::none;
     if (ImGui::BeginMenu(Translate1("ToolBar.File")))
     {
-        bool enabled = m_uiData.enabled;
+        bool enabled = ui_data_.enabled;
         if (ImGui::Checkbox(Translate1("Enabled"), &enabled))
         {
             spawn([&] { return m_dataCoordinator.RequestEnable(enabled); });
         }
 
-        enabled = m_uiData.quick_slot_enabled;
+        enabled = ui_data_.quick_slot_enabled;
         if (ImGui::Checkbox(Translate1("ToolBar.QuickSlots"), &enabled))
         {
             if (EnableQuickSlot(enabled))
             {
-                m_uiData.quick_slot_enabled = enabled;
+                ui_data_.quick_slot_enabled = enabled;
             }
         }
         ImGui::SetItemTooltip("%s", Translate1("ToolBar.QuickSlotsToolTip"));

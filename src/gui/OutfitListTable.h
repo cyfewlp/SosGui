@@ -28,7 +28,7 @@ public:
     void on_main_menu_action(MainMenuAction main_menu_action);
     void Draw(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
 
-    auto GetEditingOutfit() -> EditingOutfit & { return editing_; }
+    auto get_editing_outfit() -> EditingOutfit & { return editing_; }
 
 private:
     enum class MenuAction : std::uint8_t;

@@ -30,46 +30,38 @@ private:
     static auto IsArmorNonPlayable(const Armor *armor) -> bool { return (armor->formFlags & Armor::RecordFlags::kNonPlayable) != 0; }
 
 public:
-    explicit OutfitEditPanel(SosUiData &uiData, OutfitService &outfitService) : m_uiData(uiData), m_outfitService(outfitService)
+    explicit OutfitEditPanel(OutfitService &outfitService)
+        : outfit_service_(&outfitService), last_editing_outfit_id_(std::numeric_limits<OutfitId>::max())
     {
-        last_editing_outfit_id_ = std::numeric_limits<OutfitId>::max();
-        UpdateWindowTitle(outfit_list_table_.GetEditingOutfit());
+        UpdateWindowTitle(outfit_list_table_.get_editing_outfit());
     }
 
-    void on_refresh() ;
+    void on_refresh();
 
-    void Draw();
+    void draw(const OutfitContainer &outfit_container);
     void draw_outfit(EditingOutfit &editingOutfit);
 
     void on_main_menu_action(MainMenuAction main_menu_action) { outfit_list_table_.on_main_menu_action(main_menu_action); }
 
 private:
-    enum class Error
-    {
-        delete_armor_from_unknown_outfit_id,
-        add_armor_to_unknown_outfit_id,
-    };
-
-    static void PushError(Error error);
 
     void draw_filterers(const EditingOutfit &editingOutfit);
     void UpdateWindowTitle(const EditingOutfit &editingOutfit);
 
-    void DrawOutfitArmors(EditingOutfit &editingOutfit);
+    void draw_outfit_armors(EditingOutfit &editingOutfit);
     void SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
 
     void DrawArmorSourcesTabBar();
-    void DrawArmorView(const EditingOutfit &editingOutfit);
+    void draw_armor_view(const EditingOutfit &editingOutfit);
     void draw_preview_armor_window(const Armor *to_preview_armor);
-    void draw_armor_view(const EditingOutfit &editingOutfit, const std::vector<ArmorEntry> &viewData);
+    void draw_armor_view_content(const EditingOutfit &editingOutfit);
     void draw_armor_view(const std::vector<ArmorEntry> &viewData, bool editing_invalid_outfit, const Armor *&to_preview_armor);
     void draw_armor_row(ImGuiID index, const Armor *armor, bool editing_invalid_outfit, bool &want_add_armor, const Armor *&to_preview_armor);
-    void draw_add_armors_popup(OutfitId outfit_id);
+    void draw_add_armors_popup(const EditingOutfit &outfit);
     void DrawArmorViewModNameFilterer();
     void DrawArmorViewSlotFilterer();
 
-    void AddSelectArmors(OutfitId id);
-    void DeleteArmor(OutfitId id, const Armor *armor);
+    void AddSelectArmors(const EditingOutfit &outfit);
 
     enum class ConflictSolution : std::uint8_t
     {
@@ -83,8 +75,7 @@ private:
 
     ArmorView                        armor_view_{};
     std::string                      window_title_;
-    SosUiData                       &m_uiData;
-    OutfitService                   &m_outfitService;
+    OutfitService                   *outfit_service_;
     OutfitListTable                  outfit_list_table_{};
     REX::EnumSet<Slot>               selected_armors_slot_mask_ = Slot::kNone;
     int                              waiting_add_armor_count_   = 0;
