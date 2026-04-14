@@ -604,10 +604,9 @@ void OutfitEditPanel::draw_armor_view(const EditingOutfit &editingOutfit, const 
 
 void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, const bool editing_invalid_outfit, const Armor *&to_preview_armor)
 {
-    auto &multi_selection = armor_view_.multi_selection_;
-    auto *msIO            = multi_selection.Begin(
-        ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid(), static_cast<int>(viewData.size())
-    );
+    auto          &multi_selection = armor_view_.multi_selection_;
+    constexpr auto ms_flags        = ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid();
+    auto          *msIO            = ImGui::BeginMultiSelect(ms_flags, multi_selection.Size, static_cast<int>(viewData.size()));
     multi_selection.ApplyRequests(msIO);
     ImGuiListClipper clipper;
     const bool       item_count_known = view_item_count_ != -1;

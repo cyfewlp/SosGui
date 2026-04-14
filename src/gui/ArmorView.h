@@ -127,7 +127,7 @@ public:
     armor_view::ArmorNameFilter armor_name_filter_;
     armor_view::ModFilterer     mod_filterer_;
     armor_view::SlotFilterer    slot_filterer_;
-    MultiSelection              multi_selection_;
+    ImGuiSelectionBasicStorage  multi_selection_;
     size_t                      armor_count; ///< Available armors count
     bool                        contain_non_playable_armor_ = true;
     bool                        contain_template_armor_     = false;
