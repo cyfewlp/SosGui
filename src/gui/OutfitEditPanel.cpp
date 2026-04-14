@@ -244,10 +244,10 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
         needUpdateView = true;
     }
 
-    if (show_no_conflict_armors_ && last_outfit_slot_mask_ != slot_mask)
+    if (show_no_conflict_armors_)
     {
-        armor_view_.slot_filterer_.set_select_slots(slot_mask);
-        needUpdateView = true;
+        if (last_outfit_slot_mask_ != slot_mask) needUpdateView = true;
+        slot_filterer.set_select_slots(slot_mask);
     }
     last_outfit_slot_mask_ = slot_mask;
 
