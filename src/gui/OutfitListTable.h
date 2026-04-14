@@ -2,7 +2,6 @@
 
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
-#include "gui/BaseGui.h"
 #include "popup/Popup.h"
 #include "service/OutfitService.h"
 #include "util/ImGuiUtil.h"

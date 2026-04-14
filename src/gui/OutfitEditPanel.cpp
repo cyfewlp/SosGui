@@ -109,23 +109,11 @@ auto get_near_objects_has_armor() -> std::vector<RE::TESObjectREFR *>
 
 } // namespace
 
-void OutfitEditPanel::OnRefresh()
+void OutfitEditPanel::on_refresh()
 {
     view_item_count_     = -1;
     should_refresh_view_ = true;
     armor_view_.clear_all();
-}
-
-void OutfitEditPanel::Cleanup()
-{
-    should_refresh_view_ = true;
-    armor_view_.clear_all();
-}
-
-void OutfitEditPanel::Focus()
-{
-    ImGui::SetWindowFocus(window_title_.c_str());
-    BaseGui::Focus();
 }
 
 void OutfitEditPanel::PushError(const Error error)
@@ -144,13 +132,7 @@ void OutfitEditPanel::PushError(const Error error)
 void OutfitEditPanel::Draw()
 {
     ZoneScopedN(__FUNCTION__);
-    if (!IsShowing())
-    {
-        return;
-    }
-    ImGui::SetNextWindowPos(ImVec2(DEFAULT_OUTFIT_EDIT_WINDOW_POS_X, DEFAULT_WINDOW_POS_Y), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize({DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT}, ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(window_title_.c_str(), &m_show))
+    if (ImGui::Begin(window_title_.c_str()))
     {
         if (should_refresh_view_)
         {

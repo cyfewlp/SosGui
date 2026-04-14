@@ -1,7 +1,6 @@
 #pragma once
 
 #include "data/SosUiData.h"
-#include "gui/BaseGui.h"
 #include "gui/CharacterEditPanel.h"
 #include "gui/OutfitEditPanel.h"
 #include "gui/popup/OutfitSelectPopup.h"
@@ -38,7 +37,7 @@ class SosGuiWindow
     SosUiData          m_uiData;
     OutfitService      m_outfitService;
     SosDataCoordinator m_dataCoordinator;
-    CharacterEditPanel m_characterEditPanel;
+    CharacterEditPanel character_edit_panel_;
     OutfitEditPanel    outfit_edit_panel_;
     bool               m_isShowPanels = true;
 
@@ -50,18 +49,11 @@ public:
     static auto Init(HWND hWnd, const RE::BSGraphics::RendererData &renderData) -> void;
     static auto ShutDown() -> void;
 
-    void Show()
-    {
-        m_characterEditPanel.Show();
-        outfit_edit_panel_.Show();
-    }
-
-    auto Refresh() const -> EagerTask;
+    auto Refresh() const -> void;
     auto OnPostDisplay() -> void;
 
 private:
     auto Draw() -> void;
-    auto DrawSidebar() -> float;
     void MainMenuBar();
     void OnImportSettings();
 

@@ -3,7 +3,6 @@
 //
 
 #include "data/ActorOutfitContainer.h"
-#include "gui/BaseGui.h"
 #include "util/ImGuiUtil.h"
 
 namespace SosGui
@@ -13,13 +12,9 @@ struct SosUiData;
 class SosDataCoordinator;
 class OutfitService;
 
-class CharacterEditPanel final : public BaseGui
+class CharacterEditPanel final
 {
 public:
-    void Focus() override;
-
-    void Cleanup() override {}
-
     void Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
 
 private:

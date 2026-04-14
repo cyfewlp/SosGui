@@ -51,22 +51,10 @@ auto GetActorOutfitName(SosUiData &uiData, RE::Actor *actor) -> std::string
 }
 } // namespace
 
-void CharacterEditPanel::Focus()
-{
-    ImGui::SetWindowFocus("$SosGui_CharacterEditPanel"_T.c_str());
-    BaseGui::Focus();
-}
-
 void CharacterEditPanel::Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
     ZoneScopedN(__FUNCTION__);
-    if (!IsShowing())
-    {
-        return;
-    }
-    ImGui::SetNextWindowPos(ImVec2(DEFAULT_MAIN_WINDOW_POS_X, DEFAULT_WINDOW_POS_Y), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("$SosGui_CharacterEditPanel"_T.c_str(), &m_show, ImGuiWindowFlags_NoNav))
+    if (ImGui::Begin("$SosGui_CharacterEditPanel"_T.c_str(), nullptr, ImGuiEx::WindowFlags()))
     {
         DrawCharactersPanel(uiData, dataCoordinator, outfitService);
     }

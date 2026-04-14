@@ -182,7 +182,6 @@ void SosGuiMenu::OnShow()
     i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
     m_sosGui = std::make_unique<SosGuiWindow>();
     m_sosGui->Refresh();
-    m_sosGui->Show();
 }
 
 void SosGuiMenu::OnHide()

@@ -26,8 +26,6 @@ SosGuiWindow::SosGuiWindow() : m_outfitService(m_uiData), m_dataCoordinator(m_ui
 
 SosGuiWindow::~SosGuiWindow()
 {
-    m_characterEditPanel.Cleanup();
-    outfit_edit_panel_.Cleanup();
     m_isShowPanels = true;
     i18n::SetTranslator(nullptr);
 }
@@ -56,9 +54,9 @@ auto SosGuiWindow::ShutDown() -> void
     ImGuiEx::Shutdown();
 }
 
-auto SosGuiWindow::Refresh() const -> EagerTask
+auto SosGuiWindow::Refresh() const -> void
 {
-    co_await m_dataCoordinator.Refresh();
+    spawn([&] { return m_dataCoordinator.Refresh(); });
 }
 
 auto SosGuiWindow::OnPostDisplay() -> void
@@ -82,7 +80,7 @@ auto SosGuiWindow::Draw() -> void
     }
     try
     {
-        m_characterEditPanel.Draw(m_uiData, m_dataCoordinator, m_outfitService);
+        character_edit_panel_.Draw(m_uiData, m_dataCoordinator, m_outfitService);
         outfit_edit_panel_.Draw();
     }
     catch (const std::exception &e)
@@ -90,47 +88,6 @@ auto SosGuiWindow::Draw() -> void
         logger::LogStacktrace();
         ErrorNotifier::GetInstance().Error(e.what());
     }
-}
-
-auto SosGuiWindow::DrawSidebar() -> float
-{
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos({0, viewport->WorkPos.y});
-    ImGui::SetNextWindowSize({0, viewport->WorkSize.y});
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {5.0F, 10.0F});
-
-    const float offsetY = viewport->WorkSize.y * 0.25F;
-
-    float width = 0.0;
-    if (ImGui::Begin("##MainSidebar", nullptr, ImGuiEx::WindowFlags().AlwaysAutoResize().NoDecoration().NoMove()))
-    {
-        width = ImGui::GetWindowWidth();
-        ImGui::SetCursorPosY(offsetY);
-        const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_FramePadding>({5.0F, 5.0F}).Color<ImGuiCol_Button>({});
-        ImGui::PushFont(nullptr, Settings::UiSettings::GetInstance()->Title3PxSize());
-        auto FocusWindowButton = [](std::string_view icon, const char *tooltip, BaseGui &baseGui) {
-            auto isClick = ImGuiUtil::IconButton(icon);
-            ImGui::SetItemTooltip("%s", tooltip);
-            if (isClick)
-            {
-                if (baseGui.IsFocused())
-                {
-                    baseGui.ToggleShow();
-                }
-                else
-                {
-                    baseGui.Focus();
-                }
-            }
-        };
-
-        FocusWindowButton(ICON_USERS, Translate1("CharacterEditPanel"), m_characterEditPanel);
-        FocusWindowButton(ICON_FILE_PLUS_CORNER, Translate1("EditOutfit"), outfit_edit_panel_);
-        ImGui::PopFont();
-    }
-    ImGui::End();
-    ImGui::PopStyleVar();
-    return width;
 }
 
 void SosGuiWindow::MainMenuBar()
@@ -208,8 +165,7 @@ void SosGuiWindow::MainMenuBar()
 
 void SosGuiWindow::OnImportSettings()
 {
-    m_characterEditPanel.OnRefresh();
-    outfit_edit_panel_.OnRefresh();
+    outfit_edit_panel_.on_refresh();
 }
 
 auto SosGuiWindow::EnableQuickSlot(const bool enable) -> bool

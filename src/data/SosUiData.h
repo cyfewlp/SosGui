@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "Cleanable.h"
 #include "OutfitContainer.h"
 #include "data/ActorOutfitContainer.h"
 #include "data/SosUiOutfit.h"

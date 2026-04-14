@@ -1,6 +1,5 @@
 #pragma once
 
-#include "BaseGui.h"
 #include "data/ArmorSource.h"
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
@@ -19,7 +18,7 @@ namespace SosGui
 
 enum class MainMenuAction : std::uint8_t;
 
-class OutfitEditPanel final : public BaseGui
+class OutfitEditPanel final
 {
 public:
     using Slot  = RE::BIPED_MODEL::BipedObjectSlot;
@@ -37,9 +36,7 @@ public:
         UpdateWindowTitle(outfit_list_table_.GetEditingOutfit());
     }
 
-    void OnRefresh() override;
-    void Cleanup() override;
-    void Focus() override;
+    void on_refresh() ;
 
     void Draw();
     void draw_outfit(EditingOutfit &editingOutfit);
