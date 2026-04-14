@@ -2,7 +2,6 @@
 
 #include "WCharUtils.h"
 #include "fonts/FontManager.h"
-#include "gui/UiSettings.h"
 #include "gui/icon.h"
 #include "i18n/translator_manager.h"
 #include "imgui.h"
@@ -13,7 +12,6 @@
 #include "path_utils.h"
 #include "task.h"
 #include "util/ImGuiUtil.h"
-#include "util/UiSettingsLoader.h"
 #include "util/utils.h"
 
 #include <windows.h>
@@ -28,8 +26,7 @@ SosGuiWindow::~SosGuiWindow()
 
 auto SosGuiWindow::Init(HWND hWnd, const RE::BSGraphics::RendererData &renderData) -> void
 {
-    auto *uiSetting = ::SosGui::Settings::UiSettings::GetInstance();
-    Settings::Load(*uiSetting);
+    constexpr std::string_view ICON_FONT = "lucide-icons.ttf";
 
     auto *device  = reinterpret_cast<ID3D11Device *>(renderData.forwarder);
     auto *context = reinterpret_cast<ID3D11DeviceContext *>(renderData.context);
@@ -38,15 +35,13 @@ auto SosGuiWindow::Init(HWND hWnd, const RE::BSGraphics::RendererData &renderDat
     {
         (void)ImGuiEx::AddPrimaryFont({WCharUtils::ToString(defaultFontFilePath)}, {});
     }
-    (void)ImGuiEx::AddFont(utils::GetInterfaceFile(Settings::UiSettings::ICON_FONT));
+    (void)ImGuiEx::AddFont(utils::GetInterfaceFile(ICON_FONT));
 
     ImGui::StyleColorsDark();
 }
 
 auto SosGuiWindow::ShutDown() -> void
 {
-    auto *uiSetting = Settings::UiSettings::GetInstance();
-    Settings::Save(*uiSetting);
     ImGuiEx::Shutdown();
 }
 
@@ -137,10 +132,6 @@ void SosGuiWindow::MainMenuBar()
     {
         util::RefreshActorArmor(RE::PlayerCharacter::GetSingleton());
     }
-    if (ImGui::MenuItem(Translate1("ToolBar.Settings")))
-    {
-        ImGui::OpenPopup(Translate1("ToolBar.Settings"));
-    }
     if (ImGui::MenuItem(Translate1("ToolBar.Close")))
     {
         auto *messageQueue = RE::UIMessageQueue::GetSingleton();
@@ -151,7 +142,6 @@ void SosGuiWindow::MainMenuBar()
         ImGui::OpenPopup("A Extra GUI for SkyrimOutfitSystemRE");
     }
 
-    Popup::DrawSettingsPopup(Translate("ToolBar.Settings"));
     Popup::DrawAboutPopup("A Extra GUI for SkyrimOutfitSystemRE");
 
     ImGui::EndMainMenuBar();

@@ -7,7 +7,6 @@
 #include "data/ArmorSource.h"
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
-#include "gui/UiSettings.h"
 #include "gui/icon.h"
 #include "gui/popup/Popup.h"
 #include "gui/widgets.h"

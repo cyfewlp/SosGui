@@ -3,7 +3,6 @@
 #include "SosGui.h"
 #include "data/SosUiOutfit.h"
 #include "data/id.h"
-#include "gui/UiSettings.h"
 #include "gui/icon.h"
 #include "i18n/translator_manager.h"
 #include "imgui.h"

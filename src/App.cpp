@@ -3,11 +3,8 @@
 #include "PapyrusFunctions.h"
 #include "SosGuiMenu.h"
 #include "common.h"
-#include "gui/UiSettings.h"
-#include "imgui/ImThemeLoader.h"
 #include "log.h"
 #include "path_utils.h"
-#include "util/UiSettingsLoader.h"
 
 #include <exception>
 #include <memory>
@@ -26,8 +23,6 @@ auto Initialize() -> bool
     });
     SKSE::GetPapyrusInterface()->Register(SosGui::PapyrusFunctions::Register);
 
-    const auto themeFilePath = utils::GetInterfaceFile(ImTheme::THEME_FILE_NAME);
-    ImTheme::Loader::GetInstance().LoadThemes(themeFilePath);
     SosGui::App::GetInstance().Init();
     return true;
 }

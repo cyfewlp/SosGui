@@ -4,8 +4,6 @@
 
 #include "util/utils.h"
 
-#include "gui/UiSettings.h"
-
 namespace SosGui
 {
 

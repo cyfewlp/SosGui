@@ -19,7 +19,6 @@ class OutfitListTable final
 {
     static constexpr int        MAX_OUTFIT_NAME_BYTES = 256;
     static inline EditingOutfit UNTITLED_OUTFIT;
-    using DrawOutfitEntry  = std::function<void(const SosUiOutfit &, ImGuiID)>;
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
 public:
