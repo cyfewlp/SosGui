@@ -41,7 +41,11 @@ constexpr void RefreshActorArmor(RE::Actor *selectedActor)
 {
     if (selectedActor != nullptr)
     {
-        selectedActor->Update3DModel();
+        if (auto *currentProcess = selectedActor->GetActorRuntimeData().currentProcess; currentProcess != nullptr)
+        {
+            currentProcess->Set3DUpdateFlag(RE::RESET_3D_FLAGS::kModel);
+            selectedActor->Update3DModel();
+        }
     }
 }
 
