@@ -106,10 +106,7 @@ void CharacterEditPanel::DrawCharactersPanel(SosUiData &uiData, const SosDataCoo
 
     ImGui::SameLine(0, 20);
 
-    ImGuiUtil::Text(Translate("Add"));
-    ImGui::SameLine();
-
-    if (ImGui::BeginCombo("##NearObjects", nullptr, ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
+    if (ImGui::BeginCombo("##NearObjects", Translate1("Panels.Characters.Add"), ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
     {
         for (const auto &actor : uiData.near_actors)
         {

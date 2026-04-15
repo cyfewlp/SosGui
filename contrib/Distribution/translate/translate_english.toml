@@ -28,6 +28,7 @@ QuickSlotsToolTip = "Adds a spell to your character, to allow quick switching be
 Titile = "Characters Edit Panel"
 Refresh = "Refresh Characters"
 ActiveOutfit = "Active Outfit"
+Add = "[Add New Character]"
 
 [Panels.Characters.AutoSwitch]
 Empty = "[No Autoswitch]"
