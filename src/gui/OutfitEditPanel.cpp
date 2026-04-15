@@ -47,6 +47,7 @@ auto get_slot_name_key(const SlotType slotPos) -> std::string
 void DrawSlotPolicyHelpPopup(const char *name)
 {
     bool open = true;
+    ImGui::SetNextWindowSize({400.0F, 400.0F}, ImGuiCond_FirstUseEver);
     if (ImGui::BeginPopupModal(name, &open))
     {
         ImGui::TextWrapped("%s", Translate1("Panels.OutfitEdit.SlotPolicy.HelpText1"));
@@ -106,6 +107,7 @@ auto get_near_objects_has_armor() -> std::vector<RE::TESObjectREFR *>
         }
         return RE::BSContainer::ForEachResult::kContinue;
     });
+    std::ranges::sort(objectRefs, std::less<>(), &RE::Actor::formID);
     return objectRefs;
 }
 
@@ -718,7 +720,7 @@ void OutfitEditPanel::draw_armor_row(
 void OutfitEditPanel::draw_add_armors_popup(const EditingOutfit &outfit)
 {
     bool open = true;
-    if (ImGui::BeginPopupModal(Add_Armors_Progress_Popup_Title, &open))
+    if (ImGui::BeginPopupModal(Add_Armors_Progress_Popup_Title, &open, ImGuiEx::WindowFlags().AlwaysAutoResize()))
     {
         const int   remaining = waiting_add_armor_count_ - armor_view_.multi_selection_.Size;
         const float fraction  = static_cast<float>(remaining) / static_cast<float>(waiting_add_armor_count_);
