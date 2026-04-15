@@ -36,7 +36,8 @@ auto Popup::DrawActionButtons() -> bool
 
 void Popup::DrawAboutPopup(std::string_view name)
 {
-    if (ImGui::BeginPopupModal(name.data()))
+    bool open = true;
+    if (ImGui::BeginPopupModal(name.data(), &open))
     {
         ImGuiUtil::Text(name);
 
