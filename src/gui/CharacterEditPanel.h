@@ -3,6 +3,7 @@
 //
 
 #include "data/ActorOutfitContainer.h"
+#include "data/OutfitContainer.h"
 #include "util/ImGuiUtil.h"
 
 namespace SosGui
@@ -19,14 +20,13 @@ public:
 
 private:
     void DrawCharactersPanel(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
-    void DrawCharactersInfo(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
-    void DrawOutfitsCombo(SosUiData &uiData, const OutfitService &outfitService, RE::Actor *actor);
-    auto get_outfit_display_name(const RE::Actor *currentActor, AutoSwitch policy, SosUiData &uiData) -> std::string_view;
-    void draw_auto_switch(RE::Actor *currentActor, SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
+    void DrawCharactersInfo(SosUiData &ui_data, const SosDataCoordinator &data_coordinator, const OutfitService &outfit_service);
+    void draw_auto_switch(
+        const ActorOutfitContainer::Entry &editing_actor, const OutfitContainer &outfit_container, const SosDataCoordinator &data_coordinator,
+        const OutfitService &outfit_service
+    );
 
-    ImGuiUtil::DebounceInput debounce_input_;
-    RE::Actor               *outfit_popup_target_actor_{nullptr};
-    AutoSwitch               selected_policy_ = AutoSwitch::None;
+    ImGuiTextFilter outfit_name_filter_;
 };
 
 } // namespace SosGui

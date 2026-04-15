@@ -13,16 +13,6 @@
 
 namespace SosGui
 {
-namespace
-{
-
-void ConfirmAndClose(bool &confirmed)
-{
-    confirmed = true;
-    ImGui::CloseCurrentPopup();
-}
-} // namespace
-
 auto Popup::DrawActionButtons() -> bool
 {
     bool        confirm      = false;

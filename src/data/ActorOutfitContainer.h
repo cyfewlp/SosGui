@@ -90,6 +90,16 @@ struct ActorOutfitContainer
         return std::nullopt;
     }
 
+    [[nodiscard]] static constexpr auto find_auto_switch_outfit(const Entry &entry, AutoSwitch policy) -> std::optional<const AutoSwitchOutfit *>
+    {
+        const auto it = std::ranges::find(entry.auto_switch_outfits, policy, &AutoSwitchOutfit::policy);
+        if (it != entry.auto_switch_outfits.end())
+        {
+            return &(*it);
+        }
+        return std::nullopt;
+    }
+
     [[nodiscard]] constexpr auto end() const -> const_iterator { return container.end(); }
 
     [[nodiscard]] constexpr auto exists(const RE::Actor *actor) const -> bool { return find(actor) != container.end(); }

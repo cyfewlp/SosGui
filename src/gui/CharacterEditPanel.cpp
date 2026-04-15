@@ -35,26 +35,59 @@ constexpr auto POLICIES_DRAW_LIST = {
     AutoSwitch::DungeonRainy
 };
 
-auto GetActorOutfitName(SosUiData &uiData, RE::Actor *actor) -> std::string
+using EditingActor = ActorOutfitContainer::Entry;
+
+auto get_actor_outfit_name(const EditingActor &editing_actor, const OutfitContainer &outfit_container) -> std::string
 {
-    const auto &actorOutfits = uiData.actor_outfit_container;
-    const auto &outfits      = uiData.outfit_container;
-    if (const auto it = actorOutfits.find(actor); it != actorOutfits.end())
+    if (const auto outfitIt = outfit_container.find(editing_actor.outfit_id); outfitIt != outfit_container.end())
     {
-        if (const auto outfitIt = outfits.find(it->outfit_id); outfitIt != outfits.end())
-        {
-            return outfitIt->GetName();
-        }
+        return outfitIt->GetName();
     }
 
     return "[No Outfit]";
+}
+
+auto draw_outfits(const std::vector<SosUiOutfit> &outfits, const std::string_view selected_name, const ImGuiTextFilter &filter) -> const SosUiOutfit *
+{
+    const SosUiOutfit *selected_outfit = nullptr;
+
+    for (const auto [index, outfit] : outfits | std::views::enumerate)
+    {
+        ImGui::PushID(static_cast<int>(index));
+        const auto &name     = outfit.GetName();
+        const auto  selected = selected_name == name;
+        if (filter.PassFilter(name.c_str(), name.end()._Ptr) && ImGui::Selectable(name.c_str(), selected))
+        {
+            selected_outfit = &outfit;
+        }
+        if (selected)
+        {
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::PopID();
+    }
+    return selected_outfit;
+}
+
+auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch policy, const OutfitContainer &outfit_container) -> std::string_view
+{
+    std::string_view name = Translate("Panels.Characters.AutoSwitch.Empty");
+
+    if (const auto auto_switch_outfit_opt = ActorOutfitContainer::find_auto_switch_outfit(editing_actor, policy); auto_switch_outfit_opt)
+    {
+        if (const auto outfitIt = outfit_container.find(auto_switch_outfit_opt.value()->outfit_id); outfitIt != outfit_container.end())
+        {
+            name = outfitIt->GetName();
+        }
+    }
+    return name;
 }
 } // namespace
 
 void CharacterEditPanel::Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
     ZoneScopedN(__FUNCTION__);
-    if (ImGui::Begin("$SosGui_CharacterEditPanel"_T.c_str(), nullptr, ImGuiEx::WindowFlags()))
+    if (ImGui::Begin(Translate1("Panels.Characters.Title"), nullptr, ImGuiEx::WindowFlags()))
     {
         DrawCharactersPanel(uiData, dataCoordinator, outfitService);
     }
@@ -76,29 +109,50 @@ void CharacterEditPanel::DrawCharactersPanel(SosUiData &uiData, const SosDataCoo
     ImGuiUtil::Text(Translate("Add"));
     ImGui::SameLine();
 
-    if (RE::Actor *selectedActor = nullptr; widgets::DrawNearActorsCombo(uiData.near_actors, &selectedActor, RE::PlayerCharacter::GetSingleton()))
+    if (ImGui::BeginCombo("##NearObjects", nullptr, ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
     {
-        spawn([&] { return dataCoordinator.RequestAddActor(selectedActor); });
+        for (const auto &actor : uiData.near_actors)
+        {
+            ImGui::PushID(static_cast<int>(actor->formID));
+            if (ImGui::Selectable(actor->GetName(), false))
+            {
+                spawn([&] { return dataCoordinator.RequestAddActor(actor); });
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndCombo();
     }
     DrawCharactersInfo(uiData, dataCoordinator, outfitService);
 }
 
-void CharacterEditPanel::DrawCharactersInfo(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
+void CharacterEditPanel::DrawCharactersInfo(SosUiData &ui_data, const SosDataCoordinator &data_coordinator, const OutfitService &outfit_service)
 {
-    for (int index{0}; const auto &actor_outfit_entry : uiData.actor_outfit_container.container)
+    for (int index{0}; const auto &actor_outfit_entry : ui_data.actor_outfit_container.container)
     {
         ImGui::PushID(index++);
         auto *actor = actor_outfit_entry.actor;
         if (ImGui::CollapsingHeader(actor->GetName()))
         {
-            DrawOutfitsCombo(uiData, outfitService, actor);
+            const auto &outfit_container = ui_data.outfit_container;
+            const auto  active_outfit    = get_actor_outfit_name(actor_outfit_entry, outfit_container);
+            if (ImGui::BeginCombo(Translate1("Panels.Characters.ActiveOutfit"), active_outfit.c_str()))
+            {
+                outfit_name_filter_.Draw("##filter", -FLT_MIN);
+                const SosUiOutfit *selected = draw_outfits(outfit_container.get_all(), active_outfit, outfit_name_filter_);
+                if (selected != nullptr)
+                {
+                    spawn([&] { return outfit_service.SetActorOutfit(actor, selected->GetId(), selected->GetName()); });
+                    util::RefreshActorArmor(actor);
+                }
+                ImGui::EndCombo();
+            }
             if (ImGui::Button(Translate1("Delete")))
             {
-                spawn([&] { return dataCoordinator.RequestRemoveActor(actor); });
+                spawn([&] { return data_coordinator.RequestRemoveActor(actor); });
             }
             if (ImGui::TreeNode(Translate1("Panels.Characters.AutoSwitch.Title")))
             {
-                draw_auto_switch(actor, uiData, dataCoordinator, outfitService);
+                draw_auto_switch(actor_outfit_entry, outfit_container, data_coordinator, outfit_service);
                 ImGui::TreePop();
             }
         }
@@ -106,67 +160,23 @@ void CharacterEditPanel::DrawCharactersInfo(SosUiData &uiData, const SosDataCoor
     }
 }
 
-void CharacterEditPanel::DrawOutfitsCombo(SosUiData &uiData, const OutfitService &outfitService, RE::Actor *actor)
-{
-    const auto activeOutfit = GetActorOutfitName(uiData, actor);
-    if (ImGui::BeginCombo(Translate1("Panels.Characters.ActiveOutfit"), activeOutfit.c_str()))
-    {
-        const auto      &outfits = uiData.outfit_container.get_all();
-        ImGuiListClipper clipper;
-        clipper.Begin(static_cast<int>(outfits.size()));
-        while (clipper.Step())
-        {
-            const auto start = static_cast<size_t>(clipper.DisplayStart);
-            const auto end   = static_cast<size_t>(clipper.DisplayEnd);
-            for (size_t index = start; index < end; ++index)
-            {
-                const auto &outfit = outfits[index];
-                ImGui::PushID(static_cast<int>(index));
-                if (ImGui::Selectable(outfit.GetName().c_str(), false))
-                {
-                    spawn([&] { return outfitService.SetActorOutfit(actor, outfit.GetId(), outfit.GetName()); });
-                    util::RefreshActorArmor(actor);
-                }
-                ImGui::PopID();
-            }
-        }
-        ImGui::EndCombo();
-    }
-}
-
-std::string_view CharacterEditPanel::get_outfit_display_name(const RE::Actor *currentActor, AutoSwitch policy, SosUiData &uiData)
-{
-    std::string_view name = Translate("Panels.Characters.AutoSwitch.Empty");
-
-    if (const auto auto_switch_outfit_opt = uiData.actor_outfit_container.find_auto_switch_outfit(currentActor, policy);
-        auto_switch_outfit_opt)
-    {
-        const auto &outfitList = uiData.outfit_container;
-        if (const auto outfitIt = outfitList.find(auto_switch_outfit_opt.value()->outfit_id); outfitIt != outfitList.end())
-        {
-            name = outfitIt->GetName();
-        }
-    }
-    return name;
-}
-
 void CharacterEditPanel::draw_auto_switch(
-    RE::Actor *currentActor, SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService
+    const EditingActor &editing_actor, const OutfitContainer &outfit_container, const SosDataCoordinator &data_coordinator,
+    const OutfitService &outfit_service
 )
 {
-    bool enabled = uiData.actor_outfit_container.is_auto_switch_enabled(currentActor);
+    bool enabled = editing_actor.auto_switch_enabled;
     if (ImGui::Checkbox(Translate1("Panels.Characters.AutoSwitch.Enable"), &enabled))
     {
-        spawn([&] { return dataCoordinator.RequestSetActorAutoSwitchState(currentActor, enabled); });
+        spawn([&] { return data_coordinator.RequestSetActorAutoSwitchState(editing_actor.actor, enabled); });
     }
 
-    AutoSwitch oldSelectedPolicy = selected_policy_;
     if (ImGui::BeginTable("##AutoSwitchStateList", 2, ImGuiEx::TableFlags().Resizable().SizingStretchProp().RowBg().Borders()))
     {
         ImGui::TableSetupColumn(Translate1("Panels.Characters.AutoSwitch.Location"));
         ImGui::TableSetupColumn(Translate1("Panels.Characters.AutoSwitch.State"));
         ImGui::TableHeadersRow();
-        for (AutoSwitch policy : POLICIES_DRAW_LIST)
+        for (const auto policy : POLICIES_DRAW_LIST)
         {
             int policyId = static_cast<int>(policy);
 
@@ -174,62 +184,27 @@ void CharacterEditPanel::draw_auto_switch(
             ImGui::TableNextRow();
             if (ImGui::TableNextColumn())
             {
-                const auto     key        = std::format("Panels.Characters.AutoSwitch.Policy{}", policyId);
-                const bool     isSelected = selected_policy_ == policy;
-                constexpr auto flags      = ImGuiEx::SelectableFlags().AllowOverlap().SpanAllColumns();
-                if (ImGui::Selectable(Translate1(key), isSelected, flags))
-                {
-                    selected_policy_           = policy;
-                    outfit_popup_target_actor_ = currentActor;
-                }
-                if (isSelected)
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
+                const auto key = std::format("Panels.Characters.AutoSwitch.Policy{}", policyId);
+                ImGuiUtil::Text(Translate(key));
             }
 
             if (ImGui::TableNextColumn())
             {
-                const auto outfitName = get_outfit_display_name(currentActor, policy, uiData);
-                ImGuiUtil::Text(outfitName);
+                const auto outfitName = get_outfit_display_name(editing_actor, policy, outfit_container);
+                if (ImGui::BeginCombo(Translate1("Panels.Characters.ActiveOutfit"), outfitName.data()))
+                {
+                    outfit_name_filter_.Draw("##filter", -FLT_MIN);
+                    const SosUiOutfit *selected = draw_outfits(outfit_container.get_all(), outfitName, outfit_name_filter_);
+                    if (selected != nullptr)
+                    {
+                        spawn([&] { return outfit_service.SetActorStateOutfit(editing_actor.actor, policy, selected->GetId()); });
+                    }
+                    ImGui::EndCombo();
+                }
             }
             ImGui::PopID();
         }
         ImGui::EndTable();
-    }
-
-    if (oldSelectedPolicy != selected_policy_)
-    {
-        ImGui::OpenPopup("Outfit List");
-    }
-
-    if (ImGui::BeginPopup("Outfit List"))
-    {
-        ImGui::AlignTextToFramePadding();
-        ImGuiUtil::IconButton(ICON_SEARCH);
-        ImGui::SameLine(0.F, 0.F);
-        debounce_input_.Draw("##filter", "filter outfit");
-
-        ImGuiListClipper clipper;
-        const auto      &outfits = uiData.outfit_container.get_all();
-        clipper.Begin(static_cast<int>(outfits.size()));
-        while (clipper.Step())
-        {
-            const auto start = static_cast<size_t>(clipper.DisplayStart);
-            const auto end   = static_cast<size_t>(clipper.DisplayEnd);
-            for (size_t index = start; index < end; ++index)
-            {
-                ImGui::PushID(static_cast<int>(index));
-                const auto &outfit = outfits[index];
-                if (ImGui::Selectable(outfit.GetName().c_str(), false))
-                {
-                    spawn([&] { return outfitService.SetActorStateOutfit(outfit_popup_target_actor_, selected_policy_, outfit.GetId()); });
-                    ImGui::CloseCurrentPopup();
-                }
-                ImGui::PopID();
-            }
-        }
-        ImGui::EndPopup();
     }
 }
 } // namespace SosGui

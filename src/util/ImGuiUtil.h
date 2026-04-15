@@ -12,8 +12,6 @@
 #include <array>
 #include <string>
 
-// ImGui v1.92
-
 namespace SosGui::ImGuiUtil
 {
 static constexpr ImColor RED_COLOR = ImColor(255, 0, 0, 255);

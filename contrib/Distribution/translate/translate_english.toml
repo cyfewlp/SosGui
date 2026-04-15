@@ -25,6 +25,7 @@ QuickSlotsToolTip = "Adds a spell to your character, to allow quick switching be
 [Panels]
 
 [Panels.Characters]
+Titile = "Characters Edit Panel"
 Refresh = "Refresh Characters"
 ActiveOutfit = "Active Outfit"
 
