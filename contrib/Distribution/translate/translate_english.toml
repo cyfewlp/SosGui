@@ -25,7 +25,7 @@ QuickSlotsToolTip = "Adds a spell to your character, to allow quick switching be
 [Panels]
 
 [Panels.Characters]
-Titile = "Characters Edit Panel"
+Title = "Characters Edit Panel"
 Refresh = "Refresh Characters"
 ActiveOutfit = "Active Outfit"
 Add = "[Add New Character]"
@@ -35,7 +35,6 @@ Empty = "[No Autoswitch]"
 Title = "Location-Based Autoswitch"
 Enable = "Enable"
 Location = "Location"
-State = "State"
 Policy0 = "World"
 Policy1 = "Towns"
 Policy2 = "Dungeons"

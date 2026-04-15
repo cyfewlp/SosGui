@@ -172,7 +172,6 @@ void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
     }
     ImGui::SetItemTooltip("%s", Translate1("Panels.Outfit.Refresh"));
 
-    ImGui::SameLine();
     ImGui::Checkbox(Translate1("Panels.Outfit.ShowFavorites"), &show_favorites_);
 
     ImGui::AlignTextToFramePadding();

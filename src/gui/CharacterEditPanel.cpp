@@ -163,7 +163,7 @@ void CharacterEditPanel::draw_auto_switch(
     if (ImGui::BeginTable("##AutoSwitchStateList", 2, ImGuiEx::TableFlags().Resizable().SizingStretchProp().RowBg().Borders()))
     {
         ImGui::TableSetupColumn(Translate1("Panels.Characters.AutoSwitch.Location"));
-        ImGui::TableSetupColumn(Translate1("Panels.Characters.AutoSwitch.State"));
+        ImGui::TableSetupColumn(Translate1("Outfit"));
         ImGui::TableHeadersRow();
         for (const auto policy : POLICIES_DRAW_LIST)
         {
@@ -180,7 +180,7 @@ void CharacterEditPanel::draw_auto_switch(
             if (ImGui::TableNextColumn())
             {
                 const auto outfitName = get_outfit_display_name(editing_actor, policy, outfit_container);
-                if (ImGui::BeginCombo(Translate1("Panels.Characters.ActiveOutfit"), outfitName.data()))
+                if (ImGui::BeginCombo("##policy-outfit", outfitName.data()))
                 {
                     outfit_name_filter_.Draw("##filter", -FLT_MIN);
                     const SosUiOutfit *selected = draw_outfits(outfit_container.get_all(), outfitName, outfit_name_filter_);
