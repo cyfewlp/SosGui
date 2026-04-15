@@ -87,6 +87,8 @@ auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch polic
 void CharacterEditPanel::Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
     ZoneScopedN(__FUNCTION__);
+    ImGui::SetNextWindowPos({200.F, 200.F}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({280.F, 300.F}, ImGuiCond_FirstUseEver);
     if (ImGui::Begin(Translate1("Panels.Characters.Title"), nullptr, ImGuiEx::WindowFlags()))
     {
         DrawCharactersPanel(uiData, dataCoordinator, outfitService);
@@ -96,16 +98,6 @@ void CharacterEditPanel::Draw(SosUiData &uiData, const SosDataCoordinator &dataC
 
 void CharacterEditPanel::DrawCharactersPanel(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    if (ImGuiUtil::IconButton(ICON_REFRESH_CW))
-    {
-        spawn([&] { return dataCoordinator.RequestActorList(); });
-    }
-    ImGui::PopStyleColor();
-    ImGui::SetItemTooltip("%s", Translate1("Panels.Characters.Refresh"));
-
-    ImGui::SameLine(0, 20);
-
     if (ImGui::BeginCombo("##NearObjects", Translate1("Panels.Characters.Add"), ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
     {
         for (const auto &actor : uiData.near_actors)

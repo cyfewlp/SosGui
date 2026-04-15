@@ -121,6 +121,8 @@ void OutfitEditPanel::on_refresh()
 void OutfitEditPanel::draw(const OutfitContainer &outfit_container)
 {
     ZoneScopedN(__FUNCTION__);
+    ImGui::SetNextWindowPos({600.0F, 200.F}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({1024.0F, 680.0F}, ImGuiCond_FirstUseEver);
     if (ImGui::Begin(window_title_.c_str()))
     {
         if (should_refresh_view_)
