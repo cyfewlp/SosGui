@@ -35,6 +35,5 @@ private:
 
     void OnShow();
     void OnHide();
-    void onUserEvents(const RE::BSFixedString &event_name);
 };
 } // namespace SosGui

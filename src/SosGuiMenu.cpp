@@ -51,11 +51,11 @@ auto Creator() -> RE::IMenu *
     auto *menu  = new SosGuiMenu();
     menu->menuFlags.set(Flags::kPausesGame, Flags::kDisablePauseMenu);
     menu->menuFlags.set(Flags::kInventoryItemMenu, Flags::kUpdateUsesCursor, Flags::kUsesCursor);
-    menu->menuFlags.set(Flags::kCustomRendering, Flags::kTopmostRenderedMenu);
+    menu->menuFlags.set(Flags::kCustomRendering, Flags::kUsesMenuContext, Flags::kTopmostRenderedMenu);
     return menu;
 }
 
-auto GFxKeyToImGuiKey(const RE::GFxKey::Code keyCode) -> ImGuiKey;
+auto GFxKeyToImGuiKey(RE::GFxKey::Code keyCode) -> ImGuiKey;
 
 void OnMouseEvent(RE::GFxEvent *event, const bool down)
 {
@@ -88,6 +88,38 @@ void OnCharEvent(RE::GFxEvent *event)
 {
     const auto charEvent = reinterpret_cast<RE::GFxCharEvent *>(event);
     ImGui::GetIO().AddInputCharacter(charEvent->wcharCode);
+}
+
+void on_user_events(const RE::BSFixedString &event_name)
+{
+    const auto &user_events = RE::UserEvents::GetSingleton();
+    ImGuiKey    imgui_key   = ImGuiKey_None;
+    if (event_name == user_events->cancel)
+    {
+        auto *messageQueue = RE::UIMessageQueue::GetSingleton();
+        messageQueue->AddMessage(SosGuiMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+    }
+    else if (event_name == user_events->up)
+    {
+        imgui_key = ImGuiKey_UpArrow;
+    }
+    else if (event_name == user_events->down)
+    {
+        imgui_key = ImGuiKey_DownArrow;
+    }
+    else if (event_name == user_events->left)
+    {
+        imgui_key = ImGuiKey_LeftArrow;
+    }
+    else if (event_name == user_events->right)
+    {
+        imgui_key = ImGuiKey_RightArrow;
+    }
+    if (imgui_key != ImGuiKey_None)
+    {
+        ImGui::GetIO().AddKeyEvent(imgui_key, true);
+        ImGui::GetIO().AddKeyEvent(imgui_key, false);
+    }
 }
 
 void ProcessScaleformEvent(const RE::BSUIScaleformData *data)
@@ -155,7 +187,7 @@ RE::UI_MESSAGE_RESULTS SosGuiMenu::ProcessMessage(RE::UIMessage &a_message)
         }
         case RE::UI_MESSAGE_TYPE::kUserEvent: {
             const auto &data = reinterpret_cast<RE::BSUIMessageData *>(a_message.data);
-            onUserEvents(data->fixedStr);
+            on_user_events(data->fixedStr);
             break;
         }
         case RE::UI_MESSAGE_TYPE::kScaleformEvent: // never send because we use ImGui
@@ -201,38 +233,6 @@ void SosGuiMenu::OnHide()
     io.ClearInputKeys();
 }
 
-void SosGuiMenu::onUserEvents(const RE::BSFixedString &event_name)
-{
-    const auto &user_events = RE::UserEvents::GetSingleton();
-    ImGuiKey    imgui_key   = ImGuiKey_None;
-    if (event_name == user_events->cancel)
-    {
-        auto *messageQueue = RE::UIMessageQueue::GetSingleton();
-        messageQueue->AddMessage(MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
-    }
-    else if (event_name == user_events->up)
-    {
-        imgui_key = ImGuiKey_UpArrow;
-    }
-    else if (event_name == user_events->down)
-    {
-        imgui_key = ImGuiKey_DownArrow;
-    }
-    else if (event_name == user_events->left)
-    {
-        imgui_key = ImGuiKey_LeftArrow;
-    }
-    else if (event_name == user_events->right)
-    {
-        imgui_key = ImGuiKey_RightArrow;
-    }
-    if (imgui_key != ImGuiKey_None)
-    {
-        ImGui::GetIO().AddKeyEvent(imgui_key, true);
-        ImGui::GetIO().AddKeyEvent(imgui_key, false);
-    }
-}
-
 namespace
 {
 
@@ -244,7 +244,7 @@ struct KeyMapEntry
 
 static std::vector<KeyMapEntry> key_map = {
     {RE::GFxKey::kBackspace,    ImGuiKey_Backspace     },
-    {RE::GFxKey::kTab,          ImGuiKey_Tab           },
+    // {RE::GFxKey::kTab,          ImGuiKey_Tab           },
     // {RE::GFxKey::kClear, ImGuiKey_Clear},
     {RE::GFxKey::kReturn,       ImGuiKey_Enter         },
     {RE::GFxKey::kShift,        ImGuiMod_Shift         },

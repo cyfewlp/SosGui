@@ -126,7 +126,6 @@ set(DISTRIBUTION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution")
 
 file(GLOB_RECURSE TRANSLATE_FILES "${DISTRIBUTION_PATH}/translate/*.toml")
 install(FILES
-    "${DISTRIBUTION_PATH}/${PROJECT_NAME}.toml"
     ${TRANSLATE_FILES}
     ${LUCIDE_ICON_OUT_TTF}
     DESTINATION ${interface_path}
