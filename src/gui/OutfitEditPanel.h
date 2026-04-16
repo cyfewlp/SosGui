@@ -26,9 +26,6 @@ public:
 
     static constexpr int MAX_FILTER_ARMOR_NAME = 256;
 
-private:
-    static auto IsArmorNonPlayable(const Armor *armor) -> bool { return (armor->formFlags & Armor::RecordFlags::kNonPlayable) != 0; }
-
 public:
     explicit OutfitEditPanel(OutfitService &outfitService)
         : outfit_service_(&outfitService), last_editing_outfit_id_(std::numeric_limits<OutfitId>::max())
@@ -44,7 +41,6 @@ public:
     void on_main_menu_action(MainMenuAction main_menu_action) { outfit_list_table_.on_main_menu_action(main_menu_action); }
 
 private:
-
     void draw_filterers(const EditingOutfit &editingOutfit);
     void UpdateWindowTitle(const EditingOutfit &editingOutfit);
 
@@ -56,7 +52,7 @@ private:
     void draw_preview_armor_window(const Armor *to_preview_armor);
     void draw_armor_view_content(const EditingOutfit &editingOutfit);
     void draw_armor_view(const std::vector<ArmorEntry> &viewData, bool editing_invalid_outfit, const Armor *&to_preview_armor);
-    void draw_armor_row(ImGuiID index, const Armor *armor, bool editing_invalid_outfit, bool &want_add_armor, const Armor *&to_preview_armor);
+    void draw_armor_row(int row_index, const Armor *armor, bool editing_invalid_outfit, bool &want_add_armor, const Armor *&to_preview_armor);
     void draw_add_armors_popup(const EditingOutfit &outfit);
     void DrawArmorViewModNameFilterer();
     void DrawArmorViewSlotFilterer();

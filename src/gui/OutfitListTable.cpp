@@ -198,8 +198,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
 
     constexpr auto msFlags = ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid();
     auto          *msIO    = ImGui::BeginMultiSelect(msFlags, multi_selection_.Size, static_cast<int>(outfits.size()));
-
-    multi_selection_.ApplyRequests(msIO);
+    ImGuiUtil::MultiSelection::ApplyRequest(multi_selection_, msIO, name_sort_ascend_);
     const bool reverse     = !name_sort_ascend_;
     MenuAction menu_action = MenuAction::none;
 
@@ -253,7 +252,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
         view_item_count_ = clipper.UserIndex;
         clipper.SeekCursorForItem(clipper.UserIndex);
     }
-    multi_selection_.ApplyRequests(ImGui::EndMultiSelect());
+    ImGuiUtil::MultiSelection::ApplyRequest(multi_selection_, ImGui::EndMultiSelect(), name_sort_ascend_);
     if (multi_selection_.Size == 0)
     {
         editing_ = UNTITLED_OUTFIT;
