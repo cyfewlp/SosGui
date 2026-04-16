@@ -390,6 +390,11 @@ void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outf
         {
             ImGui::SetKeyboardFocusHere();
         }
+        ImGui::SetNextItemShortcut(ImGuiKey_Escape);
+        if (ImGui::InvisibleButton("##quit", {1.0F, 1.0F}))
+        {
+            ImGui::CloseCurrentPopup();
+        }
 
         ImGui::SetNextItemWidth(-FLT_MIN);
         if (ImGui::InputTextWithHint(

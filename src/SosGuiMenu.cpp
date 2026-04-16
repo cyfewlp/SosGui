@@ -50,8 +50,8 @@ auto Creator() -> RE::IMenu *
     using Flags = RE::UI_MENU_FLAGS;
     auto *menu  = new SosGuiMenu();
     menu->menuFlags.set(Flags::kPausesGame, Flags::kDisablePauseMenu);
-    menu->menuFlags.set(Flags::kInventoryItemMenu, Flags::kUpdateUsesCursor, Flags::kUsesCursor);
-    menu->menuFlags.set(Flags::kCustomRendering, Flags::kUsesMenuContext, Flags::kTopmostRenderedMenu);
+    menu->menuFlags.set(Flags::kUpdateUsesCursor, Flags::kUsesCursor);
+    menu->menuFlags.set(Flags::kCustomRendering, Flags::kAlwaysOpen, Flags::kTopmostRenderedMenu);
     return menu;
 }
 
@@ -95,6 +95,9 @@ void on_user_events(const RE::BSFixedString &event_name)
     const auto &user_events = RE::UserEvents::GetSingleton();
     ImGuiKey    imgui_key   = ImGuiKey_None;
     if (event_name == user_events->cancel)
+    auto       &io          = ImGui::GetIO();
+
+    if (!io.WantCaptureKeyboard && event_name == user_events->cancel)
     {
         auto *messageQueue = RE::UIMessageQueue::GetSingleton();
         messageQueue->AddMessage(SosGuiMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
@@ -117,8 +120,8 @@ void on_user_events(const RE::BSFixedString &event_name)
     }
     if (imgui_key != ImGuiKey_None)
     {
-        ImGui::GetIO().AddKeyEvent(imgui_key, true);
-        ImGui::GetIO().AddKeyEvent(imgui_key, false);
+        io.AddKeyEvent(imgui_key, true);
+        io.AddKeyEvent(imgui_key, false);
     }
 }
 
@@ -173,7 +176,7 @@ void SosGuiMenu::ToggleShow()
     messageQueue->AddMessage(MENU_NAME, type, nullptr);
 }
 
-RE::UI_MESSAGE_RESULTS SosGuiMenu::ProcessMessage(RE::UIMessage &a_message)
+auto SosGuiMenu::ProcessMessage(RE::UIMessage &a_message) -> RE::UI_MESSAGE_RESULTS
 {
     switch (a_message.type.get())
     {
@@ -201,13 +204,15 @@ RE::UI_MESSAGE_RESULTS SosGuiMenu::ProcessMessage(RE::UIMessage &a_message)
         }
         default:;
     }
-    return IMenu::ProcessMessage(a_message);
+    return RE::UI_MESSAGE_RESULTS::kHandled;
 }
 
 void SosGuiMenu::OnShow()
 {
     m_fShow = true;
     logger::debug("SosGuiMenu::kShow");
+    const auto &control_map = RE::ControlMap::GetSingleton();
+    control_map->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kAll, false, false);
     RE::Inventory3DManager::GetSingleton()->Begin3D(RE::INTERFACE_LIGHT_SCHEME::kInventory);
 
     i18n::SetTranslator(&translator_);
@@ -220,6 +225,8 @@ void SosGuiMenu::OnHide()
 {
     m_fShow = false;
     m_sosGui.reset();
+    const auto &control_map = RE::ControlMap::GetSingleton();
+    control_map->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kAll, true, false);
     i18n::SetTranslator(nullptr);
     if (auto *inventory_manager = RE::Inventory3DManager::GetSingleton(); inventory_manager != nullptr)
     {
@@ -229,8 +236,7 @@ void SosGuiMenu::OnHide()
     util::RefreshActorArmor(RE::PlayerCharacter::GetSingleton());
 
     logger::debug("SosGuiMenu::kHide");
-    auto &io = ImGui::GetIO();
-    io.ClearInputKeys();
+    ImGui::GetIO().ClearInputKeys();
 }
 
 namespace
