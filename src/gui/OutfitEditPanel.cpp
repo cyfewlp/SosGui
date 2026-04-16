@@ -628,21 +628,7 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
         filtered_view_item_count_ = clipper.UserIndex;
     }
     clipper.SeekCursorForItem(filtered_view_item_count_);
-    if (ImGui::IsAnyItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-    {
-        ImGui::OpenPopup("Context");
-    }
 
-    if (ImGui::BeginPopup("Context"))
-    {
-        ImGui::BeginDisabled(editing_invalid_outfit || armor_view_.multi_selection_.Size <= 0);
-        if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.AddAll")))
-        {
-            want_add_armor = true;
-        }
-        ImGui::EndDisabled();
-        ImGui::EndPopup();
-    }
     if (want_add_armor)
     {
         waiting_add_armor_count_ = armor_view_.multi_selection_.Size;
@@ -673,6 +659,16 @@ void OutfitEditPanel::draw_armor_row(
         {
             to_preview_armor = armor;
         }
+    }
+    if (ImGui::BeginPopupContextWindow())
+    {
+        ImGui::BeginDisabled(editing_invalid_outfit || armor_view_.multi_selection_.Size <= 0);
+        if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.AddAll")))
+        {
+            want_add_armor = true;
+        }
+        ImGui::EndDisabled();
+        ImGui::EndPopup();
     }
 
     if (ImGui::TableNextColumn()) // armor name column

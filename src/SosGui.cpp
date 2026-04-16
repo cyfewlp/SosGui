@@ -108,7 +108,7 @@ void SosGuiWindow::MainMenuBar()
 
         ImGuiUtil::Icon(ICON_FILE_PLUS_CORNER);
         ImGui::SameLine();
-        if (ImGui::MenuItem(Translate1("Panels.Outfit.Create"), "Ctrl+ N"))
+        if (ImGui::MenuItem(Translate1("Panels.Outfit.CreateNew"), "Ctrl+ N"))
         {
             main_menu_action = MainMenuAction::create_outfit;
         }

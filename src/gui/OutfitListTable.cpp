@@ -25,6 +25,7 @@ namespace
 {
 constexpr const char *CONFIRM_DELETE_OUTFITS_POPUP_TITLE = "Delete";
 constexpr const char *CREATE_OUTFIT_POPUP_TITLE          = "Create Outfit";
+constexpr const char *OUTFIT_NAME_INPUT_LABEL            = "##editableOutfitNameId";
 
 auto DrawConfirmDeleteOutfitsPopup(const char *name, ImGuiSelectionBasicStorage &selection, const std::vector<SosUiOutfit> &outfits) -> bool
 {
@@ -133,12 +134,17 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
         }
     }
 
+    if (popup_status_ != PopupStatus::none)
+    {
+        last_popup_status_ = popup_status_;
+    }
     switch (popup_status_)
     {
         case PopupStatus::open_delete:
             ImGui::OpenPopup(CONFIRM_DELETE_OUTFITS_POPUP_TITLE);
             break;
         case PopupStatus::open_create:
+        case PopupStatus::open_create_copy:
             ImGui::OpenPopup(CREATE_OUTFIT_POPUP_TITLE);
             break;
         default:
@@ -160,7 +166,7 @@ void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
         popup_status_ = PopupStatus::open_create;
     }
     ImGui::SameLine();
-    ImGuiUtil::Text(Translate("Panels.Outfit.Create"));
+    ImGuiUtil::Text(Translate("Panels.Outfit.CreateNew"));
 
     ImGui::SameLine();
     if (ImGuiUtil::IconButton(ICON_REFRESH_CW))
@@ -219,7 +225,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
             {
                 if (clipper.UserIndex >= clipper.DisplayStart)
                 {
-                    ImGui::PushID(clipper.UserIndex);
+                    ImGui::PushID(static_cast<int>(outfit.GetId()));
                     draw_outfit_row(uIndex, outfit, menu_action, outfitService);
                     ImGui::PopID();
                 }
@@ -264,6 +270,9 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
                 popup_status_ = PopupStatus::open_delete;
             }
             break;
+        case MenuAction::create_copy:
+            popup_status_ = PopupStatus::open_create_copy;
+            break;
         case MenuAction::mark_favorite:
             OnAcceptSetFavoriteOutfits(true, outfits, outfitService);
             break;
@@ -277,8 +286,6 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
 
 void OutfitListTable::draw_outfit_row(const uint32_t index, const SosUiOutfit &outfit, MenuAction &menu_action, OutfitService &outfit_service)
 {
-    constexpr const char *OUTFIT_NAME_INPUT_LABEL = "##editableOutfitNameId";
-
     if (ImGui::TableNextColumn()) // number column
     {
         bool clicked = false;
@@ -338,6 +345,7 @@ void OutfitListTable::draw_outfit_row(const uint32_t index, const SosUiOutfit &o
 
             if (ImGui::BeginPopupContextItem())
             {
+                editing_id_ = outfit.GetId();
                 ImGui::Separator();
                 if (ImGui::MenuItem(Translate1("Panels.Outfit.MarkFavorite")))
                 {
@@ -348,10 +356,16 @@ void OutfitListTable::draw_outfit_row(const uint32_t index, const SosUiOutfit &o
                     menu_action = MenuAction::mark_unfavorite;
                 }
                 ImGui::Separator();
-                if (multi_selection_.Size == 1 && ImGui::MenuItem(Translate1("Panels.Outfit.Rename")))
+                ImGui::BeginDisabled(multi_selection_.Size != 1);
+                if (ImGui::MenuItem(Translate1("Panels.Outfit.Rename")))
                 {
                     wantRename = true;
                 }
+                if (ImGui::MenuItem(Translate1("Panels.Outfit.CreateCopy")))
+                {
+                    menu_action = MenuAction::create_copy;
+                }
+                ImGui::EndDisabled();
                 if (ImGui::MenuItem(Translate1("Delete")))
                 {
                     menu_action = MenuAction::delete_all;
@@ -397,8 +411,16 @@ void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outf
         ImGui::BeginDisabled(show_conflict_name_error_ || outfit_name_buffer_[0] == '\0');
         if (ImGui::Button(Translate1("Panels.Outfit.Create")))
         {
-            editing_ = UNTITLED_OUTFIT;
-            spawn([&] { return outfitService.CreateOutfit(outfit_name_buffer_.data()); });
+            if (last_popup_status_ == PopupStatus::open_create_copy)
+            {
+                spawn([&] { return outfitService.CreateOutfitCopy(outfit_name_buffer_.data(), editing_.GetId(), editing_.slot_policies); });
+            }
+            else
+            {
+                editing_ = UNTITLED_OUTFIT;
+                spawn([&] { return outfitService.CreateOutfit(outfit_name_buffer_.data()); });
+            }
+
             ImGui::CloseCurrentPopup();
         }
 

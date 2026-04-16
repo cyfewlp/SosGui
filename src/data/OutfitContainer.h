@@ -87,13 +87,15 @@ public:
         return false;
     }
 
-    constexpr void try_emplace(std::string outfitName)
+    constexpr auto try_emplace(std::string outfitName) -> iterator
     {
-        if (const auto it = lower_bound(outfitName); it == end() || it->GetName() != outfitName)
+        auto it = lower_bound(outfitName);
+        if (it == end() || it->GetName() != outfitName)
         {
-            outfits_.emplace(it, g_NextOutfitId, std::move(outfitName));
+            it = outfits_.emplace(it, g_NextOutfitId, std::move(outfitName));
             ++g_NextOutfitId;
         }
+        return it;
     }
 
     constexpr void emplace_back(std::string outfitName)

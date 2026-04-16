@@ -35,6 +35,34 @@ auto OutfitService::CreateOutfit(std::string outfitName) const -> Task
     }
 }
 
+auto OutfitService::CreateOutfitCopy(std::string outfitName, const OutfitId src_outfit_id, const EditingOutfit::SlotPolicyArray slot_policies) const
+    -> Task
+{
+    co_await SosNativeCaller::CreateOutfit(outfitName);
+    auto        outfit_it     = outfit_container_.try_emplace(outfitName);
+    const auto src_outfit_it = outfit_container_.find(src_outfit_id);
+    if (src_outfit_it->IsEmpty())
+    {
+        co_return;
+    }
+
+    REX::EnumSet<Slot, SlotType> used_slots = Slot::kNone;
+    for (SlotType slot_pos = 0; slot_pos < SosUiOutfit::SLOT_COUNT; slot_pos++)
+    {
+        if (const auto *armor = src_outfit_it->GetArmorAt(slot_pos); armor != nullptr && used_slots.none(armor->GetSlotMask().get()))
+        {
+            used_slots.set(armor->GetSlotMask().get());
+            co_await SosNativeCaller::AddArmorToOutfit(outfitName, armor);
+            outfit_it->AddArmor(armor);
+        }
+        const auto policy = slot_policies[slot_pos];
+        if (policy != SlotPolicy::None && policy != SlotPolicy::Inherit)
+        {
+            co_await SosNativeCaller::SetBodySlotPoliciesForOutfit(outfitName, slot_pos, slot_policy_code(policy));
+        }
+    }
+}
+
 auto OutfitService::CreateOutfitFromWorn(std::string outfitName) const -> Task
 {
     std::string errorMessage("Can't create outfit from worn: ");

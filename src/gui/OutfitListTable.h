@@ -50,6 +50,7 @@ private:
         delete_all,
         mark_favorite,
         mark_unfavorite,
+        create_copy,
     };
 
     enum class PopupStatus : std::uint8_t
@@ -57,13 +58,14 @@ private:
         none,
         open_delete,
         open_create,
+        open_create_copy,
     };
 
     ImGuiTextFilter            name_filterer_;
-    OutfitId                   editing_id_ = INVALID_OUTFIT_ID;
-    EditingOutfit              editing_    = UNTITLED_OUTFIT;
+    EditingOutfit              editing_ = UNTITLED_OUTFIT;
     ImGuiSelectionBasicStorage multi_selection_;
     OutfitNameBuffer           outfit_name_buffer_{};
+    OutfitId                   editing_id_               = INVALID_OUTFIT_ID;
     ImGuiID                    active_input_id_          = 0;
     // cached field, be used to ImGui list clipper, -1 means the list need to evaluate item count.
     int                        filtered_view_item_count_ = -1;
@@ -71,5 +73,7 @@ private:
     bool                       show_favorites_           = false;
     bool                       name_sort_ascend_         = true;
     PopupStatus                popup_status_             = PopupStatus::none;
+    // valid during popup showing. Be used to check the popup trigger source: create or create-copy
+    PopupStatus                last_popup_status_        = PopupStatus::none;
 };
 } // namespace SosGui

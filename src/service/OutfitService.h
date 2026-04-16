@@ -23,6 +23,8 @@ public:
 
     auto CreateOutfit(std::string outfitName) const -> Task;
 
+    auto CreateOutfitCopy(std::string outfitName, OutfitId src_outfit_id, const EditingOutfit::SlotPolicyArray slot_policies) const -> Task;
+
     auto CreateOutfitFromWorn(std::string outfitName) const -> Task;
 
     auto GetOutfitList() const -> Task;

@@ -52,6 +52,8 @@ Policy12 = "Combat"
 [Panels.Outfit]
 Title = "Your Outfits"
 Refresh = "Refresh Outfits"
+CreateNew = "Create New outfit"
+CreateCopy = "Create Copy"
 Create = "Create"
 CreateFromWorn = "Create From Worn"
 CreateHint = "Create a new outfit"
