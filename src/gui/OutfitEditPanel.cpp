@@ -791,6 +791,7 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer()
         if (ImGui::Checkbox(slotLabel.c_str(), &checked))
         {
             slot_filterer.select_slot(slot, checked);
+            slot_filterer.flags = armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
         }
         ImGui::PopID();
     }
