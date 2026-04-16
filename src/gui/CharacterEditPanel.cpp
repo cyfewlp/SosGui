@@ -86,10 +86,12 @@ auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch polic
 
 void CharacterEditPanel::Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
+    if (!showing_) return;
+
     ZoneScopedN(__FUNCTION__);
     ImGui::SetNextWindowPos({200.F, 200.F}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize({280.F, 300.F}, ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(Translate1("Panels.Characters.Title"), nullptr, ImGuiEx::WindowFlags()))
+    if (ImGui::Begin(Translate1("Panels.Characters.Title"), &showing_, ImGuiEx::WindowFlags()))
     {
         DrawCharactersPanel(uiData, dataCoordinator, outfitService);
     }

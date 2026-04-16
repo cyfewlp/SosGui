@@ -132,6 +132,14 @@ void SosGuiWindow::MainMenuBar()
     {
         util::RefreshActorArmor(RE::PlayerCharacter::GetSingleton());
     }
+    if (ImGui::MenuItem(Translate1("Panels.Characters.Title")))
+    {
+        character_edit_panel_.toggle_showing();
+    }
+    if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.Title")))
+    {
+        outfit_edit_panel_.toggle_showing();
+    }
     if (ImGui::MenuItem(Translate1("ToolBar.Close")))
     {
         auto *messageQueue = RE::UIMessageQueue::GetSingleton();

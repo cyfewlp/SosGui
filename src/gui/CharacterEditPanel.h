@@ -18,6 +18,8 @@ class CharacterEditPanel final
 public:
     void Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
 
+    void toggle_showing() { showing_ = !showing_; }
+
 private:
     void DrawCharactersPanel(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService);
     void DrawCharactersInfo(SosUiData &ui_data, const SosDataCoordinator &data_coordinator, const OutfitService &outfit_service);
@@ -27,6 +29,7 @@ private:
     );
 
     ImGuiTextFilter outfit_name_filter_;
+    bool            showing_ = true;
 };
 
 } // namespace SosGui

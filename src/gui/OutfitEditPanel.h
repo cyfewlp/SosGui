@@ -33,6 +33,8 @@ public:
         UpdateWindowTitle(outfit_list_table_.get_editing_outfit());
     }
 
+    void toggle_showing() { showing_ = !showing_; }
+
     void on_refresh();
 
     void draw(const OutfitContainer &outfit_container);
@@ -83,6 +85,7 @@ private:
     ArmorSource                      armor_source_            = ArmorSource::None;
     bool                             show_no_conflict_armors_ = false;
     bool                             preview_armor_           = true;
+    bool                             showing_                 = true;
     int                              view_item_count_         = -1;
     Armor                           *previewing_armor_        = nullptr;
     // be used to check is armor-view need to be reset.
