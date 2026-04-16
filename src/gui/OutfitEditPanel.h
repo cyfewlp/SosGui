@@ -86,7 +86,7 @@ private:
     bool                             show_no_conflict_armors_ = false;
     bool                             preview_armor_           = true;
     bool                             showing_                 = true;
-    int                              view_item_count_         = -1;
+    int                              filtered_view_item_count_         = -1;
     Armor                           *previewing_armor_        = nullptr;
     // be used to check is armor-view need to be reset.
     Slot                             last_outfit_slot_mask_   = Slot::kNone;

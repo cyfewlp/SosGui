@@ -68,10 +68,9 @@ auto DrawConfirmDeleteOutfitsPopup(const char *name, ImGuiSelectionBasicStorage 
 }
 } // namespace
 
-void OutfitListTable::OnRefresh()
+void OutfitListTable::on_refresh()
 {
-    view_item_count_ = -1;
-    editing_         = UNTITLED_OUTFIT;
+    editing_ = UNTITLED_OUTFIT;
     multi_selection_.Clear();
     outfit_name_buffer_[0] = '\0';
 }
@@ -166,7 +165,7 @@ void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
     ImGui::SameLine();
     if (ImGuiUtil::IconButton(ICON_REFRESH_CW))
     {
-        OnRefresh();
+        on_refresh();
         spawn([&] { return outfitService.GetOutfitList(); });
         spawn([&] { return outfitService.GetAllFavoriteOutfits(); });
     }
@@ -182,7 +181,7 @@ void OutfitListTable::DrawToolWidgets(OutfitService &outfitService)
     ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
     if (name_filterer_.Draw("##filterer", -FLT_MIN))
     {
-        view_item_count_ = -1;
+        filtered_view_item_count_ = -1;
     }
     ImGui::PopItemFlag();
 }
@@ -204,8 +203,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
 
     ImGuiListClipper clipper;
 
-    const bool item_count_known = view_item_count_ != -1;
-    clipper.Begin(item_count_known ? view_item_count_ : INT_MAX);
+    clipper.Begin(INT_MAX);
     const int step  = reverse ? -1 : 1;
     const int start = reverse ? static_cast<int>(outfits.size()) - 1 : 0;
     const int end   = reverse ? -1 : static_cast<int>(outfits.size());
@@ -236,7 +234,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
             break;
         }
     }
-    if (!item_count_known)
+    if (filtered_view_item_count_ != clipper.UserIndex)
     {
         while (index != end)
         {
@@ -249,9 +247,9 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
             index += step;
         }
 
-        view_item_count_ = clipper.UserIndex;
-        clipper.SeekCursorForItem(clipper.UserIndex);
+        filtered_view_item_count_ = clipper.UserIndex;
     }
+    clipper.SeekCursorForItem(filtered_view_item_count_);
     ImGuiUtil::MultiSelection::ApplyRequest(multi_selection_, ImGui::EndMultiSelect(), name_sort_ascend_);
     if (multi_selection_.Size == 0)
     {

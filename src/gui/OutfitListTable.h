@@ -22,7 +22,7 @@ class OutfitListTable final
     using OutfitNameBuffer = std::array<char, MAX_OUTFIT_NAME_BYTES>;
 
 public:
-    void OnRefresh();
+    void on_refresh();
 
     void on_main_menu_action(MainMenuAction main_menu_action);
     void Draw(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService);
@@ -66,7 +66,7 @@ private:
     OutfitNameBuffer           outfit_name_buffer_{};
     ImGuiID                    active_input_id_          = 0;
     // cached field, be used to ImGui list clipper, -1 means the list need to evaluate item count.
-    int                        view_item_count_          = -1;
+    int                        filtered_view_item_count_ = -1;
     bool                       show_conflict_name_error_ = false;
     bool                       show_favorites_           = false;
     bool                       name_sort_ascend_         = true;

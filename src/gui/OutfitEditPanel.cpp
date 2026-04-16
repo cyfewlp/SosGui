@@ -120,9 +120,9 @@ auto get_near_objects_has_armor() -> std::vector<RE::TESObjectREFR *>
 
 void OutfitEditPanel::on_refresh()
 {
-    view_item_count_     = -1;
     should_refresh_view_ = true;
     armor_view_.clear_all();
+    outfit_list_table_.on_refresh();
 }
 
 void OutfitEditPanel::draw(const OutfitContainer &outfit_container)
@@ -138,7 +138,6 @@ void OutfitEditPanel::draw(const OutfitContainer &outfit_container)
         {
             should_refresh_view_ = false;
             armor_view_.reset_view(armor_source_, armor_source_refr_);
-            view_item_count_ = -1;
         }
 
         outfit_list_table_.Draw(outfit_container.get_all(), *outfit_service_);
@@ -205,8 +204,8 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
     }
     ImGui::EndChild();
     ImGui::EndDisabled();
-    bool needUpdateView = ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainNoPlayable"), &armor_view_.contain_non_playable_armor_);
-    needUpdateView      = ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainTemplate"), &armor_view_.contain_template_armor_) || needUpdateView;
+    ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainNoPlayable"), &armor_view_.contain_non_playable_armor_);
+    ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainTemplate"), &armor_view_.contain_template_armor_);
 
     const auto slot_mask     = editingOutfit.get_slot_mask();
     auto      &slot_filterer = armor_view_.slot_filterer_;
@@ -223,21 +222,13 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
             slot_filterer.flags = armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
             slot_filterer.set_select_slots(last_selected_slot_mask_);
         }
-
-        needUpdateView = true;
     }
 
     if (show_no_conflict_armors_)
     {
-        if (last_outfit_slot_mask_ != slot_mask) needUpdateView = true;
         slot_filterer.set_select_slots(slot_mask);
     }
     last_outfit_slot_mask_ = slot_mask;
-
-    if (needUpdateView)
-    {
-        view_item_count_ = -1;
-    }
     ImGui::EndChild();
 }
 
@@ -392,7 +383,6 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
                     {
                         armor_source_refr_ = object;
                         armor_view_.reset_view_data(armor_source_, armor_source_refr_);
-                        view_item_count_ = -1;
                     }
                     ImGui::PopID();
                 }
@@ -420,7 +410,6 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
                     {
                         armor_source_refr_ = object;
                         armor_view_.reset_view_data(armor_source_, armor_source_refr_);
-                        view_item_count_ = -1;
                     }
                     ImGui::PopID();
                 }
@@ -448,7 +437,6 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
                 {
                     armor_source_refr_ = RE::TESForm::LookupByID<RE::TESObjectREFR>(formId);
                     armor_view_.reset_view_data(armor_source_, armor_source_refr_);
-                    view_item_count_ = -1;
                 }
             }
             ImGui::EndTabItem();
@@ -465,7 +453,6 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
         {
             show_no_conflict_armors_ = false;
             armor_view_.reset_view(armor_source_, armor_source_refr_);
-            view_item_count_ = -1;
         }
 
         ImGui::EndTabBar();
@@ -477,7 +464,6 @@ void OutfitEditPanel::draw_armor_view(const EditingOutfit &editingOutfit)
     if (armor_view_.armor_name_filter_.Draw())
     {
         armor_view_.armor_name_filter_.dirty = false;
-        view_item_count_                     = -1;
     }
 
     if (armor_view_.view_data_.empty())
@@ -592,8 +578,7 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
     auto          *msIO            = ImGui::BeginMultiSelect(ms_flags, multi_selection.Size, static_cast<int>(viewData.size()));
     ImGuiUtil::MultiSelection::ApplyRequest(multi_selection, msIO, armor_name_sort_ascend_);
     ImGuiListClipper clipper;
-    const bool       item_count_known = view_item_count_ != -1;
-    clipper.Begin(item_count_known ? view_item_count_ : INT_MAX);
+    clipper.Begin(INT_MAX);
     if (msIO->RangeSrcItem != -1)
     {
         clipper.IncludeItemByIndex(static_cast<int>(msIO->RangeSrcItem));
@@ -628,7 +613,7 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
         }
     }
     ImGuiUtil::MultiSelection::ApplyRequest(multi_selection, ImGui::EndMultiSelect(), armor_name_sort_ascend_);
-    if (!item_count_known)
+    if (filtered_view_item_count_ != clipper.UserIndex)
     {
         while (index != end)
         {
@@ -640,9 +625,9 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
             }
             index += step;
         }
-        view_item_count_ = clipper.UserIndex;
-        clipper.SeekCursorForItem(view_item_count_);
+        filtered_view_item_count_ = clipper.UserIndex;
     }
+    clipper.SeekCursorForItem(filtered_view_item_count_);
     if (ImGui::IsAnyItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
     {
         ImGui::OpenPopup("Context");
@@ -779,10 +764,7 @@ void OutfitEditPanel::DrawArmorViewModNameFilterer()
     for (auto &modEntry : armor_view_.mod_filterer_.mod_list)
     {
         auto label = std::format("({}) {}", modEntry.count, modEntry.name);
-        if (ImGui::Checkbox(label.c_str(), &modEntry.checked))
-        {
-            view_item_count_ = -1;
-        }
+        ImGui::Checkbox(label.c_str(), &modEntry.checked);
     }
 }
 
@@ -797,7 +779,6 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer()
     {
         // FIXME: may change api to receive Flags, now slots-filter will be disable when flag is 'Skip_has_Any_Slots'
         slot_filterer.flags = checked_all ? armor_view::SlotFilterer::Flags::Pass_Always : armor_view::SlotFilterer::Flags::Pass_Has_Any_Slots;
-        view_item_count_    = -1;
     }
 
     for (auto [slot_idx, slot_count] : armor_view_.slot_counter_ | std::views::enumerate)
@@ -810,7 +791,6 @@ void OutfitEditPanel::DrawArmorViewSlotFilterer()
         if (ImGui::Checkbox(slotLabel.c_str(), &checked))
         {
             slot_filterer.select_slot(slot, checked);
-            view_item_count_ = -1;
         }
         ImGui::PopID();
     }
