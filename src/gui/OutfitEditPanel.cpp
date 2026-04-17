@@ -34,6 +34,14 @@
 
 namespace SosGui
 {
+
+struct ArmorDrawContext
+{
+    bool         editing_outfit_invalid = false;
+    bool         want_add_armor         = false;
+    const Armor *to_preview_armor       = nullptr;
+};
+
 namespace
 {
 constexpr int         SOS_SLOT_OFFSET                 = 30;
@@ -561,17 +569,18 @@ void OutfitEditPanel::draw_armor_view_content(const EditingOutfit &editingOutfit
         }
     }
 
-    selected_armors_slot_mask_    = Slot::kNone;
-    const Armor *to_preview_armor = nullptr;
+    selected_armors_slot_mask_ = Slot::kNone;
+    ArmorDrawContext armor_draw_context;
+    armor_draw_context.editing_outfit_invalid = editingOutfit.is_invalid();
 
-    draw_armor_view(armor_view_.view_data_, editingOutfit.is_invalid(), to_preview_armor);
+    draw_armor_view(armor_view_.view_data_, armor_draw_context);
 
-    draw_preview_armor_window(to_preview_armor);
+    draw_preview_armor_window(armor_draw_context.to_preview_armor);
 
     draw_add_armors_popup(editingOutfit);
 }
 
-void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, const bool editing_invalid_outfit, const Armor *&to_preview_armor)
+void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, ArmorDrawContext &armor_draw_context)
 {
     auto          &multi_selection = armor_view_.multi_selection_;
     constexpr auto ms_flags        = ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid();
@@ -584,11 +593,10 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
         clipper.IncludeItemByIndex(static_cast<int>(msIO->RangeSrcItem));
     }
 
-    bool      want_add_armor = false;
-    const int step           = armor_name_sort_ascend_ ? 1 : -1;
-    const int start          = armor_name_sort_ascend_ ? 0 : static_cast<int>(viewData.size()) - 1;
-    const int end            = armor_name_sort_ascend_ ? static_cast<int>(viewData.size()) : -1;
-    int       index          = start;
+    const int step  = armor_name_sort_ascend_ ? 1 : -1;
+    const int start = armor_name_sort_ascend_ ? 0 : static_cast<int>(viewData.size()) - 1;
+    const int end   = armor_name_sort_ascend_ ? static_cast<int>(viewData.size()) : -1;
+    int       index = start;
     while (clipper.Step())
     {
         const auto start_index = clipper.UserIndex;
@@ -600,7 +608,9 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
             {
                 if (clipper.UserIndex >= clipper.DisplayStart)
                 {
-                    draw_armor_row(index, armor, editing_invalid_outfit, want_add_armor, to_preview_armor);
+                    ImGui::PushID(clipper.UserIndex);
+                    draw_armor_row(index, armor, armor_draw_context);
+                    ImGui::PopID();
                 }
                 clipper.UserIndex++;
             }
@@ -629,7 +639,7 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
     }
     clipper.SeekCursorForItem(filtered_view_item_count_);
 
-    if (want_add_armor)
+    if (armor_draw_context.want_add_armor)
     {
         waiting_add_armor_count_ = armor_view_.multi_selection_.Size;
         conflict_solution_       = ConflictSolution::none;
@@ -637,11 +647,8 @@ void OutfitEditPanel::draw_armor_view(const std::vector<ArmorEntry> &viewData, c
     }
 }
 
-void OutfitEditPanel::draw_armor_row(
-    const int row_index, const Armor *armor, const bool editing_invalid_outfit, bool &want_add_armor, const Armor *&to_preview_armor
-)
+void OutfitEditPanel::draw_armor_row(const int row_index, const Armor *armor, ArmorDrawContext &armor_draw_context)
 {
-    ImGui::PushID(static_cast<int>(armor->formID));
     ImGui::TableNextRow();
     auto      &multiSelection = armor_view_.multi_selection_;
     const auto storage_id     = multiSelection.GetStorageIdFromIndex(row_index);
@@ -657,15 +664,15 @@ void OutfitEditPanel::draw_armor_row(
         }
         if (ImGui::IsItemHovered())
         {
-            to_preview_armor = armor;
+            armor_draw_context.to_preview_armor = armor;
         }
     }
     if (ImGui::BeginPopupContextWindow())
     {
-        ImGui::BeginDisabled(editing_invalid_outfit || armor_view_.multi_selection_.Size <= 0);
+        ImGui::BeginDisabled(armor_draw_context.editing_outfit_invalid || armor_view_.multi_selection_.Size <= 0);
         if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.AddAll")))
         {
-            want_add_armor = true;
+            armor_draw_context.want_add_armor = true;
         }
         ImGui::EndDisabled();
         ImGui::EndPopup();
@@ -695,15 +702,14 @@ void OutfitEditPanel::draw_armor_row(
         ImGuiUtil::IconButton(IsArmorNonPlayable(armor) ? std::string_view(ICON_X) : ICON_CHECK);
     }
 
-    ImGui::BeginDisabled(editing_invalid_outfit);
+    ImGui::BeginDisabled(armor_draw_context.editing_outfit_invalid);
     if (ImGui::TableNextColumn() && ImGui::Button(Translate1("Add"))) // column Action
     {
         armor_view_.multi_selection_.Clear();
         armor_view_.multi_selection_.SetItemSelected(storage_id, true);
-        want_add_armor = true;
+        armor_draw_context.want_add_armor = true;
     }
     ImGui::EndDisabled();
-    ImGui::PopID();
 }
 
 void OutfitEditPanel::draw_add_armors_popup(const EditingOutfit &outfit)

@@ -233,7 +233,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
             {
                 if (clipper.UserIndex >= clipper.DisplayStart)
                 {
-                    ImGui::PushID(static_cast<int>(outfit.GetId()));
+                    ImGui::PushID(clipper.UserIndex);
                     draw_outfit_row(uIndex, outfit, menu_action, outfitService);
                     ImGui::PopID();
                 }
@@ -374,10 +374,12 @@ void OutfitListTable::draw_outfit_row(const uint32_t index, const SosUiOutfit &o
                     menu_action = MenuAction::create_copy;
                 }
                 ImGui::EndDisabled();
+                ImGui::BeginDisabled(multi_selection_.Size == 0);
                 if (ImGui::MenuItem(Translate1("Delete")))
                 {
                     menu_action = MenuAction::delete_all;
                 }
+                ImGui::EndDisabled();
                 ImGui::EndPopup();
             }
             if (wantRename)

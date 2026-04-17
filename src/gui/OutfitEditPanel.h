@@ -18,6 +18,8 @@ namespace SosGui
 
 enum class MainMenuAction : std::uint8_t;
 
+struct ArmorDrawContext;
+
 class OutfitEditPanel final
 {
 public:
@@ -53,8 +55,8 @@ private:
     void draw_armor_view(const EditingOutfit &editingOutfit);
     void draw_preview_armor_window(const Armor *to_preview_armor);
     void draw_armor_view_content(const EditingOutfit &editingOutfit);
-    void draw_armor_view(const std::vector<ArmorEntry> &viewData, bool editing_invalid_outfit, const Armor *&to_preview_armor);
-    void draw_armor_row(int row_index, const Armor *armor, bool editing_invalid_outfit, bool &want_add_armor, const Armor *&to_preview_armor);
+    void draw_armor_view(const std::vector<ArmorEntry> &viewData, ArmorDrawContext &armor_draw_context);
+    void draw_armor_row(int row_index, const Armor *armor, ArmorDrawContext &armor_draw_context);
     void draw_add_armors_popup(const EditingOutfit &outfit);
     void DrawArmorViewModNameFilterer();
     void DrawArmorViewSlotFilterer();
