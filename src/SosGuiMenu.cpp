@@ -50,7 +50,7 @@ auto Creator() -> RE::IMenu *
     using Flags = RE::UI_MENU_FLAGS;
     auto *menu  = new SosGuiMenu();
     menu->menuFlags.set(Flags::kPausesGame, Flags::kDisablePauseMenu);
-    menu->menuFlags.set(Flags::kUpdateUsesCursor, Flags::kUsesCursor);
+    menu->menuFlags.set(Flags::kUpdateUsesCursor);
     menu->menuFlags.set(Flags::kCustomRendering, Flags::kAlwaysOpen, Flags::kTopmostRenderedMenu);
     return menu;
 }
@@ -75,11 +75,18 @@ void OnMouseWheelEvent(RE::GFxEvent *event)
 void OnKeyEvent(const RE::GFxKey::Code keycode, const bool down)
 {
     auto imguiKey = GFxKeyToImGuiKey(keycode);
+    // logger::debug("convert {} to {} {}", static_cast<uint32_t>(keycode), ImGui::GetKeyName(imguiKey), down ? "down" : "up");
     ImGui::GetIO().AddKeyEvent(imguiKey, down);
 }
 
 void OnKeyEvent(RE::GFxEvent *event, const bool down)
 {
+    // imgui_impl_win32::343 already mapped gamepad buttons.
+    if (RE::BSInputDeviceManager::GetSingleton()->IsGamepadEnabled())
+    {
+        return;
+    }
+
     const auto keyEvent = reinterpret_cast<RE::GFxKeyEvent *>(event);
     OnKeyEvent(keyEvent->keyCode, down);
 }
@@ -93,35 +100,13 @@ void OnCharEvent(RE::GFxEvent *event)
 void on_user_events(const RE::BSFixedString &event_name)
 {
     const auto &user_events = RE::UserEvents::GetSingleton();
-    ImGuiKey    imgui_key   = ImGuiKey_None;
-    if (event_name == user_events->cancel)
     auto       &io          = ImGui::GetIO();
 
+    //logger::debug("user eventts: {}", event_name.c_str());
     if (!io.WantCaptureKeyboard && event_name == user_events->cancel)
     {
         auto *messageQueue = RE::UIMessageQueue::GetSingleton();
         messageQueue->AddMessage(SosGuiMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
-    }
-    else if (event_name == user_events->up)
-    {
-        imgui_key = ImGuiKey_UpArrow;
-    }
-    else if (event_name == user_events->down)
-    {
-        imgui_key = ImGuiKey_DownArrow;
-    }
-    else if (event_name == user_events->left)
-    {
-        imgui_key = ImGuiKey_LeftArrow;
-    }
-    else if (event_name == user_events->right)
-    {
-        imgui_key = ImGuiKey_RightArrow;
-    }
-    if (imgui_key != ImGuiKey_None)
-    {
-        io.AddKeyEvent(imgui_key, true);
-        io.AddKeyEvent(imgui_key, false);
     }
 }
 
@@ -213,6 +198,8 @@ void SosGuiMenu::OnShow()
     logger::debug("SosGuiMenu::kShow");
     const auto &control_map = RE::ControlMap::GetSingleton();
     control_map->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kAll, false, false);
+    control_map->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kMenu, true, false);
+    control_map->PushInputContext(RE::UserEvents::INPUT_CONTEXT_ID::kMenuMode);
     RE::Inventory3DManager::GetSingleton()->Begin3D(RE::INTERFACE_LIGHT_SCHEME::kInventory);
 
     i18n::SetTranslator(&translator_);
@@ -226,6 +213,7 @@ void SosGuiMenu::OnHide()
     m_fShow = false;
     m_sosGui.reset();
     const auto &control_map = RE::ControlMap::GetSingleton();
+    control_map->PopInputContext(RE::UserEvents::INPUT_CONTEXT_ID::kMenuMode);
     control_map->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kAll, true, false);
     i18n::SetTranslator(nullptr);
     if (auto *inventory_manager = RE::Inventory3DManager::GetSingleton(); inventory_manager != nullptr)
@@ -250,7 +238,7 @@ struct KeyMapEntry
 
 static std::vector<KeyMapEntry> key_map = {
     {RE::GFxKey::kBackspace,    ImGuiKey_Backspace     },
-    // {RE::GFxKey::kTab,          ImGuiKey_Tab           },
+    {RE::GFxKey::kTab,          ImGuiKey_Escape        },
     // {RE::GFxKey::kClear, ImGuiKey_Clear},
     {RE::GFxKey::kReturn,       ImGuiKey_Enter         },
     {RE::GFxKey::kShift,        ImGuiMod_Shift         },

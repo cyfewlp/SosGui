@@ -37,6 +37,8 @@ auto SosGuiWindow::Init(HWND hWnd, const RE::BSGraphics::RendererData &renderDat
     }
     (void)ImGuiEx::AddFont(utils::GetInterfaceFile(ICON_FONT));
 
+    ImGui::GetIO().ConfigNavEscapeClearFocusWindow = true;
+
     ImGui::StyleColorsDark();
 }
 

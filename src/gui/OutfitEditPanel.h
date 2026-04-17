@@ -78,21 +78,21 @@ private:
     REX::EnumSet<Slot>               selected_armors_slot_mask_ = Slot::kNone;
     int                              waiting_add_armor_count_   = 0;
     OutfitId                         last_editing_outfit_id_;
-    ConflictSolution                 conflict_solution_       = ConflictSolution::none;
-    bool                             show_all_outfit_slots_   = false;
-    bool                             should_refresh_view_     = true;
-    bool                             armor_name_sort_ascend_  = true;
-    ArmorSource                      armor_source_            = ArmorSource::None;
-    bool                             show_no_conflict_armors_ = false;
-    bool                             preview_armor_           = true;
-    bool                             showing_                 = true;
-    int                              filtered_view_item_count_         = -1;
-    Armor                           *previewing_armor_        = nullptr;
+    ConflictSolution                 conflict_solution_        = ConflictSolution::none;
+    bool                             show_all_outfit_slots_    = false;
+    bool                             should_refresh_view_      = true;
+    bool                             armor_name_sort_ascend_   = true;
+    bool                             show_no_conflict_armors_  = false;
+    bool                             preview_armor_            = true;
+    bool                             showing_                  = true;
+    ArmorSource                      armor_source_             = ArmorSource::None;
+    int                              filtered_view_item_count_ = -1;
+    RE::TESObjectREFR               *armor_source_refr_        = nullptr;
+    Armor                           *previewing_armor_         = nullptr;
     // be used to check is armor-view need to be reset.
-    Slot                             last_outfit_slot_mask_   = Slot::kNone;
+    Slot                             last_outfit_slot_mask_    = Slot::kNone;
     // be used to restore armor-view slots filter when cancel checking 'show_no_conflict_armors'
-    Slot                             last_selected_slot_mask_ = Slot::kNone;
-    RE::TESObjectREFR               *armor_source_refr_       = nullptr;
+    Slot                             last_selected_slot_mask_  = Slot::kNone;
     std::vector<RE::TESObjectREFR *> near_objects_;
 };
 } // namespace SosGui
