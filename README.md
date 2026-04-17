@@ -1,65 +1,52 @@
-# ImGui for SkyrimOutfitSystemSE (SosGui)
+﻿# SosGui — ImGui Frontend for SkyrimOutfitSystemSE
+
+Managing outfits through MCM is painful. The constant cycle of opening MCM, navigating to
+SkyrimOutfitSystemSE, waiting for fade transitions, making a change, closing, checking the result,
+and repeating is tedious — and you can never preview armor without leaving the menu entirely.
+
+ImGui is a natural fit for this kind of workflow. SosGui replaces that experience with a fast,
+immediate-mode UI where you can filter, preview, and batch-edit outfits without ever leaving the panel.
 
 ## Features
 
-* Armor candidates
-    * support multi-selection;
-    * support sort armor by name with Unicode string;
-    * highlight conflict armor with current outfit armors;
-
-* UiSettings
-    * Store in `imgui.ini` with custom ini handlers
-    * Support dynamic scale global font size by `imgui fetature/dynamic-fonts` branch;
-    * Support seletc system font; #DWrite
-        * By default, Mod use the system default font;
-            ```c++
-            SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-            ```
-
-        - And user can by change it in `Settings` panel;
-        - ❗**NOT** support SVG font(like `Noto Color emoji`);
+* Full feature parity with `SkyrimOutfitSystemSE`
+* In-menu armor preview
+* Fast — designed for rapid iteration
+  * Batch add / delete items
+* Gamepad support (follows standard ImGui gamepad navigation)
+  * **Left stick / D-Pad** — navigate between items
+  * **A** — Activate / Open / Toggle (hold 0.6 s to enter Text Input mode)
+  * **B** — Cancel / Close / back up navigation hierarchy
+  * **X** — Toggle menu / hold for Windowing mode (Focus / Move / Resize)
+  * **LB** — Tweak slower / Focus previous window (Windowing mode)
+  * **RB** — Tweak faster / Focus next window (Windowing mode)
 
 ## Requirements
 
-* CMAKE
+* CMake
 * [Skyrim Outfit System SE Revived](https://www.nexusmods.com/skyrimspecialedition/mods/42162)
-  > A mod that allows you to change the visual appearance of your armor while keeping the stats of your real armor.
-  > An updated version of DavidJCobb and aers's work.
+  > Allows you to change the visual appearance of your armor while keeping the stats of your equipped gear.
+  > An updated version of DavidJCobb and aers's original work.
 * [Dear ImGui](https://github.com/ocornut/imgui)
-  > Dear ImGui: Bloat-free Graphical User interface for C++ with minimal dependencies
-* [ImThemes](https://github.com/Patitotective/ImThemes)
-  > Dear ImGui style browser and editor written in Nim
-* [plutosvg](https://github.com/sammycage/plutosvg)
-  > Enable freetype SVG support
+  > Bloat-free graphical user interface library for C++ with minimal dependencies.
 
-  This mod will load `ImThemes/themes.toml` and parse all available themes.
+Themes are loaded from `ImThemes/themes.toml` at startup — drop any compatible ImGui theme file there.
 
-## Environment Varibles
+## Environment Variables
 
-`MO2_MODS_PATH`: The `ModOrganizer2` mods folder. The `dll`, `pdb` and other required filed will auto copy to
-`MO2_MODS_PATH/{PLUGIN_NAME}` folder when build successful if seup this env varible;
+| Variable | Description |
+|---|---|
+| `MO2_MODS_PATH` | Path to your Mod Organizer 2 `mods` folder. When set, the build system automatically copies the compiled `dll`, `pdb`, and supporting files to `MO2_MODS_PATH/{PLUGIN_NAME}` after a successful build. |
 
 ## Build
 
 ```shell
-```shell
-cmake --preset debug-clangcl-ninjia-vcpkg
-cmake --build build\debug-clangcl-ninjia-vcpkg --target SosGui
-cd build\debug-clangcl-ninjia-vcpkg
+cmake --preset debug-clangcl-ninja-vcpkg
+cmake --build build\debug-clangcl-ninja-vcpkg --target SosGui
+cd build\debug-clangcl-ninja-vcpkg
 cpack
 ```
 
-## Document
+## Documentation
 
-Use [Obsidian](https://obsidian.md/) as document manage tool: `Wikilink` and `Backlink`
-
-
-## Gallery
-
-Main Window:
-
-![main window](assets/main_window.png)
-
-Outfit Edit Panel
-
-![outfit edit panel](assets/outfit_edit_panel.png)
+[Obsidian](https://obsidian.md/) is used as the documentation tool, with Wikilinks and Backlinks for cross-referencing notes.
