@@ -71,7 +71,7 @@ auto DrawConfirmDeleteOutfitsPopup(const char *name, ImGuiSelectionBasicStorage 
 
 void OutfitListTable::on_refresh()
 {
-    editing_ = UNTITLED_OUTFIT;
+    editing_id_ = INVALID_OUTFIT_ID;
     multi_selection_.Clear();
     outfit_name_buffer_[0] = '\0';
 }
@@ -122,15 +122,23 @@ void OutfitListTable::Draw(const std::vector<SosUiOutfit> &outfits, OutfitServic
 
     if (editing_.GetId() != editing_id_)
     {
-        const auto it = std::ranges::find_if(outfits, [this](const SosUiOutfit &outfit) { return outfit.GetId() == editing_id_; });
-        if (it != outfits.end())
+        if (editing_id_ == INVALID_OUTFIT_ID)
         {
-            editing_ = *it;
-            spawn([&] { return outfitService.GetSlotPolicy(editing_); });
+            editing_ = UNTITLED_OUTFIT;
         }
         else
         {
-            editing_id_ = editing_.GetId();
+            const auto it = std::ranges::find_if(outfits, [this](const SosUiOutfit &outfit) { return outfit.GetId() == editing_id_; });
+            if (it != outfits.end())
+            {
+                editing_ = *it;
+                spawn([&] { return outfitService.GetSlotPolicy(editing_); });
+            }
+            else
+            {
+                editing_id_ = INVALID_OUTFIT_ID;
+                editing_    = UNTITLED_OUTFIT;
+            }
         }
     }
 
@@ -201,7 +209,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
 
     ZoneScopedN(__FUNCTION__);
 
-    constexpr auto msFlags = ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape().ClearOnClickVoid();
+    constexpr auto msFlags = ImGuiEx::MultiSelectFlags().NoSelectAll().BoxSelect1d().ClearOnEscape();
     auto          *msIO    = ImGui::BeginMultiSelect(msFlags, multi_selection_.Size, static_cast<int>(outfits.size()));
     ImGuiUtil::MultiSelection::ApplyRequest(multi_selection_, msIO, name_sort_ascend_);
     const bool reverse     = !name_sort_ascend_;
@@ -259,7 +267,7 @@ void OutfitListTable::DrawOutfitTableContent(const std::vector<SosUiOutfit> &out
     ImGuiUtil::MultiSelection::ApplyRequest(multi_selection_, ImGui::EndMultiSelect(), name_sort_ascend_);
     if (multi_selection_.Size == 0)
     {
-        editing_ = UNTITLED_OUTFIT;
+        editing_id_ = INVALID_OUTFIT_ID;
     }
 
     switch (menu_action)
@@ -422,7 +430,7 @@ void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outf
             }
             else
             {
-                editing_ = UNTITLED_OUTFIT;
+                editing_id_ = INVALID_OUTFIT_ID;
                 spawn([&] { return outfitService.CreateOutfit(outfit_name_buffer_.data()); });
             }
 
@@ -432,7 +440,7 @@ void OutfitListTable::DrawCreateOutfitPopup(const std::vector<SosUiOutfit> &outf
         ImGui::SameLine();
         if (ImGui::Button(Translate1("Panels.Outfit.CreateFromWorn")))
         {
-            editing_ = UNTITLED_OUTFIT;
+            editing_id_ = INVALID_OUTFIT_ID;
             spawn([&] { return outfitService.CreateOutfitFromWorn(outfit_name_buffer_.data()); });
             ImGui::CloseCurrentPopup();
         }
@@ -466,7 +474,7 @@ void OutfitListTable::OnAcceptSetFavoriteOutfits(const bool toFavorite, const st
 void OutfitListTable::DeleteAllSelectOutfits(const std::vector<SosUiOutfit> &outfits, OutfitService &outfitService)
 {
     if (multi_selection_.Size <= 0) return;
-    editing_ = UNTITLED_OUTFIT;
+    editing_id_ = INVALID_OUTFIT_ID;
 
     void   *it    = nullptr;
     ImGuiID index = 0;
