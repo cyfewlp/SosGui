@@ -195,25 +195,6 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
         RE::Inventory3DManager::GetSingleton()->UnloadInventoryItem();
     }
 
-    ImGui::SeparatorText(Translate1("Panels.Outfit.ModList"));
-    constexpr int maxChildItemCount = 10;
-    const auto    itemHeight        = ImGui::GetTextLineHeight();
-    const float   childHeight       = (itemHeight + ImGui::GetStyle().ItemInnerSpacing.y) * maxChildItemCount;
-
-    if (ImGui::BeginChild("##ModNameListChild", {0, childHeight}, ImGuiEx::ChildFlags().Borders().ResizeY()))
-    {
-        DrawArmorViewModNameFilterer();
-    }
-    ImGui::EndChild();
-
-    ImGuiUtil::Text(Translate1("Panels.Outfit.BodySlots"));
-    ImGui::BeginDisabled(show_no_conflict_armors_); // disable modify slot filter if `ShowNoConflictArmors` checked
-    if (ImGui::BeginChild("#SlotFilterChild", {0, childHeight}, ImGuiEx::ChildFlags().Borders().ResizeY()))
-    {
-        DrawArmorViewSlotFilterer();
-    }
-    ImGui::EndChild();
-    ImGui::EndDisabled();
     ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainNoPlayable"), &armor_view_.contain_non_playable_armor_);
     ImGui::Checkbox(Translate1("Panels.OutfitEdit.ContainTemplate"), &armor_view_.contain_template_armor_);
 
@@ -239,6 +220,32 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
         slot_filterer.set_select_slots(slot_mask);
     }
     last_outfit_slot_mask_ = slot_mask;
+
+    constexpr int maxChildItemCount = 12;
+    const float   max_height        = ImGui::GetFrameHeightWithSpacing() * maxChildItemCount;
+
+    if (ImGui::CollapsingHeader(Translate1("Panels.Outfit.ModList"), ImGuiEx::TreeNodeFlags().DefaultOpen()))
+    {
+        ImGui::SetNextWindowSizeConstraints({0.F, 0.F}, {FLT_MAX, max_height});
+        if (ImGui::BeginChild("ModListFilter", {}, ImGuiEx::ChildFlags().AutoResizeY()))
+        {
+            DrawArmorViewModNameFilterer();
+        }
+        ImGui::EndChild();
+    }
+
+    ImGui::BeginDisabled(show_no_conflict_armors_); // disable modify slot filter if `ShowNoConflictArmors` checked
+    if (ImGui::CollapsingHeader(Translate1("Panels.Outfit.BodySlots"), ImGuiEx::TreeNodeFlags().DefaultOpen()))
+    {
+        ImGui::SetNextWindowSizeConstraints({0.F, 0.F}, {FLT_MAX, max_height});
+        if (ImGui::BeginChild("BodySlotsFilter", {}, ImGuiEx::ChildFlags().AutoResizeY()))
+        {
+            DrawArmorViewSlotFilterer();
+        }
+        ImGui::EndChild();
+    }
+    ImGui::EndDisabled();
+
     ImGui::EndChild();
 }
 
