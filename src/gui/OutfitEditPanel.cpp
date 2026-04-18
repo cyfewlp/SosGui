@@ -158,11 +158,13 @@ void OutfitEditPanel::draw(const OutfitContainer &outfit_container)
         UpdateWindowTitle(editingOutfit);
 
         ImGui::SameLine();
-        ImGui::BeginGroup();
-        draw_outfit(editingOutfit);
-        DrawArmorSourcesTabBar();
-        draw_armor_view(editingOutfit);
-        ImGui::EndGroup();
+        if (ImGui::BeginChild("Main Content")) // we want a focu scope: use internal API or child window?
+        {
+            draw_outfit(editingOutfit);
+            DrawArmorSourcesTabBar();
+            draw_armor_view(editingOutfit);
+        }
+        ImGui::EndChild();
     }
     ImGui::End();
 }
