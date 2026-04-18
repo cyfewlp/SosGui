@@ -476,9 +476,7 @@ void OutfitEditPanel::draw_armor_view(const EditingOutfit &editingOutfit)
     {
         return;
     }
-    constexpr auto flags =
-        ImGuiEx::TableFlags().RowBg().BordersInnerH().ScrollY().Resizable().SizingStretchProp().Sortable().Hideable().Reorderable();
-    const auto styleGuard = ImGuiEx::StyleGuard().Style<ImGuiStyleVar_FramePadding>({3.0F, 3.0F});
+    constexpr auto flags = ImGuiEx::TableFlags().RowBg().ScrollY().Resizable().SizingFixedFit().Sortable().Hideable().Reorderable();
     if (ImGui::BeginTable("##ArmorCandidates", 6, flags))
     {
         draw_armor_view_content(editingOutfit);
@@ -548,7 +546,7 @@ void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
 void OutfitEditPanel::draw_armor_view_content(const EditingOutfit &editingOutfit)
 {
     ImGui::TableSetupScrollFreeze(1, 1);
-    ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort().WidthFixed(), 56.0F);
+    ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort());
     ImGui::TableSetupColumn(Translate1("Armor"), ImGuiEx::TableColumnFlags().DefaultSort().PreferSortAscending().NoHide());
     ImGui::TableSetupColumn("FormID", ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
     ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.ModName"), ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
