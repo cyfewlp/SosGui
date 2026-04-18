@@ -148,12 +148,12 @@ auto OutfitService::SetOutfitIsFavorite(const OutfitId id, std::string outfitNam
     }
 }
 
-auto OutfitService::SetActorOutfit(RE::Actor *actor, const OutfitId id, std::string outfitName) const -> Task
+auto OutfitService::SetActorActiveOutfit(RE::Actor *actor, const OutfitId id, std::string outfitName) const -> Task
 {
-    if (outfit_container_.exists(id))
+    if (id == INVALID_OUTFIT_ID || outfit_container_.exists(id))
     {
         m_uiData.actor_outfit_container.set(actor, id);
-        co_await SosNativeCaller::ActiveOutfit(actor, outfitName);
+        co_await SosNativeCaller::SetActorActiveOutfit(actor, outfitName);
     }
 }
 

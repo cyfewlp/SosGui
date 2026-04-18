@@ -39,7 +39,7 @@ auto SosNativeCaller::RefreshAllActorsActiveOutfit() -> Awaitable
     return StaticCall(SosFunction::RefreshArmorForAllConfiguredActors);
 }
 
-auto SosNativeCaller::ActiveOutfit(RE::Actor *actor, std::string outfitName) -> Awaitable
+auto SosNativeCaller::SetActorActiveOutfit(RE::Actor *actor, std::string outfitName) -> Awaitable
 {
     auto *args = RE::MakeFunctionArguments(std::move(actor), std::move(outfitName));
     return StaticCall(SosFunction::SetSelectedOutfit, args);

@@ -37,14 +37,14 @@ constexpr auto POLICIES_DRAW_LIST = {
 
 using EditingActor = ActorOutfitContainer::Entry;
 
-auto get_actor_outfit_name(const EditingActor &editing_actor, const OutfitContainer &outfit_container) -> std::string
+auto get_actor_outfit_name(const EditingActor &editing_actor, const OutfitContainer &outfit_container) -> std::optional<std::string>
 {
     if (const auto outfitIt = outfit_container.find(editing_actor.outfit_id); outfitIt != outfit_container.end())
     {
         return outfitIt->GetName();
     }
 
-    return "[No Outfit]";
+    return std::nullopt;
 }
 
 auto draw_outfits(const std::vector<SosUiOutfit> &outfits, const std::string_view selected_name, const ImGuiTextFilter &filter) -> const SosUiOutfit *
@@ -69,7 +69,8 @@ auto draw_outfits(const std::vector<SosUiOutfit> &outfits, const std::string_vie
     return selected_outfit;
 }
 
-auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch policy, const OutfitContainer &outfit_container) -> std::string
+auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch policy, const OutfitContainer &outfit_container)
+    -> std::optional<std::string>
 {
     if (const auto auto_switch_outfit_opt = ActorOutfitContainer::find_auto_switch_outfit(editing_actor, policy); auto_switch_outfit_opt)
     {
@@ -78,7 +79,7 @@ auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch polic
             return outfitIt->GetName();
         }
     }
-    return "";
+    return std::nullopt;
 }
 } // namespace
 
@@ -122,15 +123,21 @@ void CharacterEditPanel::DrawCharactersInfo(SosUiData &ui_data, const SosDataCoo
         auto *actor = actor_outfit_entry.actor;
         if (ImGui::CollapsingHeader(actor->GetName()))
         {
-            const auto &outfit_container = ui_data.outfit_container;
-            const auto  active_outfit    = get_actor_outfit_name(actor_outfit_entry, outfit_container);
-            if (ImGui::BeginCombo(Translate1("Panels.Characters.ActiveOutfit"), active_outfit.c_str()))
+            const auto    &outfit_container  = ui_data.outfit_container;
+            const auto     active_outfit_opt = get_actor_outfit_name(actor_outfit_entry, outfit_container);
+            constexpr auto empty_outfit_name = "[No Outfit]";
+            const auto     active_outfit     = active_outfit_opt.transform(&std::string::c_str).value_or(empty_outfit_name);
+            if (ImGui::BeginCombo(Translate1("Panels.Characters.ActiveOutfit"), active_outfit))
             {
                 outfit_name_filter_.Draw("##filter", -FLT_MIN);
+                if (ImGui::Selectable(empty_outfit_name, !active_outfit_opt))
+                {
+                    spawn([&] { return outfit_service.SetActorActiveOutfit(actor, INVALID_OUTFIT_ID, ""); });
+                }
                 const SosUiOutfit *selected = draw_outfits(outfit_container.get_all(), active_outfit, outfit_name_filter_);
                 if (selected != nullptr)
                 {
-                    spawn([&] { return outfit_service.SetActorOutfit(actor, selected->GetId(), selected->GetName()); });
+                    spawn([&] { return outfit_service.SetActorActiveOutfit(actor, selected->GetId(), selected->GetName()); });
                     util::RefreshActorArmor(actor);
                 }
                 ImGui::EndCombo();
@@ -181,15 +188,16 @@ void CharacterEditPanel::draw_auto_switch(
             if (ImGui::TableNextColumn())
             {
                 const auto empty_outfit_name = Translate1("Panels.Characters.AutoSwitch.Empty");
-                const auto outfitName        = get_outfit_display_name(editing_actor, policy, outfit_container);
-                if (ImGui::BeginCombo("##policy-outfit", outfitName.empty() ? empty_outfit_name : outfitName.c_str()))
+                const auto outfit_name_opt   = get_outfit_display_name(editing_actor, policy, outfit_container);
+                const auto outfit_name       = outfit_name_opt.transform(&std::string::c_str).value_or(empty_outfit_name);
+                if (ImGui::BeginCombo("##policy-outfit", outfit_name))
                 {
                     outfit_name_filter_.Draw("##filter", -FLT_MIN);
-                    if (ImGui::Selectable(empty_outfit_name, outfitName.empty()))
+                    if (ImGui::Selectable(empty_outfit_name, !outfit_name_opt))
                     {
                         spawn([&] { return outfit_service.ClearActorStateOutfit(editing_actor.actor, policy); });
                     }
-                    const SosUiOutfit *selected = draw_outfits(outfit_container.get_all(), outfitName, outfit_name_filter_);
+                    const SosUiOutfit *selected = draw_outfits(outfit_container.get_all(), outfit_name, outfit_name_filter_);
                     if (selected != nullptr)
                     {
                         spawn([&] { return outfit_service.SetActorStateOutfit(editing_actor.actor, policy, selected->GetId()); });

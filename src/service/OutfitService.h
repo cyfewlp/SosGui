@@ -33,7 +33,7 @@ public:
 
     auto SetOutfitIsFavorite(OutfitId id, std::string outfitName, bool isFavorite) const -> Task;
 
-    auto SetActorOutfit(RE::Actor *actor, OutfitId id, std::string outfitName) const -> Task;
+    auto SetActorActiveOutfit(RE::Actor *actor, OutfitId id, std::string outfitName) const -> Task;
 
     auto GetActorOutfit(RE::Actor *actor) const -> Task;
 
