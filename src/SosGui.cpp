@@ -81,7 +81,7 @@ auto SosGuiWindow::Draw() -> void
     static bool show_character_edit_panel = true;
     const auto &plugin_name               = SKSE::PluginDeclaration::GetSingleton()->GetName();
 
-    const auto outfit_editing_window_title = std::format("{} - {}", outfit_edit_panel_.get_sub_title(), plugin_name);
+    const auto outfit_editing_window_title = std::format("{} - {}###{}", outfit_edit_panel_.get_sub_title(), plugin_name, plugin_name);
     const auto window_title                = show_character_edit_panel ? plugin_name : outfit_editing_window_title;
     if (ImGui::Begin(window_title.data(), &showing_))
     {
