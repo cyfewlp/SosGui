@@ -1,0 +1,95 @@
+[center][size=5][b]SosGui[/b][/size]
+[i]An ImGui frontend for SkyrimOutfitSystemSE[/i][/center]
+
+[line]
+
+[size=4][b]Overview[/b][/size]
+
+SkyrimOutfitSystemSE is personally my favourite outfit mod. It perfectly matches what I want from a transmog system: no need to actually own the armor, no dependency on inventory, and safe to uninstall. The only weak point has always been MCM — navigating those menus is slow and cumbersome, and you can never preview armor without leaving the menu entirely.
+
+So I built [b]SosGui[/b]: a fast, immediate-mode UI powered by [url=https://github.com/ocornut/imgui]Dear ImGui[/url] that replaces the MCM workflow entirely. Filter, preview, and batch-edit outfits without ever leaving the panel. Speed is the priority — no transitions, no reloads.
+
+[line]
+
+[size=4][b]Features[/b][/size]
+
+[list]
+[*][b]Full feature parity[/b] with SkyrimOutfitSystemSE — everything you could do in MCM, now faster
+[*][b]In-menu armor preview[/b] — see how an armor looks without closing the panel
+[*][b]Batch operations[/b] — add or remove multiple items at once
+[*][b]Fast iteration[/b] — immediate-mode UI with no fade transitions or menu reloads
+[*][b]Gamepad support[/b] — standard ImGui gamepad navigation out of the box
+[/list]
+
+[size=3][b]Gamepad Controls[/b][/size]
+
+[list]
+[*][b]Left Stick / D-Pad[/b] — Navigate between items
+[*][b]A[/b] — Activate / Open / Toggle (hold 0.6 s to enter Text Input mode)
+[*][b]B[/b] — Cancel / Close / Back up navigation hierarchy
+[*][b]X[/b] — Toggle menu / hold for Windowing mode (Focus / Move / Resize)
+[*][b]LB[/b] — Tweak slower / Focus previous window (Windowing mode)
+[*][b]RB[/b] — Tweak faster / Focus next window (Windowing mode)
+[/list]
+
+[line]
+
+[size=4][b]Installation[/b][/size]
+
+[b]Recommended: Mod Organizer 2[/b]
+
+[list=1]
+[*]Install [url=https://www.nexusmods.com/skyrimspecialedition/mods/42162]SkyrimOutfitSystemSE Revived[/url] and all of its requirements first.
+[*]Download the latest release of SosGui from the Files tab.
+[*]Install via Mod Organizer 2 (or your preferred mod manager) as usual.
+[*]Enable the mod and ensure it loads [b]after[/b] SkyrimOutfitSystemSE.
+[*]Launch the game. A voice spell ([b]SosGuiShow[/b]) will be added to your player automatically on game start.
+[/list]
+
+[b]Opening the Menu[/b]
+
+Cast the [b]SosGuiShow[/b] voice spell — the SosGui panel will open immediately. No MCM required.
+
+[line]
+
+[size=4][b]Compatibility[/b][/size]
+
+[list]
+[*][b]Requires[/b] [url=https://www.nexusmods.com/skyrimspecialedition/mods/42162]SkyrimOutfitSystemSE Revived[/url] — SosGui is a UI frontend for that mod and cannot function without it.
+[*]Compatible with any mod that does not conflict with SkyrimOutfitSystemSE itself.
+[*]Should be compatible with ENB, ReShade, and other overlay tools as long as they do not block ImGui DirectX hooks.
+[*][b]Not compatible[/b] with other ImGui-based UI mods that hook the same render target if they conflict at the DirectX swap-chain level.
+[/list]
+
+[line]
+
+[size=4][b]Requirements[/b][/size]
+
+[list]
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/42162][b]SkyrimOutfitSystemSE Revived[/b][/url] — the outfit management system this UI is built on top of
+[*][b]Skyrim Special Edition[/b] (Anniversary Edition supported)
+[*][b]SKSE64[/b] — required by SkyrimOutfitSystemSE
+[/list]
+
+[line]
+
+[size=4][b]Source Code & Credits[/b][/size]
+
+[size=3][b]Source Code[/b][/size]
+
+The full source code for SosGui is available on [url=https://github.com/cyfewlp/SosGui][b]GitHub[/b][/url]. Contributions and bug reports are welcome.
+
+[b]Built with:[/b]
+[list]
+[*][url=https://github.com/ocornut/imgui][b]Dear ImGui[/b][/url] by Omar Cornut — bloat-free immediate-mode GUI library for C++
+[*][url=https://github.com/CharmedBaryon/CommonLibSSE-NG][b]CommonLibSSE-NG[/b][/url] — SKSE plugin development library for Skyrim SE/AE/VR
+[/list]
+
+[size=3][b]Credits[/b][/size]
+
+[list]
+[*][b]DavidJCobb & aers[/b] — original authors of SkyrimOutfitSystem, the mod this tool is a frontend for
+[*][b]Styyx[/b] (and contributors) — for maintaining [url=https://www.nexusmods.com/skyrimspecialedition/mods/42162]SkyrimOutfitSystemSE Revived[/url]
+[*][b]Omar Cornut[/b] — for [url=https://github.com/ocornut/imgui]Dear ImGui[/url]
+[*][b]Joel Day[/b] — for the [url=https://marketplace.visualstudio.com/items?itemName=joelday.papyrus-lang-vscode]Papyrus language extension for VS Code[/url]
+[/list]
