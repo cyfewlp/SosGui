@@ -101,7 +101,7 @@ auto SosGuiWindow::Draw() -> void
         ImGui::EndChild();
 
         ImGui::SameLine(0.F, 0.F);
-        if (ImGui::BeginChild("Panel", {}, ImGuiEx::ChildFlags().NavFlattened()))
+        if (ImGui::BeginChild("Panel"))
         {
             if (show_character_edit_panel)
             {
