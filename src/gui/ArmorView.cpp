@@ -132,7 +132,7 @@ void ArmorView::reset_counter()
             }
         }
     }
-    std::ranges::sort(mod_filterer_.mod_list, std::less<>(), &armor_view::ModFilterer::ModEntry::name);
+    std::ranges::sort(mod_filterer_.mod_list, util::StringCompare, &armor_view::ModFilterer::ModEntry::name);
 }
 
 void ArmorView::reset_view_data(ArmorSource source, RE::TESObjectREFR *source_ref)

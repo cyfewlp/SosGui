@@ -44,6 +44,13 @@ static auto UnicodeStringCompare(const char *lhs, const char *rhs) -> bool
     return result > 0 && result == CSTR_LESS_THAN;
 }
 
+constexpr auto StringCompare(const std::string_view &lhs, const std::string_view &rhs) -> bool
+{
+    const int result =
+        ::CompareStringA(LOCALE_INVARIANT, NORM_IGNORECASE, lhs.data(), static_cast<int>(lhs.size()), rhs.data(), static_cast<int>(rhs.size()));
+    return result > 0 && result == CSTR_LESS_THAN;
+}
+
 struct StringCompactor
 {
     auto operator()(const char *lhs, const char *rhs) const -> bool { return UnicodeStringCompare(lhs, rhs); }
