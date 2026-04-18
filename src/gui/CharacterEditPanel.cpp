@@ -69,18 +69,16 @@ auto draw_outfits(const std::vector<SosUiOutfit> &outfits, const std::string_vie
     return selected_outfit;
 }
 
-auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch policy, const OutfitContainer &outfit_container) -> std::string_view
+auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch policy, const OutfitContainer &outfit_container) -> std::string
 {
-    std::string_view name = Translate("Panels.Characters.AutoSwitch.Empty");
-
     if (const auto auto_switch_outfit_opt = ActorOutfitContainer::find_auto_switch_outfit(editing_actor, policy); auto_switch_outfit_opt)
     {
         if (const auto outfitIt = outfit_container.find(auto_switch_outfit_opt.value()->outfit_id); outfitIt != outfit_container.end())
         {
-            name = outfitIt->GetName();
+            return outfitIt->GetName();
         }
     }
-    return name;
+    return "";
 }
 } // namespace
 
@@ -162,6 +160,7 @@ void CharacterEditPanel::draw_auto_switch(
         spawn([&] { return data_coordinator.RequestSetActorAutoSwitchState(editing_actor.actor, enabled); });
     }
 
+    ImGui::BeginDisabled(!enabled);
     if (ImGui::BeginTable("##AutoSwitchStateList", 2, ImGuiEx::TableFlags().Resizable().SizingStretchProp().RowBg().Borders()))
     {
         ImGui::TableSetupColumn(Translate1("Panels.Characters.AutoSwitch.Location"));
@@ -181,10 +180,15 @@ void CharacterEditPanel::draw_auto_switch(
 
             if (ImGui::TableNextColumn())
             {
-                const auto outfitName = get_outfit_display_name(editing_actor, policy, outfit_container);
-                if (ImGui::BeginCombo("##policy-outfit", outfitName.data()))
+                const auto empty_outfit_name = Translate1("Panels.Characters.AutoSwitch.Empty");
+                const auto outfitName        = get_outfit_display_name(editing_actor, policy, outfit_container);
+                if (ImGui::BeginCombo("##policy-outfit", outfitName.empty() ? empty_outfit_name : outfitName.c_str()))
                 {
                     outfit_name_filter_.Draw("##filter", -FLT_MIN);
+                    if (ImGui::Selectable(empty_outfit_name, outfitName.empty()))
+                    {
+                        spawn([&] { return outfit_service.ClearActorStateOutfit(editing_actor.actor, policy); });
+                    }
                     const SosUiOutfit *selected = draw_outfits(outfit_container.get_all(), outfitName, outfit_name_filter_);
                     if (selected != nullptr)
                     {
@@ -197,5 +201,6 @@ void CharacterEditPanel::draw_auto_switch(
         }
         ImGui::EndTable();
     }
+    ImGui::EndDisabled();
 }
 } // namespace SosGui

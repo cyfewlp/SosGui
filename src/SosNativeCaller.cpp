@@ -162,6 +162,12 @@ auto SosNativeCaller::SetStateOutfit(const RE::Actor *actor, uint32_t location, 
     return StaticCall(SosFunction::SetStateOutfit, args);
 }
 
+auto SosNativeCaller::ClearStateOutfit(const RE::Actor *actor, uint32_t location) -> Awaitable
+{
+    auto *args = RE::MakeFunctionArguments(std::move(actor), std::move(location));
+    return StaticCall(SosFunction::UnsetStateOutfit, args);
+}
+
 auto SosNativeCaller::GetStateOutfit(RE::Actor *actor, uint32_t location) -> Awaitable
 {
     auto *args = RE::MakeFunctionArguments(std::move(actor), std::move(location));

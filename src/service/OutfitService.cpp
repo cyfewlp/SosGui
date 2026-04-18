@@ -341,6 +341,12 @@ auto OutfitService::SetActorStateOutfit(RE::Actor *actor, AutoSwitch policy, con
     actorOutfitContainer.set_auto_switch_outfit(actor, policy, newOutfitId);
 }
 
+auto OutfitService::ClearActorStateOutfit(RE::Actor *actor, AutoSwitch policy) const -> Task
+{
+    co_await SosNativeCaller::ClearStateOutfit(actor, static_cast<uint32_t>(policy));
+    m_uiData.actor_outfit_container.set_auto_switch_outfit(actor, policy, INVALID_OUTFIT_ID);
+}
+
 auto OutfitService::RefreshAllActorsAutoSwitchOutfit() -> Task
 {
     co_await SosNativeCaller::RefreshAllActorsAutoSwitchOutfit();
