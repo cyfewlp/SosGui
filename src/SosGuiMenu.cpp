@@ -102,7 +102,7 @@ void on_user_events(const RE::BSFixedString &event_name)
     const auto &user_events = RE::UserEvents::GetSingleton();
     auto       &io          = ImGui::GetIO();
 
-    //logger::debug("user eventts: {}", event_name.c_str());
+    // logger::debug("user eventts: {}", event_name.c_str());
     if (!io.WantCaptureKeyboard && event_name == user_events->cancel)
     {
         auto *messageQueue = RE::UIMessageQueue::GetSingleton();
@@ -212,6 +212,7 @@ void SosGuiMenu::OnHide()
 {
     m_fShow = false;
     m_sosGui.reset();
+    SosGuiWindow::refresh_actors_outfits();
     const auto &control_map = RE::ControlMap::GetSingleton();
     control_map->PopInputContext(RE::UserEvents::INPUT_CONTEXT_ID::kMenuMode);
     control_map->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kAll, true, false);
@@ -221,7 +222,6 @@ void SosGuiMenu::OnHide()
         inventory_manager->UnloadInventoryItem();
         inventory_manager->End3D();
     }
-    util::RefreshActorArmor(RE::PlayerCharacter::GetSingleton());
 
     logger::debug("SosGuiMenu::kHide");
     ImGui::GetIO().ClearInputKeys();

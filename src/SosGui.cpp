@@ -47,6 +47,12 @@ auto SosGuiWindow::ShutDown() -> void
     ImGuiEx::Shutdown();
 }
 
+auto SosGuiWindow::refresh_actors_outfits() -> void
+{
+    spawn([&] { return OutfitService::RefreshAllActorsAutoSwitchOutfit(); });
+    spawn([&] { return OutfitService::RefreshAllActorsActiveOutfit(); });
+}
+
 auto SosGuiWindow::Refresh() const -> void
 {
     spawn([&] { return m_dataCoordinator.Refresh(); });
@@ -130,9 +136,9 @@ void SosGuiWindow::MainMenuBar()
     {
         m_isShowPanels = !m_isShowPanels;
     }
-    if (ImGui::MenuItem(Translate1("ToolBar.RefreshPlayerArmor")))
+    if (ImGui::MenuItem(Translate1("ToolBar.RefreshActorsOutfit")))
     {
-        util::RefreshActorArmor(RE::PlayerCharacter::GetSingleton());
+        refresh_actors_outfits();
     }
     if (ImGui::MenuItem(Translate1("Panels.Characters.Title")))
     {

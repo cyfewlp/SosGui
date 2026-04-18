@@ -25,8 +25,18 @@ auto SosNativeCaller::BodySlotPolicyNamesForOutfit(std::string outfitName) -> Aw
 
 auto SosNativeCaller::SetBodySlotPoliciesForOutfit(std::string outfitName, uint32_t slotPos, std::string policyCode) -> Awaitable
 {
-    auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::move(slotPos), std::move(policyCode));
+    auto *args = RE::MakeFunctionArguments(std::move(outfitName), std::forward<uint32_t>(slotPos), std::move(policyCode));
     return StaticCall(SosFunction::SetBodySlotPoliciesForOutfit, args);
+}
+
+auto SosNativeCaller::RefreshAllActorsAutoSwitchOutfit()
+{
+    return StaticCall(SosFunction::SetOutfitUsingStateForAllConfiguredActors);
+}
+
+auto SosNativeCaller::RefreshAllActorsActiveOutfit()
+{
+    return StaticCall(SosFunction::RefreshArmorForAllConfiguredActors);
 }
 
 auto SosNativeCaller::ActiveOutfit(RE::Actor *actor, std::string outfitName) -> Awaitable

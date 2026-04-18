@@ -121,7 +121,7 @@ void ArmorView::reset_counter()
     for (const auto &armor : view_data_)
     {
         const std::string_view modName   = util::GetFormModFileName(armor);
-        auto                  &mod_entry = mod_filterer_.try_emplace(modName, 0, false); // FIXME-OPT
+        auto                  &mod_entry = mod_filterer_.try_emplace(modName, 0, false);
         mod_entry.count += 1;
 
         for (auto [index, slot_count] : slot_counter_ | std::views::enumerate)

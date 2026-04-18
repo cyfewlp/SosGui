@@ -48,6 +48,7 @@ public:
 
     static auto Init(HWND hWnd, const RE::BSGraphics::RendererData &renderData) -> void;
     static auto ShutDown() -> void;
+    static auto refresh_actors_outfits()->void;
 
     auto Refresh() const -> void;
     auto OnPostDisplay() -> void;

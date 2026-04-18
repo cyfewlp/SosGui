@@ -58,5 +58,8 @@ public:
     auto GetActorAllStateOutfit(RE::Actor *actor) const -> Task;
 
     auto SetActorStateOutfit(RE::Actor *actor, AutoSwitch policy, OutfitId outfitId) const -> Task;
+
+    static auto RefreshAllActorsAutoSwitchOutfit() -> Task;
+    static auto RefreshAllActorsActiveOutfit() -> Task;
 };
 } // namespace SosGui

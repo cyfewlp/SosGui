@@ -39,7 +39,7 @@ auto OutfitService::CreateOutfitCopy(std::string outfitName, const OutfitId src_
     -> Task
 {
     co_await SosNativeCaller::CreateOutfit(outfitName);
-    auto        outfit_it     = outfit_container_.try_emplace(outfitName);
+    auto       outfit_it     = outfit_container_.try_emplace(outfitName);
     const auto src_outfit_it = outfit_container_.find(src_outfit_id);
     if (src_outfit_it->IsEmpty())
     {
@@ -339,5 +339,15 @@ auto OutfitService::SetActorStateOutfit(RE::Actor *actor, AutoSwitch policy, con
         newOutfitId = outfitId;
     }
     actorOutfitContainer.set_auto_switch_outfit(actor, policy, newOutfitId);
+}
+
+auto OutfitService::RefreshAllActorsAutoSwitchOutfit() -> Task
+{
+    co_await SosNativeCaller::RefreshAllActorsAutoSwitchOutfit();
+}
+
+auto OutfitService::RefreshAllActorsActiveOutfit() -> Task
+{
+    co_await SosNativeCaller::RefreshAllActorsActiveOutfit();
 }
 } // namespace SosGui
