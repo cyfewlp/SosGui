@@ -700,7 +700,7 @@ void OutfitEditPanel::draw_armor_row(const int row_index, const Armor *armor, Ar
 
     if (ImGui::TableNextColumn()) // column playable
     {
-        ImGuiUtil::IconButton(IsArmorNonPlayable(armor) ? std::string_view(ICON_X) : ICON_CHECK);
+        ImGuiUtil::Icon(IsArmorNonPlayable(armor) ? std::string_view(ICON_X) : ICON_CHECK);
     }
 
     ImGui::BeginDisabled(armor_draw_context.editing_outfit_invalid);
@@ -709,6 +709,10 @@ void OutfitEditPanel::draw_armor_row(const int row_index, const Armor *armor, Ar
         armor_view_.multi_selection_.Clear();
         armor_view_.multi_selection_.SetItemSelected(storage_id, true);
         armor_draw_context.want_add_armor = true;
+    }
+    if (ImGui::IsItemFocused())
+    {
+        selected_armors_slot_mask_.set(armor->GetSlotMask().get());
     }
     ImGui::EndDisabled();
 }

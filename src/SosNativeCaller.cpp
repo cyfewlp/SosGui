@@ -29,12 +29,12 @@ auto SosNativeCaller::SetBodySlotPoliciesForOutfit(std::string outfitName, uint3
     return StaticCall(SosFunction::SetBodySlotPoliciesForOutfit, args);
 }
 
-auto SosNativeCaller::RefreshAllActorsAutoSwitchOutfit()
+auto SosNativeCaller::RefreshAllActorsAutoSwitchOutfit() -> Awaitable
 {
     return StaticCall(SosFunction::SetOutfitUsingStateForAllConfiguredActors);
 }
 
-auto SosNativeCaller::RefreshAllActorsActiveOutfit()
+auto SosNativeCaller::RefreshAllActorsActiveOutfit() -> Awaitable
 {
     return StaticCall(SosFunction::RefreshArmorForAllConfiguredActors);
 }
