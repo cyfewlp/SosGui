@@ -135,6 +135,21 @@ install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION SKSE/Plugins
     COMPONENT mod_runtime
 )
+install(FILES
+    ${CMAKE_SOURCE_DIR}/papyrus/SosGui.esp
+    DESTINATION .
+    COMPONENT main_files
+)
+
+# Install Papyrus source and scripts
+install(
+    DIRECTORY
+    ${CMAKE_SOURCE_DIR}/papyrus/Source
+    ${CMAKE_SOURCE_DIR}/papyrus/Scripts
+    DESTINATION .
+    COMPONENT papyrus
+)
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     install(FILES "$<TARGET_PDB_FILE:${PROJECT_NAME}>"
         DESTINATION SKSE/Plugins
