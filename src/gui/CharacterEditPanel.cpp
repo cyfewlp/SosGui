@@ -83,22 +83,10 @@ auto get_outfit_display_name(const EditingActor &editing_actor, AutoSwitch polic
 }
 } // namespace
 
-void CharacterEditPanel::Draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
+void CharacterEditPanel::draw(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
 {
-    if (!showing_) return;
-
     ZoneScopedN(__FUNCTION__);
-    ImGui::SetNextWindowPos({200.F, 200.F}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize({280.F, 300.F}, ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(Translate1("Panels.Characters.Title"), &showing_, ImGuiEx::WindowFlags()))
-    {
-        DrawCharactersPanel(uiData, dataCoordinator, outfitService);
-    }
-    ImGui::End();
-}
 
-void CharacterEditPanel::DrawCharactersPanel(SosUiData &uiData, const SosDataCoordinator &dataCoordinator, const OutfitService &outfitService)
-{
     if (ImGui::BeginCombo("##NearObjects", Translate1("Panels.Characters.Add"), ImGuiEx::ComboFlags().WidthFitPreview().HeightRegular()))
     {
         for (const auto &actor : uiData.near_actors)
@@ -121,7 +109,7 @@ void CharacterEditPanel::DrawCharactersInfo(SosUiData &ui_data, const SosDataCoo
     {
         ImGui::PushID(index++);
         auto *actor = actor_outfit_entry.actor;
-        if (ImGui::CollapsingHeader(actor->GetName()))
+        if (ImGui::CollapsingHeader(actor->GetName(), ImGuiEx::TreeNodeFlags().DefaultOpen()))
         {
             const auto    &outfit_container  = ui_data.outfit_container;
             const auto     active_outfit_opt = get_actor_outfit_name(actor_outfit_entry, outfit_container);

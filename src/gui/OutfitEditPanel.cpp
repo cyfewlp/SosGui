@@ -135,38 +135,29 @@ void OutfitEditPanel::on_refresh()
 
 void OutfitEditPanel::draw(const OutfitContainer &outfit_container)
 {
-    if (!showing_) return;
-
-    ZoneScopedN(__FUNCTION__);
-    ImGui::SetNextWindowPos({600.0F, 200.F}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize({1024.0F, 680.0F}, ImGuiCond_FirstUseEver);
-    if (ImGui::Begin(window_title_.c_str(), &showing_))
+    if (should_refresh_view_)
     {
-        if (should_refresh_view_)
-        {
-            should_refresh_view_ = false;
-            armor_view_.reset_view(armor_source_, armor_source_refr_);
-        }
-
-        outfit_list_table_.Draw(outfit_container.get_all(), *outfit_service_);
-        auto &editingOutfit   = outfit_list_table_.get_editing_outfit();
-        editingOutfit.invalid = outfit_container.find(editingOutfit.GetId()) == outfit_container.end();
-
-        ImGui::SameLine();
-        draw_filterers(editingOutfit);
-
-        UpdateWindowTitle(editingOutfit);
-
-        ImGui::SameLine();
-        if (ImGui::BeginChild("Main Content")) // we want a focu scope: use internal API or child window?
-        {
-            draw_outfit(editingOutfit);
-            DrawArmorSourcesTabBar();
-            draw_armor_view(editingOutfit);
-        }
-        ImGui::EndChild();
+        should_refresh_view_ = false;
+        armor_view_.reset_view(armor_source_, armor_source_refr_);
     }
-    ImGui::End();
+
+    outfit_list_table_.Draw(outfit_container.get_all(), *outfit_service_);
+    auto &editingOutfit   = outfit_list_table_.get_editing_outfit();
+    editingOutfit.invalid = outfit_container.find(editingOutfit.GetId()) == outfit_container.end();
+
+    ImGui::SameLine();
+    draw_filterers(editingOutfit);
+
+    update_sub_title(editingOutfit);
+
+    ImGui::SameLine();
+    if (ImGui::BeginChild("Main Content")) // we want a focu scope: use internal API or child window?
+    {
+        draw_outfit(editingOutfit);
+        DrawArmorSourcesTabBar();
+        draw_armor_view(editingOutfit);
+    }
+    ImGui::EndChild();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,13 +240,11 @@ void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
     ImGui::EndChild();
 }
 
-void OutfitEditPanel::UpdateWindowTitle(const EditingOutfit &editingOutfit)
+void OutfitEditPanel::update_sub_title(const EditingOutfit &editingOutfit)
 {
     if (last_editing_outfit_id_ != editingOutfit.GetId())
     {
-        window_title_ = std::format(
-            "{} {} - {}###OutfitEditPanel", Translate("Panels.OutfitEdit.EditingHint"), editingOutfit.get_name(), Translate("Panels.OutfitEdit.Title")
-        );
+        sub_title_ = std::format("{} {}", Translate("Panels.OutfitEdit.EditingHint"), editingOutfit.get_name());
     }
     last_editing_outfit_id_ = editingOutfit.GetId();
 }

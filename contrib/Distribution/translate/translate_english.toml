@@ -72,7 +72,6 @@ Untitled = "Untitled"
 NameConflict = "alreay exists"
 
 [Panels.OutfitEdit]
-Title = "Outfit Edit Panel"
 EditingHint = "Editing Outfit"
 MissingOutfitHint = "Please selec an outfit to edit"
 EmptyHint = "Outfit is empty"

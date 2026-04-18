@@ -73,20 +73,48 @@ auto SosGuiWindow::Draw() -> void
     MainMenuBar();
     ErrorNotifier::GetInstance().Show();
 
-    if (!m_isShowPanels)
+    if (!showing_) return;
+
+    ZoneScopedN(__FUNCTION__);
+    ImGui::SetNextWindowPos({600.0F, 200.F}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({1024.0F, 680.0F}, ImGuiCond_FirstUseEver);
+    static bool show_character_edit_panel = true;
+    const auto &plugin_name               = SKSE::PluginDeclaration::GetSingleton()->GetName();
+
+    const auto outfit_editing_window_title = std::format("{} - {}", outfit_edit_panel_.get_sub_title(), plugin_name);
+    const auto window_title                = show_character_edit_panel ? plugin_name : outfit_editing_window_title;
+    if (ImGui::Begin(window_title.data(), &showing_))
     {
-        return;
+        if (ImGui::BeginChild("NavRail", {}, ImGuiEx::ChildFlags().Borders().AutoResizeX()))
+        {
+            constexpr auto padding_lines = 5;
+            ImGui::Dummy({1.0F, ImGui::GetTextLineHeight() * padding_lines});
+            if (ImGuiUtil::IconButton(ICON_USERS))
+            {
+                show_character_edit_panel = true;
+            }
+            if (ImGuiUtil::IconButton(ICON_SHIRT))
+            {
+                show_character_edit_panel = false;
+            }
+        }
+        ImGui::EndChild();
+
+        ImGui::SameLine(0.F, 0.F);
+        if (ImGui::BeginChild("Panel", {}, ImGuiEx::ChildFlags().NavFlattened()))
+        {
+            if (show_character_edit_panel)
+            {
+                character_edit_panel_.draw(ui_data_, m_dataCoordinator, outfit_service_);
+            }
+            else
+            {
+                outfit_edit_panel_.draw(ui_data_.outfit_container);
+            }
+        }
+        ImGui::EndChild();
     }
-    try
-    {
-        character_edit_panel_.Draw(ui_data_, m_dataCoordinator, outfit_service_);
-        outfit_edit_panel_.draw(ui_data_.outfit_container);
-    }
-    catch (const std::exception &e)
-    {
-        logger::LogStacktrace();
-        ErrorNotifier::GetInstance().Error(e.what());
-    }
+    ImGui::End();
 }
 
 void SosGuiWindow::MainMenuBar()
@@ -134,19 +162,11 @@ void SosGuiWindow::MainMenuBar()
     }
     if (ImGui::MenuItem(Translate1("ToolBar.ShowOrHide")))
     {
-        m_isShowPanels = !m_isShowPanels;
+        showing_ = !showing_;
     }
     if (ImGui::MenuItem(Translate1("ToolBar.RefreshActorsOutfit")))
     {
         refresh_actors_outfits();
-    }
-    if (ImGui::MenuItem(Translate1("Panels.Characters.Title")))
-    {
-        character_edit_panel_.toggle_showing();
-    }
-    if (ImGui::MenuItem(Translate1("Panels.OutfitEdit.Title")))
-    {
-        outfit_edit_panel_.toggle_showing();
     }
     if (ImGui::MenuItem(Translate1("ToolBar.Close")))
     {

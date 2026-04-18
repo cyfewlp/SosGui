@@ -39,7 +39,7 @@ class SosGuiWindow
     SosDataCoordinator m_dataCoordinator;
     CharacterEditPanel character_edit_panel_;
     OutfitEditPanel    outfit_edit_panel_;
-    bool               m_isShowPanels = true;
+    bool               showing_ = true;
 
 public:
     SosGuiWindow() : outfit_service_(ui_data_), m_dataCoordinator(ui_data_, outfit_service_), outfit_edit_panel_(outfit_service_) {}

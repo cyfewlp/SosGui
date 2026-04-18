@@ -28,14 +28,11 @@ public:
 
     static constexpr int MAX_FILTER_ARMOR_NAME = 256;
 
-public:
     explicit OutfitEditPanel(OutfitService &outfitService)
         : outfit_service_(&outfitService), last_editing_outfit_id_(std::numeric_limits<OutfitId>::max())
     {
-        UpdateWindowTitle(outfit_list_table_.get_editing_outfit());
+        update_sub_title(outfit_list_table_.get_editing_outfit());
     }
-
-    void toggle_showing() { showing_ = !showing_; }
 
     void on_refresh();
 
@@ -44,9 +41,11 @@ public:
 
     void on_main_menu_action(MainMenuAction main_menu_action) { outfit_list_table_.on_main_menu_action(main_menu_action); }
 
+    [[nodiscard]] auto get_sub_title() { return sub_title_; }
+
 private:
     void draw_filterers(const EditingOutfit &editingOutfit);
-    void UpdateWindowTitle(const EditingOutfit &editingOutfit);
+    void update_sub_title(const EditingOutfit &editingOutfit);
 
     void draw_outfit_armors(EditingOutfit &editingOutfit);
     void SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
@@ -74,7 +73,7 @@ private:
     };
 
     ArmorView                        armor_view_{};
-    std::string                      window_title_;
+    std::string                      sub_title_;
     OutfitService                   *outfit_service_;
     OutfitListTable                  outfit_list_table_{};
     REX::EnumSet<Slot>               selected_armors_slot_mask_ = Slot::kNone;
@@ -86,7 +85,6 @@ private:
     bool                             armor_name_sort_ascend_   = true;
     bool                             show_no_conflict_armors_  = false;
     bool                             preview_armor_            = true;
-    bool                             showing_                  = true;
     ArmorSource                      armor_source_             = ArmorSource::None;
     int                              filtered_view_item_count_ = -1;
     RE::TESObjectREFR               *armor_source_refr_        = nullptr;
