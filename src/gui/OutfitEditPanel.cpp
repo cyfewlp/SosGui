@@ -709,6 +709,7 @@ void OutfitEditPanel::draw_armor_row(const int row_index, const Armor *armor, Ar
     if (ImGui::IsItemFocused())
     {
         selected_armors_slot_mask_.set(armor->GetSlotMask().get());
+        armor_draw_context.to_preview_armor = armor;
     }
     ImGui::EndDisabled();
 }
