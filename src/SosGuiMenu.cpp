@@ -72,28 +72,16 @@ void OnMouseWheelEvent(RE::GFxEvent *event)
     ImGui::GetIO().AddMouseWheelEvent(0, mouseEvent->scrollDelta);
 }
 
-void OnKeyEvent(const RE::GFxKey::Code keycode, const bool down)
+void OnKeyEvent_(const RE::GFxKey::Code keycode, const bool down)
 {
     auto imguiKey = GFxKeyToImGuiKey(keycode);
     // logger::debug("convert {} to {} {}", static_cast<uint32_t>(keycode), ImGui::GetKeyName(imguiKey), down ? "down" : "up");
     ImGui::GetIO().AddKeyEvent(imguiKey, down);
 }
 
-void OnKeyEvent(RE::GFxEvent *event, const bool down)
-{
-    // imgui_impl_win32::343 already mapped gamepad buttons.
-    if (RE::BSInputDeviceManager::GetSingleton()->IsGamepadEnabled())
-    {
-        return;
-    }
-
-    const auto keyEvent = reinterpret_cast<RE::GFxKeyEvent *>(event);
-    OnKeyEvent(keyEvent->keyCode, down);
-}
-
 void OnCharEvent(RE::GFxEvent *event)
 {
-    const auto charEvent = reinterpret_cast<RE::GFxCharEvent *>(event);
+    const auto *charEvent = reinterpret_cast<RE::GFxCharEvent *>(event);
     ImGui::GetIO().AddInputCharacter(charEvent->wcharCode);
 }
 
@@ -102,38 +90,11 @@ void on_user_events(const RE::BSFixedString &event_name)
     const auto &user_events = RE::UserEvents::GetSingleton();
     auto       &io          = ImGui::GetIO();
 
-    // logger::debug("user eventts: {}", event_name.c_str());
+    // logger::debug("user events: {}", event_name.c_str());
     if (!io.WantCaptureKeyboard && event_name == user_events->cancel)
     {
         auto *messageQueue = RE::UIMessageQueue::GetSingleton();
         messageQueue->AddMessage(SosGuiMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
-    }
-}
-
-void ProcessScaleformEvent(const RE::BSUIScaleformData *data)
-{
-    switch (const auto &fxEvent = data->scaleformEvent; fxEvent->type.get())
-    {
-        case RE::GFxEvent::EventType::kMouseDown:
-            OnMouseEvent(fxEvent, true);
-            break;
-        case RE::GFxEvent::EventType::kMouseUp:
-            OnMouseEvent(fxEvent, false);
-            break;
-        case RE::GFxEvent::EventType::kMouseWheel:
-            OnMouseWheelEvent(fxEvent);
-            break;
-        case RE::GFxEvent::EventType::kKeyDown:
-            OnKeyEvent(fxEvent, true);
-            break;
-        case RE::GFxEvent::EventType::kKeyUp:
-            OnKeyEvent(fxEvent, false);
-            break;
-        case RE::GFxEvent::EventType::kCharEvent:
-            OnCharEvent(fxEvent);
-            break;
-        default:
-            break;
     }
 }
 } // namespace
@@ -183,13 +144,40 @@ auto SosGuiMenu::ProcessMessage(RE::UIMessage &a_message) -> RE::UI_MESSAGE_RESU
             auto *scaleformData = reinterpret_cast<RE::BSUIScaleformData *>(a_message.data);
             if (scaleformData != nullptr && scaleformData->scaleformEvent != nullptr)
             {
-                ProcessScaleformEvent(scaleformData);
+                process_scaleform_event(scaleformData);
             }
             break;
         }
         default:;
     }
     return RE::UI_MESSAGE_RESULTS::kHandled;
+}
+
+void SosGuiMenu::process_scaleform_event(const RE::BSUIScaleformData *data)
+{
+    switch (const auto &fxEvent = data->scaleformEvent; fxEvent->type.get())
+    {
+        case RE::GFxEvent::EventType::kMouseDown:
+            OnMouseEvent(fxEvent, true);
+            break;
+        case RE::GFxEvent::EventType::kMouseUp:
+            OnMouseEvent(fxEvent, false);
+            break;
+        case RE::GFxEvent::EventType::kMouseWheel:
+            OnMouseWheelEvent(fxEvent);
+            break;
+        case RE::GFxEvent::EventType::kKeyDown:
+            OnKeyEvent(fxEvent, true);
+            break;
+        case RE::GFxEvent::EventType::kKeyUp:
+            OnKeyEvent(fxEvent, false);
+            break;
+        case RE::GFxEvent::EventType::kCharEvent:
+            OnCharEvent(fxEvent);
+            break;
+        default:
+            break;
+    }
 }
 
 void SosGuiMenu::OnShow()
@@ -201,6 +189,7 @@ void SosGuiMenu::OnShow()
     control_map->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kMenu, true, false);
     control_map->PushInputContext(RE::UserEvents::INPUT_CONTEXT_ID::kMenuMode);
     RE::Inventory3DManager::GetSingleton()->Begin3D(RE::INTERFACE_LIGHT_SCHEME::kInventory);
+    RE::MenuControls::GetSingleton()->AddHandler(&gamepad_event_interceptor_);
 
     i18n::SetTranslator(&translator_);
     i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
@@ -222,9 +211,22 @@ void SosGuiMenu::OnHide()
         inventory_manager->UnloadInventoryItem();
         inventory_manager->End3D();
     }
+    RE::MenuControls::GetSingleton()->RemoveHandler(&gamepad_event_interceptor_);
 
     logger::debug("SosGuiMenu::kHide");
     ImGui::GetIO().ClearInputKeys();
+}
+
+void SosGuiMenu::OnKeyEvent(RE::GFxEvent *event, const bool down) const
+{
+    // imgui_impl_win32::343 already mapped gamepad buttons.
+    if (gamepad_event_interceptor_.is_gamepad_event)
+    {
+        return;
+    }
+
+    const auto *keyEvent = reinterpret_cast<RE::GFxKeyEvent *>(event);
+    OnKeyEvent_(keyEvent->keyCode, down);
 }
 
 namespace
