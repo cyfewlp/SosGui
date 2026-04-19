@@ -7,10 +7,11 @@
 #include "SosGui.h"
 #include "imgui.h"
 #include "log.h"
+#include "path_utils.h"
+#include "toml++/toml.hpp"
 #include "tracy/Tracy.hpp"
 #include "util/utils.h"
 
-#include <path_utils.h>
 #include <unordered_map>
 
 namespace RE
@@ -96,6 +97,26 @@ void on_user_events(const RE::BSFixedString &event_name)
         auto *messageQueue = RE::UIMessageQueue::GetSingleton();
         messageQueue->AddMessage(SosGuiMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
     }
+}
+
+auto get_language() -> std::string
+{
+    constexpr std::string_view settings_file = "sosgui_settings.toml";
+    std::string                language      = "english";
+    const auto                 settings_path = utils::GetPluginInterfaceDir() / settings_file;
+    if (std::filesystem::exists(settings_path))
+    {
+        try
+        {
+            const auto table = toml::parse_file(settings_path.generic_string());
+            language         = table["language"].value_or("english");
+        }
+        catch (const std::exception &e)
+        {
+            logger::warn("SosGuiMenu: failed to load settings: {}", e.what());
+        }
+    }
+    return language;
 }
 } // namespace
 
@@ -192,7 +213,7 @@ void SosGuiMenu::OnShow()
     RE::MenuControls::GetSingleton()->AddHandler(&gamepad_event_interceptor_);
 
     i18n::SetTranslator(&translator_);
-    i18n::UpdateTranslator("english", "english", utils::GetPluginInterfaceDir());
+    i18n::UpdateTranslator(get_language(), "english", utils::GetPluginInterfaceDir());
     m_sosGui = std::make_unique<SosGuiWindow>();
     m_sosGui->Refresh();
 }

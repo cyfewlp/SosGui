@@ -45,5 +45,33 @@
                 </group>
             </optionalFileGroups>
         </installStep>
+        <installStep name="Language">
+            <optionalFileGroups order="Explicit">
+                <group name="Select Language" type="SelectExactlyOne">
+                    <plugins order="Explicit">
+                        <plugin name="English (Default)">
+                            <description>
+                                <![CDATA[Use English. No settings file is installed; English is always the fallback.]]>
+                            </description>
+                            <files/>
+                            <typeDescriptor>
+                                <type name="Recommended"/>
+                            </typeDescriptor>
+                        </plugin>
+                        <plugin name="Chinese (中文)">
+                            <description>
+                                <![CDATA[Use Simplified Chinese. Installs sosgui_settings.toml with language = "chinese".]]>
+                            </description>
+                            <files>
+                                <file source="lang\chinese\sosgui_settings.toml" destination="interface\SosGui\sosgui_settings.toml"/>
+                            </files>
+                            <typeDescriptor>
+                                <type name="Optional"/>
+                            </typeDescriptor>
+                        </plugin>
+                    </plugins>
+                </group>
+            </optionalFileGroups>
+        </installStep>
     </installSteps>
 </config>

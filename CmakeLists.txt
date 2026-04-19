@@ -141,6 +141,11 @@ install(FILES
     DESTINATION ${interface_path}
     COMPONENT mod_interface_files
 )
+install(
+    DIRECTORY ${DISTRIBUTION_PATH}/lang
+    DESTINATION .
+    COMPONENT mod_interface_files
+)
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION SKSE/Plugins
     COMPONENT mod_runtime
