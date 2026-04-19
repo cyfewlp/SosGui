@@ -3,7 +3,6 @@
 #include "gui/OutfitEditPanel.h"
 
 #include "SosDataType.h"
-#include "Translation.h"
 #include "data/ArmorSource.h"
 #include "data/SosUiData.h"
 #include "data/SosUiOutfit.h"
@@ -551,7 +550,7 @@ void OutfitEditPanel::draw_armor_view_content(const EditingOutfit &editingOutfit
     ImGui::TableSetupColumn("FormID", ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
     ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.ModName"), ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
     ImGui::TableSetupColumn(Translate1("Panels.OutfitEdit.Playable"), ImGuiEx::TableColumnFlags().DefaultHide().NoSort());
-    ImGui::TableSetupColumn(Translate1("##Add"), ImGuiEx::TableColumnFlags().NoSort());
+    ImGui::TableSetupColumn("##Add", ImGuiEx::TableColumnFlags().NoSort());
     ImGui::TableHeadersRow();
 
     if (auto *sortSpecs = ImGui::TableGetSortSpecs(); sortSpecs != nullptr)

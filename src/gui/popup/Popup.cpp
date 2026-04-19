@@ -1,6 +1,5 @@
 #include "gui/popup/Popup.h"
 
-#include "Translation.h"
 #include "i18n/translator_manager.h"
 #include "imgui.h"
 #include "imguiex/ErrorNotifier.h"

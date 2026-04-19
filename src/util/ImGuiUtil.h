@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "Translation.h"
 #include "imgui.h"
 #include "imguiex/ImGuiEx.h"
 #include "imguiex/icon.h"

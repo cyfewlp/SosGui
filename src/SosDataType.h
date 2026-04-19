@@ -5,7 +5,6 @@
 #pragma once
 
 #include "RE/B/BipedObjects.h"
-#include "Translation.h"
 
 #include <array>
 #include <cstdint>

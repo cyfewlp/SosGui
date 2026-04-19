@@ -42,7 +42,7 @@ auto armor_view::ArmorNameFilter::Draw() -> bool
     ImGuiUtil::IconButton(ICON_SEARCH);
 
     ImGui::SameLine();
-    const bool needUpdate = DebounceInput::Draw("##ArmorFilter", Translation::Translate("$SkyOutSys_OEdit_AddFromList_Filter_Name").c_str());
+    const bool needUpdate = DebounceInput::Draw("##ArmorFilter", Translate1("Panels.OutfitEdit.ArmorNameFilter"));
     return needUpdate;
 }
 
