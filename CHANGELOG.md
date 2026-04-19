@@ -1,4 +1,4 @@
-## [unreleased]
+## [0.2.0] - 2026-04-19
 
 ### 🚀 Features
 
@@ -32,6 +32,7 @@
 - Show conflict armors error when focused "Add" button in armor row.
 - Support clear auto-switch policy outfit
 - Support clear active outfit
+- OutfitEdit: support preview armor when hovered a slot row in outfit view panel
 
 ### 🐛 Bug Fixes
 
@@ -56,6 +57,9 @@
 - OutfitEditPanel: call `OutfitListTable::on_refresh` in `on_refresh`; refactor the: "view_item_count_", pass `INT_MAX` to imgui list clipper and seek item by `view_item_count_` and re-calculate when `UserIndex` not equal `view_item_count_`
 - OutfitEdit: set slot filter to `Pass_Has_Any_Slot` when check any slot.
 - OutfitList: set `editing` and `editing_id` to INVALID after change.
+- ArmorView: sort mod filter ignore case.
+- Fix the window id not fix bug
+- *(ui)* OutfitEdit: fix the resize column(double click to fit content) bug.
 
 ### 💼 Other
 
@@ -97,10 +101,14 @@
 - Cleanup `UiSettings`
 - Remove unused settings
 - Update README; remove `InvisibleButton` for escape to quit window: already support by the `ConfigNavEscapeClearFocusWindow` flag.
+- Add `GamepadEventInterceptor` to record current is come from gamepad and intercept it to avoid repeat action.
+- Fix the external link url
 
 ### 📚 Documentation
 
 - Update CHANGELOG; remove unused code;
+- Update CHANGELOG
+- Add mod main page bbcode.
 
 ### ⚡ Performance
 
@@ -109,6 +117,9 @@
 ### 🖼️ UI Changes
 
 - OutfitEdit: adjust filters layout: use   `CollapsingHeader` instead of `SeparatorText`
+- Merge `CharacterEdit` and `OutfitEdit` panels. Now default show character panel and switch in side navigation rail.
+- OutfitEdit: allow preview armor when focused "Add" button.
+- Remove `NavFlattened` from `panel` child window.
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -117,6 +128,13 @@
 - Upgrade imgui to v1.92.7
 - Stuff
 - Some adjust
+- Add papyrus and .esp
+- CMake: install papyrus source and scripts
+- Remove outdated gallery image
+- Sync `JamieMods`
+- Add new esp that merged "Sos"
+- Cpack, fomod.
+- Remove `Translation`; sync translate keys.
 ## [0.1.0] - 2026-03-30
 
 ### 🚀 Features
