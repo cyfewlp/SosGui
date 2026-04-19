@@ -49,10 +49,10 @@ void Popup::DrawAboutPopup(std::string_view name)
         ImGuiUtil::Text(std::format("{:10} {}", "Author Date", plugin->GetAuthor()));
         ImGuiUtil::Text(std::format("{:10}", "Github"));
         ImGui::SameLine();
-        ImGui::TextLinkOpenURL("https://github.com/cyfewlp/JamieMods");
+        ImGui::TextLinkOpenURL("https://github.com/cyfewlp/SosGui");
         ImGuiUtil::Text(std::format("{:10}", "Nexus Mods"));
         ImGui::SameLine();
-        ImGui::TextLinkOpenURL("https://next.nexusmods.com/profile/JamieYin101");
+        ImGui::TextLinkOpenURL("https://www.nexusmods.com/skyrimspecialedition/mods/177806");
         ImGui::EndPopup();
     }
 }
