@@ -153,24 +153,13 @@ void OutfitEditPanel::draw(const OutfitContainer &outfit_container)
     ImGui::SameLine();
     if (ImGui::BeginChild("Main Content")) // we want a focu scope: use internal API or child window?
     {
-        draw_outfit(editingOutfit);
+        ArmorDrawContext armor_draw_context;
+        armor_draw_context.editing_outfit_invalid = editingOutfit.is_invalid();
+        draw_outfit_armors(editingOutfit, armor_draw_context);
         DrawArmorSourcesTabBar();
-        draw_armor_view(editingOutfit);
+        draw_armor_view(editingOutfit, armor_draw_context);
     }
     ImGui::EndChild();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-// Outfit Panel
-////////////////////////////////////////////////////////////////////////////////////////////////
-
-void OutfitEditPanel::draw_outfit(EditingOutfit &editingOutfit)
-{
-    ZoneScopedN(__FUNCTION__);
-    if (ImGui::CollapsingHeader(editingOutfit.get_name().data(), ImGuiEx::TreeNodeFlags().DefaultOpen()))
-    {
-        draw_outfit_armors(editingOutfit);
-    }
 }
 
 void OutfitEditPanel::draw_filterers(const EditingOutfit &editingOutfit)
@@ -249,8 +238,15 @@ void OutfitEditPanel::update_sub_title(const EditingOutfit &editingOutfit)
     last_editing_outfit_id_ = editingOutfit.GetId();
 }
 
-void OutfitEditPanel::draw_outfit_armors(EditingOutfit &editingOutfit)
+void OutfitEditPanel::draw_outfit_armors(EditingOutfit &editingOutfit, ArmorDrawContext &armor_draw_context)
 {
+    ZoneScopedN(__FUNCTION__);
+
+    if (!ImGui::CollapsingHeader(editingOutfit.get_name().data(), ImGuiEx::TreeNodeFlags().DefaultOpen()))
+    {
+        return;
+    }
+
     constexpr const char *SLOT_POLICY_HELP_POPUP_TITLE = "What is Slot Policy?";
     constexpr auto        ERROR_COLOR                  = IM_COL32(255, 180, 171, 255); ///< m3 default dark mode error color
     constexpr auto        ERROR_TEXT_COLOR             = IM_COL32(105, 0, 5, 255);     ///< m3 default dark mode error text color
@@ -311,6 +307,10 @@ void OutfitEditPanel::draw_outfit_armors(EditingOutfit &editingOutfit)
                 if (ImGui::Selectable(Translate1(get_slot_name_key(slotIdx)), isSelected, ImGuiEx::SelectableFlags().AllowOverlap().SpanAllColumns()))
                 {
                     selectedIdx = isSelected ? RE::BIPED_OBJECT::kEditorTotal : slotIdx;
+                }
+                if (armor != nullptr && ImGui::IsItemHovered())
+                {
+                    armor_draw_context.to_preview_armor = armor;
                 }
             }
 
@@ -465,7 +465,7 @@ void OutfitEditPanel::DrawArmorSourcesTabBar()
     }
 }
 
-void OutfitEditPanel::draw_armor_view(const EditingOutfit &editingOutfit)
+void OutfitEditPanel::draw_armor_view(const EditingOutfit &editingOutfit, ArmorDrawContext &armor_draw_context)
 {
     if (armor_view_.armor_name_filter_.Draw())
     {
@@ -479,7 +479,7 @@ void OutfitEditPanel::draw_armor_view(const EditingOutfit &editingOutfit)
     constexpr auto flags = ImGuiEx::TableFlags().RowBg().ScrollY().Resizable().SizingFixedFit().Sortable().Hideable().Reorderable();
     if (ImGui::BeginTable("##ArmorCandidates", 6, flags))
     {
-        draw_armor_view_content(editingOutfit);
+        draw_armor_view_content(editingOutfit, armor_draw_context);
         ImGui::EndTable();
     }
 }
@@ -543,7 +543,7 @@ void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
     }
 }
 
-void OutfitEditPanel::draw_armor_view_content(const EditingOutfit &editingOutfit)
+void OutfitEditPanel::draw_armor_view_content(const EditingOutfit &editingOutfit, ArmorDrawContext &armor_draw_context)
 {
     ImGui::TableSetupScrollFreeze(1, 1);
     ImGui::TableSetupColumn("##Number", ImGuiEx::TableColumnFlags().NoSort());
@@ -565,8 +565,6 @@ void OutfitEditPanel::draw_armor_view_content(const EditingOutfit &editingOutfit
     }
 
     selected_armors_slot_mask_ = Slot::kNone;
-    ArmorDrawContext armor_draw_context;
-    armor_draw_context.editing_outfit_invalid = editingOutfit.is_invalid();
 
     draw_armor_view(armor_view_.view_data_, armor_draw_context);
 

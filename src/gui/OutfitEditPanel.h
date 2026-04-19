@@ -37,7 +37,6 @@ public:
     void on_refresh();
 
     void draw(const OutfitContainer &outfit_container);
-    void draw_outfit(EditingOutfit &editingOutfit);
 
     void on_main_menu_action(MainMenuAction main_menu_action) { outfit_list_table_.on_main_menu_action(main_menu_action); }
 
@@ -47,13 +46,13 @@ private:
     void draw_filterers(const EditingOutfit &editingOutfit);
     void update_sub_title(const EditingOutfit &editingOutfit);
 
-    void draw_outfit_armors(EditingOutfit &editingOutfit);
+    void draw_outfit_armors(EditingOutfit &editingOutfit, ArmorDrawContext &armor_draw_context);
     void SlotPolicyCombo(EditingOutfit &editingOutfit, const uint32_t &slotIdx) const;
 
     void DrawArmorSourcesTabBar();
-    void draw_armor_view(const EditingOutfit &editingOutfit);
+    void draw_armor_view(const EditingOutfit &editingOutfit, ArmorDrawContext &armor_draw_context);
     void draw_preview_armor_window(const Armor *to_preview_armor);
-    void draw_armor_view_content(const EditingOutfit &editingOutfit);
+    void draw_armor_view_content(const EditingOutfit &editingOutfit, ArmorDrawContext &armor_draw_context);
     void draw_armor_view(const std::vector<ArmorEntry> &viewData, ArmorDrawContext &armor_draw_context);
     void draw_armor_row(int row_index, const Armor *armor, ArmorDrawContext &armor_draw_context);
     void draw_add_armors_popup(const EditingOutfit &outfit);
