@@ -120,6 +120,16 @@ if (BUILD_TESTING)
 endif ()
 
 ############################################################
+# CPACK
+set(CPACK_GENERATOR "7Z")
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION_DISPLAY})
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_BUILD_TYPE}")
+set(CPACK_OUTPUT_FILE_PREFIX "${CMAKE_SOURCE_DIR}/dist")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_SOURCE_DIR}/dist")
+include(CPack)
+
+############################################################
 # Install
 set(interface_path interface/${PROJECT_NAME})
 set(DISTRIBUTION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/contrib/Distribution")
@@ -137,8 +147,15 @@ install(TARGETS ${PROJECT_NAME}
 )
 install(FILES
     ${CMAKE_SOURCE_DIR}/papyrus/SosGui.esp
+    ${CMAKE_SOURCE_DIR}/papyrus/sosgui_merged.esp
     DESTINATION .
     COMPONENT main_files
+)
+install(
+    DIRECTORY
+    ${DISTRIBUTION_PATH}/fomod
+    DESTINATION .
+    COMPONENT fomod
 )
 
 # Install Papyrus source and scripts
@@ -156,6 +173,11 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         COMPONENT mod_runtime
     )
 endif ()
+cpack_add_component(main_files)
+cpack_add_component(fomod)
+cpack_add_component(mod_runtime)
+cpack_add_component(mod_interface_files)
+cpack_add_component(papyrus)
 
 # When your SKSE .dll is compiled, this will automatically copy the .dll into your mods folder.
 # Only works if you configure DEPLOY_ROOT above (or set the SKYRIM_MODS_FOLDER environment variable)

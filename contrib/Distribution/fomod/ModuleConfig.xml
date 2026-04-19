@@ -1,0 +1,49 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
+    <moduleName>ImGui extender for Skyrim Outfit System SE - SosGui</moduleName>
+    <moduleImage path="fomod\sosgui_character_edit.jpg"/>
+
+	<moduleDependencies operator="And">
+		<fileDependency file="SkyrimOutfitSystem.esp" state="Active"/>
+	</moduleDependencies>
+
+    <requiredInstallFiles>
+        <folder source="Source" destination="Source"/>
+        <folder source="SKSE" destination="SKSE"/>
+        <folder source="Scripts" destination="Scripts"/>
+        <folder source="interface" destination="interface"/>
+    </requiredInstallFiles>
+
+    <installSteps order="Explicit">
+        <installStep name="ESP">
+            <optionalFileGroups order="Explicit">
+                <group name="Select ESP" type="SelectExactlyOne">
+                    <plugins order="Explicit">
+                        <plugin name="Standalone">
+                            <description>
+                                <![CDATA[Use the standalone SosGui.esp plugin file.]]>
+                            </description>
+                            <files>
+                                <file source="SosGui.esp" destination="/"/>
+                            </files>
+                            <typeDescriptor>
+                                <type name="Optional"/>
+                            </typeDescriptor>
+                        </plugin>
+                        <plugin name="Merged">
+                            <description>
+                                <![CDATA[Use the merged plugin that combines SosGui with Skyrim Outfit System SE Revived into a single ESP.]]>
+                            </description>
+                            <files>
+                                <file source="sosgui_merged.esp" destination="/"/>
+                            </files>
+                            <typeDescriptor>
+                                <type name="Optional"/>
+                            </typeDescriptor>
+                        </plugin>
+                    </plugins>
+                </group>
+            </optionalFileGroups>
+        </installStep>
+    </installSteps>
+</config>
