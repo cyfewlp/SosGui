@@ -12,6 +12,11 @@
 ### 🖼️ UI Changes
 
 - Add multi-language supports. Default support `chinese` and can select in fomod install steps.
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove `sosgui_merged.esp`. `SosGui.esp` now is marked to ESL
+- Remove `sosgui_merged` install step. FoMod: add `SosGui.esp` as `requiredInstallFiles`
 ## [0.2.0] - 2026-04-19
 
 ### 🚀 Features
