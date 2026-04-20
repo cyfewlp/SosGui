@@ -12,6 +12,7 @@
         <folder source="SKSE" destination="SKSE"/>
         <folder source="Scripts" destination="Scripts"/>
         <folder source="interface" destination="interface"/>
+        <file source="SosGui.esp" destination="SosGui.esp" />
     </requiredInstallFiles>
 
     <installSteps order="Explicit">

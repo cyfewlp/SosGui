@@ -152,7 +152,6 @@ install(TARGETS ${PROJECT_NAME}
 )
 install(FILES
     ${CMAKE_SOURCE_DIR}/papyrus/SosGui.esp
-    ${CMAKE_SOURCE_DIR}/papyrus/sosgui_merged.esp
     DESTINATION .
     COMPONENT main_files
 )
