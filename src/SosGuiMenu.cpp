@@ -51,7 +51,7 @@ auto Creator() -> RE::IMenu *
     using Flags = RE::UI_MENU_FLAGS;
     auto *menu  = new SosGuiMenu();
     menu->menuFlags.set(Flags::kPausesGame, Flags::kDisablePauseMenu);
-    menu->menuFlags.set(Flags::kUpdateUsesCursor);
+    menu->menuFlags.set(Flags::kUpdateUsesCursor, Flags::kAllowSaving);
     menu->menuFlags.set(Flags::kCustomRendering, Flags::kAlwaysOpen, Flags::kTopmostRenderedMenu);
     return menu;
 }
