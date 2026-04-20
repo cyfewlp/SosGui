@@ -1,3 +1,17 @@
+## [0.3.0] - 2026-04-20
+
+### 🚀 Features
+
+- Allow save game when menu showing
+
+### 📚 Documentation
+
+- Add `Notes` part.
+- Update main.bbcode
+
+### 🖼️ UI Changes
+
+- Add multi-language supports. Default support `chinese` and can select in fomod install steps.
 ## [0.2.0] - 2026-04-19
 
 ### 🚀 Features
