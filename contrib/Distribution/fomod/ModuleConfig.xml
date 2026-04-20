@@ -15,36 +15,6 @@
     </requiredInstallFiles>
 
     <installSteps order="Explicit">
-        <installStep name="ESP">
-            <optionalFileGroups order="Explicit">
-                <group name="Select ESP" type="SelectExactlyOne">
-                    <plugins order="Explicit">
-                        <plugin name="Standalone">
-                            <description>
-                                <![CDATA[Use the standalone SosGui.esp plugin file.]]>
-                            </description>
-                            <files>
-                                <file source="SosGui.esp" destination="/"/>
-                            </files>
-                            <typeDescriptor>
-                                <type name="Optional"/>
-                            </typeDescriptor>
-                        </plugin>
-                        <plugin name="Merged">
-                            <description>
-                                <![CDATA[Use the merged plugin that combines SosGui with Skyrim Outfit System SE Revived into a single ESP.]]>
-                            </description>
-                            <files>
-                                <file source="sosgui_merged.esp" destination="/"/>
-                            </files>
-                            <typeDescriptor>
-                                <type name="Optional"/>
-                            </typeDescriptor>
-                        </plugin>
-                    </plugins>
-                </group>
-            </optionalFileGroups>
-        </installStep>
         <installStep name="Language">
             <optionalFileGroups order="Explicit">
                 <group name="Select Language" type="SelectExactlyOne">
