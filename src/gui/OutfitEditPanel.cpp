@@ -531,6 +531,18 @@ void OutfitEditPanel::draw_preview_armor_window(const Armor *to_preview_armor)
             ImGui::SetNextWindowSize(window_size);
             if (ImGui::Begin(preview_window_name, nullptr, ImGuiEx::WindowFlags().NoResize().NoDecoration().NoBackground().NoFocusOnAppearing()))
             {
+                if (ImGui::IsWindowHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+                {
+                    if (!std::exchange(preview_armor_rotating_, true))
+                    {
+                        RE::Inventory3DManager::StartMouseRotation();
+                    }
+                }
+                else if (std::exchange(preview_armor_rotating_, false))
+                {
+                    RE::Inventory3DManager::StopMouseRotation();
+                }
+
                 const auto &window_pos = ImGui::GetWindowPos();
                 const auto  new_x      = -(viewport_ratio.x * window_pos.x + model_radius + world_minx);
                 const auto  new_z      = -(viewport_ratio.y * window_pos.y + model_radius + world_minz);

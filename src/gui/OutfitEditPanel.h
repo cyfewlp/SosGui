@@ -83,6 +83,7 @@ private:
     bool                             should_refresh_view_      = true;
     bool                             armor_name_sort_ascend_   = true;
     bool                             show_no_conflict_armors_  = false;
+    bool                             preview_armor_rotating_   = false;
     bool                             preview_armor_            = true;
     ArmorSource                      armor_source_             = ArmorSource::None;
     int                              filtered_view_item_count_ = -1;
