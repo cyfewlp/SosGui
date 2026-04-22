@@ -11,14 +11,29 @@ So I built [b]SosGui[/b]: a fast, immediate-mode UI powered by [url=https://gith
 
 [line]
 
+[youtube]UhpPXwK94l0[/youtube]
+
+[line]
+
+[b]How it works[/b]
+[spoiler]
+SosGui communicates with SkyrimOutfitSystemSE entirely through its own Papyrus script API. All calls go through [b]IVirtualMachine[/b] to invoke SOS's native Papyrus functions — no engine hooks, no binary patching.
+
+To keep the UI responsive, SosGui caches nearly all configuration data (actors, armors, outfits) in memory. Advanced filtering and batch operations are built on top of this cache. Hot paths have been specifically optimised — including sort algorithms and UTF-16 string caching — to avoid unnecessary overhead during typical usage.
+[/spoiler]
+
+[line]
+
 [size=4][b]Features[/b][/size]
 
 [list]
 [*][b]Full feature parity[/b] with SkyrimOutfitSystemSE — everything you could do in MCM, now faster
-[*][b]In-menu armor preview[/b] — see how an armor looks without closing the panel
+[*][b]In-menu armor preview[/b] — see how an armor looks without closing the panel; hold [b]Middle Mouse Button[/b] to rotate the model
 [*][b]Batch operations[/b] — add or remove multiple items at once
 [*][b]Fast iteration[/b] — immediate-mode UI with no fade transitions or menu reloads
 [*][b]Gamepad support[/b] — standard ImGui gamepad navigation out of the box
+[*][b]Locale-aware sorting[/b] — outfits and armors are sorted by name by default, with proper locale support (e.g. Chinese names sort by pinyin)
+[*][b]SimpleIME integration[/b] — compatible with my other mod [url=https://www.nexusmods.com/skyrimspecialedition/mods/140136]SimpleIME[/url], enabling multi-byte language input (Chinese, Japanese, Korean, etc.) directly in the panel
 [/list]
 
 [size=3][b]Gamepad Controls[/b][/size]
