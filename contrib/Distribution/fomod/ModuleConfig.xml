@@ -24,7 +24,9 @@
                             <description>
                                 <![CDATA[Use English. No settings file is installed; English is always the fallback.]]>
                             </description>
-                            <files/>
+                            <files>
+                                <file source="lang\english\sosgui_settings.toml" destination="interface\SosGui\sosgui_settings.toml"/>
+                            </files>
                             <typeDescriptor>
                                 <type name="Recommended"/>
                             </typeDescriptor>

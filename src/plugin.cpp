@@ -1,4 +1,5 @@
 
+#include "Settings.h"
 #include "common.h"
 #include "log.h"
 
@@ -21,7 +22,7 @@ void InitializeLogging(SpdLogSettings settings)
     {
         SKSE::stl::report_and_fail("Unable to lookup SKSE logs directory.");
     }
-    const auto & plugin_declaration = SKSE::PluginDeclaration::GetSingleton();
+    const auto &plugin_declaration = SKSE::PluginDeclaration::GetSingleton();
     *path /= plugin_declaration->GetName();
     *path += L".log";
 
@@ -40,7 +41,9 @@ bool PluginLoad(const SKSE::LoadInterface *skse)
     {
         const auto *plugin = SKSE::PluginDeclaration::GetSingleton();
 
-        InitializeLogging({spdlog::level::debug, spdlog::level::trace});
+        SosGui::SettingsLoader::load();
+        const auto &settings = SosGui::Settings::get_instance();
+        InitializeLogging({settings.debug_log ? spdlog::level::debug : spdlog::level::info, spdlog::level::trace});
 
         Init(skse, false);
 

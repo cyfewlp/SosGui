@@ -24,6 +24,12 @@ struct GamepadEventInterceptor : RE::MenuEventHandler
     }
 };
 
+struct MenuOpenKeyboardEventHandler : RE::MenuEventHandler
+{
+    auto CanProcess(RE::InputEvent *a_event) -> bool override;
+    auto ProcessButton(RE::ButtonEvent *a_event) -> bool override;
+};
+
 class SosGuiMenu : public RE::IMenu
 {
     bool                          m_fShow = false;

@@ -4,6 +4,7 @@
 
 #include "SosGuiMenu.h"
 
+#include "Settings.h"
 #include "SosGui.h"
 #include "imgui.h"
 #include "log.h"
@@ -99,26 +100,56 @@ void on_user_events(const RE::BSFixedString &event_name)
     }
 }
 
-auto get_language() -> std::string
+} // namespace
+
+/// Shortcut detection is performed inside CanProcess, which always returns false.
+/// If CanProcess returns true, the event is routed to ProcessButton — but depending on
+/// the active input context, this alone may cause the event to be intercepted before
+/// other handlers see it, regardless of what ProcessButton returns.
+/// Keeping CanProcess at false lets us observe key state without consuming the event.
+auto MenuOpenKeyboardEventHandler::CanProcess(RE::InputEvent *a_event) -> bool
 {
-    constexpr std::string_view settings_file = "sosgui_settings.toml";
-    std::string                language      = "english";
-    const auto                 settings_path = utils::GetPluginInterfaceDir() / settings_file;
-    if (std::filesystem::exists(settings_path))
+    const auto *button_event = (a_event != nullptr) ? a_event->AsButtonEvent() : nullptr;
+    if (button_event != nullptr)
     {
-        try
+        static bool ctrl_held  = false;
+        static bool shift_held = false;
+        static bool alt_held   = false;
+
+        if (button_event->GetIDCode() == RE::BSWin32KeyboardDevice::Key::kLeftControl ||
+            button_event->GetIDCode() == RE::BSWin32KeyboardDevice::Key::kRightControl)
         {
-            const auto table = toml::parse_file(settings_path.generic_string());
-            language         = table["language"].value_or("english");
+            ctrl_held = button_event->IsPressed();
         }
-        catch (const std::exception &e)
+        else if (button_event->GetIDCode() == RE::BSWin32KeyboardDevice::Key::kLeftShift ||
+                 button_event->GetIDCode() == RE::BSWin32KeyboardDevice::Key::kRightShift)
         {
-            logger::warn("SosGuiMenu: failed to load settings: {}", e.what());
+            shift_held = button_event->IsPressed();
+        }
+        else if (button_event->GetIDCode() == RE::BSWin32KeyboardDevice::Key::kLeftAlt ||
+                 button_event->GetIDCode() == RE::BSWin32KeyboardDevice::Key::kRightAlt)
+        {
+            alt_held = button_event->IsPressed();
+        }
+
+        const auto &shortcut          = Settings::get_instance().menu_toggle_shortcut;
+        const auto  key_pass          = button_event->GetIDCode() == shortcut.key && button_event->IsDown();
+        const auto  modifier_key_pass = shortcut.ctrl == ctrl_held && shortcut.shift == shift_held && shortcut.alt == alt_held;
+        if (key_pass && modifier_key_pass)
+        {
+            const auto sosgui_showing = RE::UI::GetSingleton()->IsMenuOpen(SosGuiMenu::MENU_NAME);
+            RE::UIMessageQueue::GetSingleton()->AddMessage(
+                SosGuiMenu::MENU_NAME, sosgui_showing ? RE::UI_MESSAGE_TYPE::kHide : RE::UI_MESSAGE_TYPE::kShow, nullptr
+            );
         }
     }
-    return language;
+    return false;
 }
-} // namespace
+
+auto MenuOpenKeyboardEventHandler::ProcessButton(RE::ButtonEvent * /*a_event*/) -> bool
+{
+    return false;
+}
 
 void SosGuiMenu::RegisterMenu()
 {
@@ -213,7 +244,8 @@ void SosGuiMenu::OnShow()
     RE::MenuControls::GetSingleton()->AddHandler(&gamepad_event_interceptor_);
 
     i18n::SetTranslator(&translator_);
-    i18n::UpdateTranslator(get_language(), "english", utils::GetPluginInterfaceDir());
+    const auto &settings = Settings::get_instance();
+    i18n::UpdateTranslator(settings.language, "english", utils::GetPluginInterfaceDir());
     m_sosGui = std::make_unique<SosGuiWindow>();
     m_sosGui->Refresh();
 }

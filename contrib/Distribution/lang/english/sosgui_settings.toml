@@ -1,5 +1,5 @@
 #debug = false
-language = "chinese"
+#language = "english"
 ### Shortcut: <key> or <modifier> + <key>
 ### e.g. f1, ctrl+f1, ctrl+shift+f1
 ### Case and spaces are ignored.

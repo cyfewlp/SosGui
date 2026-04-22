@@ -176,6 +176,10 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         DESTINATION SKSE/Plugins
         COMPONENT mod_runtime
     )
+    install(FILES "${DISTRIBUTION_PATH}/lang/english/sosgui_settings.toml"
+        DESTINATION ${interface_path}
+        COMPONENT mod_runtime
+    )
 endif ()
 cpack_add_component(main_files)
 cpack_add_component(fomod)
