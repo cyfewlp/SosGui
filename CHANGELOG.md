@@ -1,23 +1,14 @@
-## [0.3.0] - 2026-04-20
+## [0.3.0] - 2026-04-22
 
 ### 🚀 Features
 
-- Allow save game when menu showing
-
-### 📚 Documentation
-
-- Add `Notes` part.
-- Update main.bbcode
-
-### 🖼️ UI Changes
-
-- Add multi-language supports. Default support `chinese` and can select in fomod install steps.
+- Support use keyboard shortcut toggle SosGuiMenu.
+- `OutfitEdit`: Support rotate armor in preview window.
 
 ### ⚙️ Miscellaneous Tasks
 
-- Remove `sosgui_merged.esp`. `SosGui.esp` now is marked to ESL
-- Remove `sosgui_merged` install step. FoMod: add `SosGui.esp` as `requiredInstallFiles`
-## [0.2.0] - 2026-04-19
+- Rename `MenuOpenKeyboardEventHandler`; add some log.
+## [0.2.0] - 2026-04-20
 
 ### 🚀 Features
 
@@ -52,6 +43,7 @@
 - Support clear auto-switch policy outfit
 - Support clear active outfit
 - OutfitEdit: support preview armor when hovered a slot row in outfit view panel
+- Allow save game when menu showing
 
 ### 🐛 Bug Fixes
 
@@ -128,6 +120,9 @@
 - Update CHANGELOG; remove unused code;
 - Update CHANGELOG
 - Add mod main page bbcode.
+- Add `Notes` part.
+- Update main.bbcode
+- Update docs
 
 ### ⚡ Performance
 
@@ -139,6 +134,7 @@
 - Merge `CharacterEdit` and `OutfitEdit` panels. Now default show character panel and switch in side navigation rail.
 - OutfitEdit: allow preview armor when focused "Add" button.
 - Remove `NavFlattened` from `panel` child window.
+- Add multi-language supports. Default support `chinese` and can select in fomod install steps.
 
 ### ⚙️ Miscellaneous Tasks
 
@@ -154,6 +150,8 @@
 - Add new esp that merged "Sos"
 - Cpack, fomod.
 - Remove `Translation`; sync translate keys.
+- Remove `sosgui_merged.esp`. `SosGui.esp` now is marked to ESL
+- Remove `sosgui_merged` install step. FoMod: add `SosGui.esp` as `requiredInstallFiles`
 ## [0.1.0] - 2026-03-30
 
 ### 🚀 Features
