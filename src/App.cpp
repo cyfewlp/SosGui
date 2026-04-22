@@ -24,16 +24,18 @@ struct ActorCellEventSink : RE::BSTEventSink<RE::BGSActorCellEvent>
     auto ProcessEvent(const RE::BGSActorCellEvent *a_event, RE::BSTEventSource<RE::BGSActorCellEvent> * /*a_eventSource*/)
         -> RE::BSEventNotifyControl override
     {
-        static SosGui::MenuOpenKeyboardEventHandler g_gui_menu_open_event_handler;
+        static SosGui::MenuToggleKeyboardEventHandler menu_toggle_keyboard_event_handler;
         if (a_event != nullptr)
         {
             if (a_event->flags == RE::BGSActorCellEvent::CellFlag::kEnter)
             {
-                RE::MenuControls::GetSingleton()->AddHandler(&g_gui_menu_open_event_handler);
+                logger::info("Register SosGuiMenu toggle event handler");
+                RE::MenuControls::GetSingleton()->AddHandler(&menu_toggle_keyboard_event_handler);
             }
             else
             {
-                RE::MenuControls::GetSingleton()->RemoveHandler(&g_gui_menu_open_event_handler);
+                logger::info("Unregister SosGuiMenu toggle event handler");
+                RE::MenuControls::GetSingleton()->RemoveHandler(&menu_toggle_keyboard_event_handler);
             }
         }
         return RE::BSEventNotifyControl::kContinue;
@@ -52,6 +54,7 @@ auto Initialize() -> bool
         static ActorCellEventSink actor_cell_event_sink;
         if (message->type == SKSE::MessagingInterface::kDataLoaded)
         {
+            logger::info("Register ActorCellEventSink.");
             RE::PlayerCharacter::GetSingleton()->AsBGSActorCellEventSource()->AddEventSink<RE::BGSActorCellEvent>(&actor_cell_event_sink);
         }
     });

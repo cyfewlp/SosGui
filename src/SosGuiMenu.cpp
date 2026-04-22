@@ -107,7 +107,7 @@ void on_user_events(const RE::BSFixedString &event_name)
 /// the active input context, this alone may cause the event to be intercepted before
 /// other handlers see it, regardless of what ProcessButton returns.
 /// Keeping CanProcess at false lets us observe key state without consuming the event.
-auto MenuOpenKeyboardEventHandler::CanProcess(RE::InputEvent *a_event) -> bool
+auto MenuToggleKeyboardEventHandler::CanProcess(RE::InputEvent *a_event) -> bool
 {
     const auto *button_event = (a_event != nullptr) ? a_event->AsButtonEvent() : nullptr;
     if (button_event != nullptr)
@@ -143,11 +143,6 @@ auto MenuOpenKeyboardEventHandler::CanProcess(RE::InputEvent *a_event) -> bool
             );
         }
     }
-    return false;
-}
-
-auto MenuOpenKeyboardEventHandler::ProcessButton(RE::ButtonEvent * /*a_event*/) -> bool
-{
     return false;
 }
 
