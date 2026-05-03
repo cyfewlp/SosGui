@@ -1,3 +1,13 @@
+## [0.3.1] - 2026-05-03
+
+### 🐛 Bug Fixes
+
+- Actor location-based outfit assignments silently skipped on load
+
+### 📚 Documentation
+
+- Update main.bbcode
+- Update main.bbcode: add keyboard shortcut notes part.
 ## [0.3.0] - 2026-04-22
 
 ### 🚀 Features
