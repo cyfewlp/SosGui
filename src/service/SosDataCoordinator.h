@@ -11,13 +11,13 @@ namespace SosGui
 class SosDataCoordinator
 {
     SosUiData     &ui_data_;
-    OutfitService &m_outfitService;
+    OutfitService &outfit_service_;
     using OnComplete = std::function<void()>;
     using Variable   = RE::BSScript::Variable;
     using Armor      = RE::TESObjectARMO;
 
 public:
-    explicit SosDataCoordinator(SosUiData &uiData, OutfitService &outfitService) : ui_data_(uiData), m_outfitService(outfitService) {}
+    explicit SosDataCoordinator(SosUiData &uiData, OutfitService &outfitService) : ui_data_(uiData), outfit_service_(outfitService) {}
 
     auto RequestEnable(bool enable) const -> Task;
     auto QueryIsEnable() const -> Task;

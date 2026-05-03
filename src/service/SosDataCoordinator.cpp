@@ -5,11 +5,6 @@
 #include "data/SosUiData.h"
 #include "service/OutfitService.h"
 
-#include <RE/A/Actor.h>
-#include <RE/P/PlayerCharacter.h>
-#include <RE/S/SpellItem.h>
-#include <RE/T/TESForm.h>
-#include <RE/V/Variable.h>
 #include <vector>
 
 namespace SosGui
@@ -23,24 +18,20 @@ auto SosDataCoordinator::RequestActorList() const -> Task
         co_return;
     }
 
-    const auto array  = actorListVar.GetArray();
-    auto      &actors = ui_data_.actor_outfit_container.container;
-    actors.clear();
-    for (const auto *iter = array->begin(); iter != array->end(); ++iter)
+    const auto array = actorListVar.GetArray();
+    ui_data_.actor_outfit_container.container.clear();
+    for (const auto &var : *array)
     {
-        const RE::BSScript::Variable var   = *iter;
-        auto                        *actor = var.Unpack<RE::Actor *>();
-        actors.emplace_back(actor);
+        auto *actor = var.Unpack<RE::Actor *>();
 
         const RE::BSScript::Variable isEnabledVar = co_await SosNativeCaller::IsActorAutoSwitchEnabled(actor);
         if (isEnabledVar.IsBool() && isEnabledVar.GetBool())
         {
-            co_await m_outfitService.GetActorAllStateOutfit(actor);
+            co_await outfit_service_.GetActorAllStateOutfit(actor);
         }
-        co_await m_outfitService.GetActorOutfit(actor);
+        co_await outfit_service_.GetActorOutfit(actor);
         co_await RequestUpdateActorAutoSwitchState(actor);
     }
-    ui_data_.actor_outfit_container.sort();
 }
 
 auto SosDataCoordinator::RequestAddActor(RE::Actor *actor) const -> Task
@@ -66,9 +57,8 @@ auto SosDataCoordinator::RequestNearActorList() const -> Task
 
     const auto array = actorsVar.GetArray();
     ui_data_.near_actors.clear();
-    for (const auto *iter = array->begin(); iter != array->end(); ++iter)
+    for (const auto &var : *array)
     {
-        const RE::BSScript::Variable var = *iter;
         ui_data_.near_actors.emplace_back(var.Unpack<RE::Actor *>());
     }
     std::ranges::sort(ui_data_.near_actors, std::less<>(), &RE::Actor::formID);
@@ -135,16 +125,16 @@ auto SosDataCoordinator::QueryIsEnable() const -> Task
 
 auto SosDataCoordinator::Refresh() const -> Task
 {
-    logger::debug("start refresh in thread: {}", std::this_thread::get_id());
-    auto              start = std::chrono::high_resolution_clock::now();
+    logger::info("start refresh in thread: {}", std::this_thread::get_id());
+    const auto        start = std::chrono::high_resolution_clock::now();
     std::vector<Task> tasks;
-    tasks.emplace_back(m_outfitService.GetOutfitList());
+    tasks.emplace_back(outfit_service_.GetOutfitList());
     tasks.emplace_back(QueryIsEnable());
     tasks.emplace_back(RequestActorList());
     tasks.emplace_back(RequestNearActorList());
     co_await RequestUpdateActorAutoSwitchState(RE::PlayerCharacter::GetSingleton());
-    tasks.emplace_back(m_outfitService.GetActorOutfit(RE::PlayerCharacter::GetSingleton()));
-    tasks.emplace_back(m_outfitService.GetAllFavoriteOutfits());
+    tasks.emplace_back(outfit_service_.GetActorOutfit(RE::PlayerCharacter::GetSingleton()));
+    tasks.emplace_back(outfit_service_.GetAllFavoriteOutfits());
     ui_data_.quick_slot_enabled = HasQuickSlotSpell();
     for (const auto &task : tasks)
     {

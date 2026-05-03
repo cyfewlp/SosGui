@@ -15,11 +15,11 @@ class OutfitService
 {
     using Armor    = RE::TESObjectARMO;
     using Variable = RE::BSScript::Variable;
-    SosUiData       &m_uiData;
+    SosUiData       &ui_data_;
     OutfitContainer &outfit_container_;
 
 public:
-    OutfitService(SosUiData &uiData) : m_uiData(uiData), outfit_container_(m_uiData.outfit_container) {}
+    OutfitService(SosUiData &uiData) : ui_data_(uiData), outfit_container_(ui_data_.outfit_container) {}
 
     auto CreateOutfit(std::string outfitName) const -> Task;
 
